@@ -41,5 +41,16 @@ struct span
   const T& operator [] (int idx) const { return ptr[idx]; }
 
   span sub(int offset) { return span{ len - offset, ptr + offset }; }
+
+  span() = default;
+  span(size_t N, T* tab) :  len(N), ptr(tab) {}
+
+  // construction from vector/string
+  template<typename U, typename = decltype(((U*)0)->data())>
+  span(U& s)
+  {
+    ptr = s.data();
+    len = s.size();
+  }
 };
 
