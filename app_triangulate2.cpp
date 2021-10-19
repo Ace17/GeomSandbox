@@ -9,18 +9,12 @@
 
 #include "app.h"
 
-#include <algorithm>
+#include <algorithm> // sort
 #include <cassert>
-#include <climits>
+#include <climits> // RAND_MAX
 #include <cmath>
 #include <cstdio>
-#include <cstdlib>
-#include <exception>
-#include <iostream>
-#include <limits>
-#include <map>
-#include <memory>
-#include <utility>
+#include <cstdlib> // rand
 #include <vector>
 
 namespace
@@ -226,6 +220,7 @@ std::vector<Edge> triangulate(span<const Vec2> points)
     if(idx >= 4)
       break;
   }
+
   printHull();
 
   std::vector<Edge> r;
