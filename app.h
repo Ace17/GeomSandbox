@@ -10,6 +10,7 @@ struct Color
 constexpr Color White{ 1, 1, 1, 1 };
 constexpr Color Red{ 1, 0, 0, 1 };
 constexpr Color Green{ 0, 1, 0, 1 };
+constexpr Color Yellow{ 1, 1, 0, 1 };
 
 struct IDrawer
 {

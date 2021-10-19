@@ -116,7 +116,17 @@ const int unittests_run = [] ()
     return 0;
   }();
 
-std::vector<Edge> triangulate(span<const Vec2> points)
+struct IVisualizer
+{
+  virtual ~IVisualizer() = default;
+
+  virtual void begin() = 0;
+  virtual void end() = 0;
+
+  virtual void line(Vec2 a, Vec2 b) = 0;
+};
+
+std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
 {
   std::vector<HalfEdge> he;
 
@@ -162,8 +172,33 @@ std::vector<Edge> triangulate(span<const Vec2> points)
       fprintf(stderr, "]\n");
     };
 
+  auto drawHull = [&] ()
+    {
+      int k = 0;
+      int edge = 0;
+
+      do
+      {
+        const int prev = edge;
+        edge = nextEdgeOnHull(he, edge);
+
+        vis->line(points[he[edge].point], points[he[prev].point]);
+
+        if(++k > 10)
+        {
+          break;
+        }
+      }
+      while (edge != 0);
+    };
+
+  vis->begin();
+  drawHull();
+  vis->end();
+
   for(int idx = 3; idx < (int)points.len; ++idx)
   {
+    vis->begin();
     auto p = points[idx];
     fprintf(stderr, "--- insertion of point P%d ---\n", idx);
 
@@ -219,7 +254,8 @@ std::vector<Edge> triangulate(span<const Vec2> points)
     }
     while (hullCurr != 0);
 
-    Fiber::yield();
+    drawHull();
+    vis->end();
   }
 
   printHull();
@@ -236,7 +272,7 @@ struct TriangulateApp : IApp
 {
   TriangulateApp()
   {
-    const int N = 15;
+    const int N = 7;
     m_points.resize(N);
 
     for(auto& p : m_points)
@@ -290,6 +326,9 @@ struct TriangulateApp : IApp
       drawer->text(center + T * 1.0, buffer, Green);
       idx++;
     }
+
+    for(auto& line : m_visu.m_lines)
+      drawer->line(line.a, line.b, Yellow);
   }
 
   void keydown(Key key) override
@@ -307,14 +346,39 @@ struct TriangulateApp : IApp
   {
     auto pThis = (TriangulateApp*)userParam;
     pThis->triangulateFromFiber();
-    Fiber::yield();
   }
 
   void triangulateFromFiber()
   {
-    m_edges = triangulate({ m_points.size(), m_points.data() });
+    m_edges = triangulate({ m_points.size(), m_points.data() }, &m_visu);
   }
 
+  struct Visualizer : IVisualizer
+  {
+    struct VisualLine
+    {
+      Vec2 a, b;
+    };
+
+    std::vector<VisualLine> m_lines;
+
+    void line(Vec2 a, Vec2 b) override
+    {
+      m_lines.push_back({ a, b });
+    }
+
+    void begin() override
+    {
+      m_lines.clear();
+    }
+
+    void end() override
+    {
+      Fiber::yield();
+    }
+  };
+
+  Visualizer m_visu;
   std::unique_ptr<Fiber> m_fiber;
   std::vector<Vec2> m_points;
   std::vector<Edge> m_edges;
