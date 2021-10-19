@@ -12,10 +12,10 @@ struct Fiber::Priv
   ucontext_t client;
 };
 
-static_assert(sizeof(Fiber::Priv) < sizeof(Fiber::privBuffer));
-
 Fiber::Fiber(void(*func)())
 {
+  static_assert(sizeof(Fiber::Priv) < sizeof(Fiber::privBuffer));
+
   stack.resize(1024 * 1024);
   priv = new(privBuffer) Fiber::Priv;
 
