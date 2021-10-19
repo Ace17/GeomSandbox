@@ -297,19 +297,16 @@ struct TriangulateApp : IApp
     if(key == Key::Space)
     {
       if(!m_fiber)
-      {
-        staticThis = this;
-        m_fiber = std::make_unique<Fiber>(&staticTriangulateFromFiber);
-      }
+        m_fiber = std::make_unique<Fiber>(&staticTriangulateFromFiber, this);
 
       m_fiber->resume();
     }
   }
 
-  static TriangulateApp* staticThis;
-  static void staticTriangulateFromFiber()
+  static void staticTriangulateFromFiber(void* userParam)
   {
-    staticThis->triangulateFromFiber();
+    auto pThis = (TriangulateApp*)userParam;
+    pThis->triangulateFromFiber();
     Fiber::yield();
   }
 
@@ -322,7 +319,6 @@ struct TriangulateApp : IApp
   std::vector<Vec2> m_points;
   std::vector<Edge> m_edges;
 };
-TriangulateApp* TriangulateApp::staticThis;
 const int registered = registerApp("triangulate2", [] () -> IApp* { return new TriangulateApp; });
 }
 

@@ -5,7 +5,7 @@
 class Fiber
 {
 public:
-  Fiber(void(*func)());
+  Fiber(void(*func)(void*), void* userParam);
 
   void resume();
   static void yield();
@@ -14,7 +14,8 @@ private:
   static void launcherFunc();
 
   // Function to run inside the fiber
-  void (* m_func)();
+  void(*const m_func)(void*);
+  void* const m_userParam;
 
   // Execution state
   std::vector<uint8_t> m_stack;

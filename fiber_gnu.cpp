@@ -12,12 +12,12 @@ struct Fiber::Priv
 
 void Fiber::launcherFunc()
 {
-  ThisFiber->m_func();
+  ThisFiber->m_func(ThisFiber->m_userParam);
   ThisFiber->m_finished = true;
   yield();
 }
 
-Fiber::Fiber(void(*func)()) : m_func(func)
+Fiber::Fiber(void(*func)(void*), void* userParam) : m_func(func), m_userParam(userParam)
 {
   static_assert(sizeof(Fiber::Priv) < sizeof(Fiber::privBuffer));
 
