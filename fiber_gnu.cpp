@@ -2,9 +2,6 @@
 #include <cassert>
 #include <ucontext.h>
 
-void makecontext(ucontext_t* ucp, void (* func)(), int argc, ...);
-int swapcontext(ucontext_t* oucp, const ucontext_t* ucp);
-
 static thread_local Fiber* ThisFiber;
 
 struct Fiber::Priv
