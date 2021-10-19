@@ -299,12 +299,10 @@ struct TriangulateApp : IApp
       if(!m_fiber)
       {
         staticThis = this;
-        m_fiberFinished = false;
         m_fiber = std::make_unique<Fiber>(&staticTriangulateFromFiber);
       }
 
-      if(!m_fiberFinished)
-        m_fiber->resume();
+      m_fiber->resume();
     }
   }
 
@@ -312,7 +310,6 @@ struct TriangulateApp : IApp
   static void staticTriangulateFromFiber()
   {
     staticThis->triangulateFromFiber();
-    staticThis->m_fiberFinished = true;
     Fiber::yield();
   }
 
@@ -322,7 +319,6 @@ struct TriangulateApp : IApp
   }
 
   std::unique_ptr<Fiber> m_fiber;
-  bool m_fiberFinished = false;
   std::vector<Vec2> m_points;
   std::vector<Edge> m_edges;
 };

@@ -10,7 +10,14 @@ struct Fiber::Priv
   ucontext_t client;
 };
 
-Fiber::Fiber(void(*func)())
+void Fiber::launcherFunc()
+{
+  ThisFiber->m_func();
+  ThisFiber->finished = true;
+  yield();
+}
+
+Fiber::Fiber(void(*func)()) : m_func(func)
 {
   static_assert(sizeof(Fiber::Priv) < sizeof(Fiber::privBuffer));
 
@@ -21,11 +28,14 @@ Fiber::Fiber(void(*func)())
   priv->client.uc_stack.ss_sp = stack.data();
   priv->client.uc_stack.ss_size = stack.size();
 
-  makecontext(&priv->client, func, 0);
+  makecontext(&priv->client, launcherFunc, 0);
 }
 
 void Fiber::resume()
 {
+  if(finished)
+    return;
+
   assert(ThisFiber == nullptr);
   ThisFiber = this;
   swapcontext(&priv->main, &priv->client);
