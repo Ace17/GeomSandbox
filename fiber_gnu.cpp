@@ -13,7 +13,7 @@ struct Fiber::Priv
 void Fiber::launcherFunc()
 {
   ThisFiber->m_func();
-  ThisFiber->finished = true;
+  ThisFiber->m_finished = true;
   yield();
 }
 
@@ -21,19 +21,19 @@ Fiber::Fiber(void(*func)()) : m_func(func)
 {
   static_assert(sizeof(Fiber::Priv) < sizeof(Fiber::privBuffer));
 
-  stack.resize(1024 * 1024);
+  m_stack.resize(1024 * 1024);
   priv = new(privBuffer) Fiber::Priv;
 
   getcontext(&priv->client);
-  priv->client.uc_stack.ss_sp = stack.data();
-  priv->client.uc_stack.ss_size = stack.size();
+  priv->client.uc_stack.ss_sp = m_stack.data();
+  priv->client.uc_stack.ss_size = m_stack.size();
 
   makecontext(&priv->client, launcherFunc, 0);
 }
 
 void Fiber::resume()
 {
-  if(finished)
+  if(m_finished)
     return;
 
   assert(ThisFiber == nullptr);
