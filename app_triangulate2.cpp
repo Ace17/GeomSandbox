@@ -8,6 +8,7 @@
 // Triangulation
 
 #include "app.h"
+#include "fiber.h"
 
 #include <algorithm> // sort
 #include <cassert>
@@ -15,6 +16,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib> // rand
+#include <memory>
 #include <vector>
 
 namespace
@@ -217,8 +219,7 @@ std::vector<Edge> triangulate(span<const Vec2> points)
     }
     while (hullCurr != 0);
 
-    if(idx >= 4)
-      break;
+    Fiber::yield();
   }
 
   printHull();
@@ -294,12 +295,38 @@ struct TriangulateApp : IApp
   void keydown(Key key) override
   {
     if(key == Key::Space)
-      m_edges = triangulate({ m_points.size(), m_points.data() });
+    {
+      if(!m_fiber)
+      {
+        staticThis = this;
+        m_fiberFinished = false;
+        m_fiber = std::make_unique<Fiber>(&staticTriangulateFromFiber);
+      }
+
+      if(!m_fiberFinished)
+        m_fiber->resume();
+    }
   }
 
+  static TriangulateApp* staticThis;
+  static void staticTriangulateFromFiber()
+  {
+    staticThis->triangulateFromFiber();
+    staticThis->m_fiberFinished = true;
+    Fiber::yield();
+  }
+
+  void triangulateFromFiber()
+  {
+    m_edges = triangulate({ m_points.size(), m_points.data() });
+  }
+
+  std::unique_ptr<Fiber> m_fiber;
+  bool m_fiberFinished = false;
   std::vector<Vec2> m_points;
   std::vector<Edge> m_edges;
 };
+TriangulateApp* TriangulateApp::staticThis;
 const int registered = registerApp("triangulate2", [] () -> IApp* { return new TriangulateApp; });
 }
 
