@@ -1,4 +1,5 @@
 #include "fiber.h"
+#include <cassert>
 #include <ucontext.h>
 
 void makecontext(ucontext_t* ucp, void (* func)(), int argc, ...);
@@ -28,12 +29,15 @@ Fiber::Fiber(void(*func)())
 
 void Fiber::resume()
 {
+  assert(ThisFiber == nullptr);
   ThisFiber = this;
   swapcontext(&priv->main, &priv->client);
 }
 
 void Fiber::yield()
 {
-  swapcontext(&ThisFiber->priv->client, &ThisFiber->priv->main);
+  auto pThis = ThisFiber;
+  ThisFiber = nullptr;
+  swapcontext(&pThis->priv->client, &pThis->priv->main);
 }
 
