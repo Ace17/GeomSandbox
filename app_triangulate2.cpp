@@ -66,12 +66,7 @@ int nextEdgeOnHull(span<const HalfEdge> he, int edge)
   while(he[edge].twin != -1)
   {
     edge = he[he[edge].twin].nextEdge;
-
-    if(edge == watchdog)
-    {
-      fprintf(stderr, "Infinite loop detected\n");
-      break;
-    }
+    assert(edge != watchdog); // infinite loop
   }
 
   return edge;
@@ -135,25 +130,27 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
 
   // bootstrap triangulation with first triangle
   {
-    // make the triangle CCW if needed, and ensure that edge 0 is on the hull
+    // make the triangle CCW if needed
     if(det2d(points[1] - points[0], points[2] - points[0]) > 0)
     {
-      he.push_back({ 0, 1, -1 });
-      he.push_back({ 1, 2, -1 });
-      he.push_back({ 2, 0, -1 });
+      he.push_back({ /*P*/ 0, /*E*/ 1, -1 });
+      he.push_back({ /*P*/ 1, /*E*/ 2, -1 });
+      he.push_back({ /*P*/ 2, /*E*/ 0, -1 });
     }
     else
     {
-      he.push_back({ 1, 1, -1 });
-      he.push_back({ 0, 2, -1 });
-      he.push_back({ 2, 0, -1 });
+      he.push_back({ /*P*/ 0, /*E*/ 1, -1 });
+      he.push_back({ /*P*/ 2, /*E*/ 2, -1 });
+      he.push_back({ /*P*/ 1, /*E*/ 0, -1 });
     }
   }
+
+  int hullHead = 0;
 
   auto printHull = [&] ()
     {
       int k = 0;
-      int edge = 0;
+      int edge = hullHead;
       fprintf(stderr, "[");
 
       do
@@ -167,7 +164,7 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
           break;
         }
       }
-      while (edge != 0);
+      while (edge != hullHead);
 
       fprintf(stderr, "]\n");
     };
@@ -175,7 +172,7 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
   auto drawHull = [&] ()
     {
       int k = 0;
-      int edge = 0;
+      int edge = hullHead;
 
       do
       {
@@ -189,7 +186,7 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
           break;
         }
       }
-      while (edge != 0);
+      while (edge != hullHead);
     };
 
   vis->begin();
@@ -198,16 +195,14 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
 
   for(int idx = 3; idx < (int)points.len; ++idx)
   {
-    vis->begin();
     auto p = points[idx];
     fprintf(stderr, "--- insertion of point P%d ---\n", idx);
 
-    int hullCurr = 0; // he[0] is always on the hull
+    int hullCurr = hullHead;
+    const int loopPoint = he[hullHead].point;
 
     do
     {
-      printHull();
-
       const auto currHe = he[hullCurr];
       int hullNext = nextEdgeOnHull(he, hullCurr);
       const auto nextHe = he[hullNext];
@@ -234,6 +229,13 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
         auto& edge1 = he[e1];
         auto& edge2 = he[e2];
 
+        // The edge we're about to link is going to become an internal edge.
+        // If this is the edge we use as the head of the hull,
+        // reassign the head of the hull to one of the two external edges
+        // we're about to add.
+        if(hullCurr == hullHead)
+          hullHead = e1;
+
         // First, the edge that is shared with the current triangulation
         edge0.twin = hullCurr;
         he[hullCurr].twin = e0;
@@ -248,17 +250,18 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
         edge2.point = idx;
         edge2.twin = -1;
         edge2.nextEdge = e0;
+
+        printHull();
+
+        vis->begin();
+        drawHull();
+        vis->end();
       }
 
       hullCurr = hullNext;
     }
-    while (hullCurr != 0);
-
-    drawHull();
-    vis->end();
+    while (he[hullCurr].point != loopPoint);
   }
-
-  printHull();
 
   std::vector<Edge> r;
 
