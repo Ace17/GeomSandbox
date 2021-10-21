@@ -169,18 +169,17 @@ std::vector<::Edge> triangulate(span<const Point> points)
       }
     }
 
-    /* Delete duplicate edges. */
-    std::vector<bool> isDuplicate(edges.size(), false);
+    std::swap(triangles, tmps);
 
-    for(auto it1 = edges.begin(); it1 != edges.end(); ++it1)
+    /* Delete duplicate edges. */
+    std::vector<bool> isShared(edges.size());
+
+    for(int idx1 = 0; idx1 < (int)edges.size(); ++idx1)
     {
-      for(auto it2 = std::next(it1); it2 != edges.end(); ++it2)
+      for(int idx2 = idx1 + 1; idx2 < (int)edges.size(); ++idx2)
       {
-        if(*it1 == *it2)
-        {
-          isDuplicate[std::distance(edges.begin(), it1)] = true;
-          isDuplicate[std::distance(edges.begin(), it2)] = true;
-        }
+        if(edges[idx1] == edges[idx2])
+          isShared[idx1] = isShared[idx2] = true;
       }
     }
 
@@ -189,35 +188,24 @@ std::vector<::Edge> triangulate(span<const Point> points)
     {
       const int idx = int(&e - edges.data());
 
-      if(isDuplicate[idx])
+      if(isShared[idx])
         continue;
 
-      tmps.push_back({ e.p0, e.p1, { pt.x, pt.y, pt.index } });
+      triangles.push_back({ e.p0, e.p1, pt });
     }
-
-    triangles = tmps;
   }
-
-  /* Remove original super triangle. */
-  triangles.erase(
-    std::remove_if(triangles.begin(), triangles.end(),
-                   [&] (auto const& tri) {
-        const auto p0 = enclosingTriangle.p0;
-        const auto p1 = enclosingTriangle.p1;
-        const auto p2 = enclosingTriangle.p2;
-        return (tri.p0 == p0 || tri.p1 == p0 || tri.p2 == p0) ||
-        (tri.p0 == p1 || tri.p1 == p1 || tri.p2 == p1) ||
-        (tri.p0 == p2 || tri.p1 == p2 || tri.p2 == p2);
-      }),
-    triangles.end());
 
   std::vector<::Edge> r;
 
   for(auto const& tri : triangles)
   {
-    r.push_back({ tri.e0.p0.index, tri.e0.p1.index });
-    r.push_back({ tri.e1.p0.index, tri.e1.p1.index });
-    r.push_back({ tri.e2.p0.index, tri.e2.p1.index });
+    for(auto const& edge : { tri.e0, tri.e1, tri.e2 })
+    {
+      if(edge.p0.index < 0 || edge.p1.index < 0)
+        continue;
+
+      r.push_back({ edge.p0.index, edge.p1.index });
+    }
   }
 
   return r;
