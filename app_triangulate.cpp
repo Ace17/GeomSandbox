@@ -188,6 +188,8 @@ std::vector<::Edge> triangulate(span<const Point> points)
     return {};
 
   std::vector<Triangle> triangulation;
+  std::vector<Edge> edges;
+  edges.reserve(points.len);
 
   triangulation.emplace_back(createEnclosingTriangle(points));
 
@@ -201,7 +203,7 @@ std::vector<::Edge> triangulate(span<const Point> points)
     const int r = split<Triangle>(triangulation, shouldBeRemoved);
 
     // keep the edges of the triangles to remove
-    std::vector<Edge> edges;
+    edges.clear();
 
     for(int i = r; i < (int)triangulation.size(); ++i)
     {
