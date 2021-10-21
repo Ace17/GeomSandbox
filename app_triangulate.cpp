@@ -36,8 +36,6 @@ namespace BowyerWatson
 {
 constexpr double eps = 1e-4;
 
-using T = float;
-
 struct Point
 {
   float x = 0;
@@ -69,14 +67,15 @@ struct Edge
 
 struct Circle
 {
-  T x, y, radius;
+  Vec2 center;
+  float squaredRadius;
 
   bool isInside(Vec2 pt) const
   {
-    const auto d = pt - Vec2(x, y);
-    const auto dist = d.x * d.x + d.y * d.y;
+    const auto d = pt - center;
+    const auto squaredDist = d.x * d.x + d.y * d.y;
 
-    return (dist - radius) <= eps;
+    return (squaredDist - squaredRadius) <= eps;
   }
 };
 
@@ -105,12 +104,12 @@ struct Triangle
     const auto u = p2.x * p2.x - p0.x * p0.x + p2.y * p2.y - p0.y * p0.y;
     const auto s = 1. / (2. * (ax * by - ay * bx));
 
-    circle.x = ((p2.y - p0.y) * m + (p0.y - p1.y) * u) * s;
-    circle.y = ((p0.x - p2.x) * m + (p1.x - p0.x) * u) * s;
+    circle.center.x = ((p2.y - p0.y) * m + (p0.y - p1.y) * u) * s;
+    circle.center.y = ((p0.x - p2.x) * m + (p1.x - p0.x) * u) * s;
 
-    const auto dx = p0.x - circle.x;
-    const auto dy = p0.y - circle.y;
-    circle.radius = dx * dx + dy * dy;
+    const auto dx = p0.x - circle.center.x;
+    const auto dy = p0.y - circle.center.y;
+    circle.squaredRadius = dx * dx + dy * dy;
   }
 };
 
@@ -132,8 +131,8 @@ Triangle createEnclosingTriangle(span<const Point> points)
   const auto dx = xmax - xmin;
   const auto dy = ymax - ymin;
   const auto dmax = std::max(dx, dy);
-  const auto midx = (xmin + xmax) / static_cast<T>(2.);
-  const auto midy = (ymin + ymax) / static_cast<T>(2.);
+  const auto midx = (xmin + xmax) / 2.0f;
+  const auto midy = (ymin + ymax) / 2.0f;
 
   const auto p0 = Point{ midx - 20 * dmax, midy - dmax };
   const auto p1 = Point{ midx, midy + 20 * dmax };
