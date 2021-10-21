@@ -10,6 +10,7 @@
 #include "app.h"
 
 #include <algorithm>
+#include <cassert>
 #include <climits>
 #include <cmath>
 #include <cstdio>
@@ -84,6 +85,8 @@ struct Triangle
   Edge e0, e1, e2;
   Circle circle;
 
+  Triangle() = default;
+
   Triangle(const Point& _p0, const Point& _p1, const Point& _p2)
     : p0{_p0},
     p1{_p1},
@@ -139,6 +142,46 @@ Triangle createEnclosingTriangle(span<const Point> points)
   return Triangle{ p0, p1, p2 };
 }
 
+// reorder 'elements' so that it can be split into two parts:
+// - [0 .. r[ : criteria is false
+// - [r .. N[ : criteria is true
+template<typename T, typename Lambda>
+int split(span<T> elements, Lambda predicate)
+{
+  int result = elements.len;
+
+  for(int i = 0; i < result;)
+  {
+    if(predicate(elements[i]))
+      std::swap(elements[i], elements[--result]);
+    else
+      ++i;
+  }
+
+  return result;
+}
+
+const int unittests_run = [] ()
+  {
+    // no-op
+    {
+      auto isGreaterThan10 = [] (int val) { return val > 10; };
+      std::vector<int> input = { 4, 5, 3, 4, 5, 3 };
+      int r = split<int>(input, isGreaterThan10);
+      assert(6 == r);
+    }
+
+    // simple
+    {
+      auto isEven = [] (int val) { return val % 2 == 0; };
+      std::vector<int> input = { 1, 2, 3, 4, 5, 6 };
+      int r = split<int>(input, isEven);
+      assert(3 == r);
+    }
+
+    return 0;
+  }();
+
 std::vector<::Edge> triangulate(span<const Point> points)
 {
   if(points.len < 3)
@@ -153,23 +196,23 @@ std::vector<::Edge> triangulate(span<const Point> points)
   for(auto const& pt : points)
   {
     std::vector<Edge> edges;
-    std::vector<Triangle> tmps;
 
-    for(auto const& tri : triangles)
+    auto isEncompassingTriangle = [pt] (const Triangle& tri)
+      {
+        return tri.circle.isInside(pt);
+      };
+
+    int r = split<Triangle>(triangles, isEncompassingTriangle);
+
+    for(int i = r; i < (int)triangles.size(); ++i)
     {
-      if(tri.circle.isInside(pt))
-      {
-        edges.push_back(tri.e0);
-        edges.push_back(tri.e1);
-        edges.push_back(tri.e2);
-      }
-      else
-      {
-        tmps.push_back(tri);
-      }
+      auto& tri = triangles[i];
+      edges.push_back(tri.e0);
+      edges.push_back(tri.e1);
+      edges.push_back(tri.e2);
     }
 
-    std::swap(triangles, tmps);
+    triangles.resize(r); // drop encompassing triangles
 
     /* Delete duplicate edges. */
     std::vector<bool> isShared(edges.size());
@@ -201,6 +244,7 @@ std::vector<::Edge> triangulate(span<const Point> points)
   {
     for(auto const& edge : { tri.e0, tri.e1, tri.e2 })
     {
+      // a negative index refs to a point that is not part of the input.
       if(edge.p0.index < 0 || edge.p1.index < 0)
         continue;
 
