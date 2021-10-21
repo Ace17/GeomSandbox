@@ -102,13 +102,8 @@ struct Delaunay
   std::vector<Edge> edges;
 };
 
-Delaunay triangulate(const std::vector<Point>& points)
+Triangle createEnclosingTriangle(span<const Point> points)
 {
-  using Node = Point;
-
-  if(points.size() < 3)
-    return {};
-
   auto xmin = points[0].x;
   auto xmax = xmin;
   auto ymin = points[0].y;
@@ -128,13 +123,23 @@ Delaunay triangulate(const std::vector<Point>& points)
   const auto midx = (xmin + xmax) / static_cast<T>(2.);
   const auto midy = (ymin + ymax) / static_cast<T>(2.);
 
+  const auto p0 = Point{ midx - 20 * dmax, midy - dmax };
+  const auto p1 = Point{ midx, midy + 20 * dmax };
+  const auto p2 = Point{ midx + 20 * dmax, midy - dmax };
+
+  return Triangle{ p0, p1, p2 };
+}
+
+Delaunay triangulate(const std::vector<Point>& points)
+{
+  if(points.size() < 3)
+    return {};
+
   auto d = Delaunay{};
 
   // Init Delaunay triangulation with an enclosing triangle
-  const auto p0 = Node{ midx - 20 * dmax, midy - dmax };
-  const auto p1 = Node{ midx, midy + 20 * dmax };
-  const auto p2 = Node{ midx + 20 * dmax, midy - dmax };
-  d.triangles.emplace_back(Triangle{ p0, p1, p2 });
+  const Triangle enclosingTriangle = createEnclosingTriangle(points);
+  d.triangles.emplace_back(enclosingTriangle);
 
   for(auto const& pt : points)
   {
@@ -197,6 +202,9 @@ Delaunay triangulate(const std::vector<Point>& points)
   d.triangles.erase(
     std::remove_if(d.triangles.begin(), d.triangles.end(),
                    [&] (auto const& tri) {
+        const auto p0 = enclosingTriangle.p0;
+        const auto p1 = enclosingTriangle.p1;
+        const auto p2 = enclosingTriangle.p2;
         return (tri.p0 == p0 || tri.p1 == p0 || tri.p2 == p0) ||
         (tri.p0 == p1 || tri.p1 == p1 || tri.p2 == p1) ||
         (tri.p0 == p2 || tri.p1 == p2 || tri.p2 == p2);
