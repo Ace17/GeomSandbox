@@ -170,7 +170,7 @@ std::vector<::Edge> triangulate(span<const Point> points)
     }
 
     /* Delete duplicate edges. */
-    std::vector<bool> remove(edges.size(), false);
+    std::vector<bool> isDuplicate(edges.size(), false);
 
     for(auto it1 = edges.begin(); it1 != edges.end(); ++it1)
     {
@@ -178,20 +178,20 @@ std::vector<::Edge> triangulate(span<const Point> points)
       {
         if(*it1 == *it2)
         {
-          remove[std::distance(edges.begin(), it1)] = true;
-          remove[std::distance(edges.begin(), it2)] = true;
+          isDuplicate[std::distance(edges.begin(), it1)] = true;
+          isDuplicate[std::distance(edges.begin(), it2)] = true;
         }
       }
     }
 
-    edges.erase(
-      std::remove_if(edges.begin(), edges.end(),
-                     [&] (auto const& e) { return remove[&e - &edges[0]]; }),
-      edges.end());
-
     /* Update triangulation. */
     for(auto const& e : edges)
     {
+      const int idx = int(&e - edges.data());
+
+      if(isDuplicate[idx])
+        continue;
+
       tmps.push_back({ e.p0, e.p1, { pt.x, pt.y, pt.index } });
     }
 
