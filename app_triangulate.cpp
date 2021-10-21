@@ -174,13 +174,8 @@ std::vector<::Edge> triangulate(span<const Point> points)
 
     for(auto it1 = edges.begin(); it1 != edges.end(); ++it1)
     {
-      for(auto it2 = edges.begin(); it2 != edges.end(); ++it2)
+      for(auto it2 = std::next(it1); it2 != edges.end(); ++it2)
       {
-        if(it1 == it2)
-        {
-          continue;
-        }
-
         if(*it1 == *it2)
         {
           remove[std::distance(edges.begin(), it1)] = true;
