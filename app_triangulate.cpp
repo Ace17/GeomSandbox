@@ -23,6 +23,11 @@
 
 namespace
 {
+struct Edge
+{
+  int a, b;
+};
+
 /*
  * Bowyer-Watson algorithm
  * C++ implementation of http://paulbourke.net/papers/triangulate .
@@ -109,12 +114,6 @@ struct Triangle
   }
 };
 
-struct Delaunay
-{
-  std::vector<Triangle> triangles;
-  std::vector<Edge> edges;
-};
-
 Triangle createEnclosingTriangle(span<const Point> points)
 {
   auto xmin = points[0].x;
@@ -143,23 +142,23 @@ Triangle createEnclosingTriangle(span<const Point> points)
   return Triangle{ p0, p1, p2 };
 }
 
-Delaunay triangulate(span<const Point> points)
+std::vector<::Edge> triangulate(span<const Point> points)
 {
   if(points.len < 3)
     return {};
 
-  auto d = Delaunay{};
+  std::vector<Triangle> triangles;
 
   // Init Delaunay triangulation with an enclosing triangle
   const Triangle enclosingTriangle = createEnclosingTriangle(points);
-  d.triangles.emplace_back(enclosingTriangle);
+  triangles.emplace_back(enclosingTriangle);
 
   for(auto const& pt : points)
   {
     std::vector<Edge> edges;
     std::vector<Triangle> tmps;
 
-    for(auto const& tri : d.triangles)
+    for(auto const& tri : triangles)
     {
       if(tri.circle.isInside(pt))
       {
@@ -204,12 +203,12 @@ Delaunay triangulate(span<const Point> points)
       tmps.push_back({ e.p0, e.p1, { pt.x, pt.y, pt.index } });
     }
 
-    d.triangles = tmps;
+    triangles = tmps;
   }
 
   /* Remove original super triangle. */
-  d.triangles.erase(
-    std::remove_if(d.triangles.begin(), d.triangles.end(),
+  triangles.erase(
+    std::remove_if(triangles.begin(), triangles.end(),
                    [&] (auto const& tri) {
         const auto p0 = enclosingTriangle.p0;
         const auto p1 = enclosingTriangle.p1;
@@ -218,17 +217,18 @@ Delaunay triangulate(span<const Point> points)
         (tri.p0 == p1 || tri.p1 == p1 || tri.p2 == p1) ||
         (tri.p0 == p2 || tri.p1 == p2 || tri.p2 == p2);
       }),
-    d.triangles.end());
+    triangles.end());
 
-  /* Add edges. */
-  for(auto const& tri : d.triangles)
+  std::vector<::Edge> r;
+
+  for(auto const& tri : triangles)
   {
-    d.edges.push_back(tri.e0);
-    d.edges.push_back(tri.e1);
-    d.edges.push_back(tri.e2);
+    r.push_back({ tri.e0.p0.index, tri.e0.p1.index });
+    r.push_back({ tri.e1.p0.index, tri.e1.p1.index });
+    r.push_back({ tri.e2.p0.index, tri.e2.p1.index });
   }
 
-  return d;
+  return r;
 }
 } /* namespace BowyerWatson */
 
@@ -245,11 +245,6 @@ Vec2 randomPos()
   return r;
 }
 
-struct Edge
-{
-  int a, b;
-};
-
 float det2d(Vec2 a, Vec2 b)
 {
   return a.x * b.y - a.y * b.x;
@@ -257,8 +252,6 @@ float det2d(Vec2 a, Vec2 b)
 
 std::vector<Edge> triangulate(span<const Vec2> points)
 {
-  std::vector<Edge> r;
-
   using namespace BowyerWatson;
   std::vector<Point> input;
 
@@ -267,10 +260,7 @@ std::vector<Edge> triangulate(span<const Vec2> points)
   for(auto point : points)
     input.push_back({ point.x, point.y, i++ });
 
-  auto triangulation = BowyerWatson::triangulate(input);
-
-  for(auto& edge : triangulation.edges)
-    r.push_back({ edge.p0.index, edge.p1.index });
+  auto r = BowyerWatson::triangulate(input);
 
   fprintf(stderr, "Triangulated, %d edges\n", (int)r.size());
 
