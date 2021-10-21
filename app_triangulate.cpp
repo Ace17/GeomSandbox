@@ -128,9 +128,9 @@ Delaunay triangulate(const std::vector<Point>& points)
   const auto midx = (xmin + xmax) / static_cast<T>(2.);
   const auto midy = (ymin + ymax) / static_cast<T>(2.);
 
-  /* Init Delaunay triangulation. */
   auto d = Delaunay{};
 
+  // Init Delaunay triangulation with an enclosing triangle
   const auto p0 = Node{ midx - 20 * dmax, midy - dmax };
   const auto p1 = Node{ midx, midy + 20 * dmax };
   const auto p2 = Node{ midx + 20 * dmax, midy - dmax };

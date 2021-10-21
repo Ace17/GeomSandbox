@@ -124,24 +124,34 @@ struct IVisualizer
 std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
 {
   std::vector<HalfEdge> he;
+  std::vector<int> pointToEdge(points.len, -1);
 
   if(points.len < 3)
     return {};
+
+  auto addHalfEdge = [&] (int p0, int nextEdge) -> int
+    {
+      const int edge = (int)he.size();
+      pointToEdge[p0] = edge;
+      he.push_back({ p0, -1, -1 });
+      he[edge].nextEdge = nextEdge;
+      return edge;
+    };
 
   // bootstrap triangulation with first triangle
   {
     // make the triangle CCW if needed
     if(det2d(points[1] - points[0], points[2] - points[0]) > 0)
     {
-      he.push_back({ /*P*/ 0, /*E*/ 1, -1 });
-      he.push_back({ /*P*/ 1, /*E*/ 2, -1 });
-      he.push_back({ /*P*/ 2, /*E*/ 0, -1 });
+      addHalfEdge(/*P*/ 0, /*E*/ 1);
+      addHalfEdge(/*P*/ 1, /*E*/ 2);
+      addHalfEdge(/*P*/ 2, /*E*/ 0);
     }
     else
     {
-      he.push_back({ /*P*/ 0, /*E*/ 1, -1 });
-      he.push_back({ /*P*/ 2, /*E*/ 2, -1 });
-      he.push_back({ /*P*/ 1, /*E*/ 0, -1 });
+      addHalfEdge(/*P*/ 0, /*E*/ 1);
+      addHalfEdge(/*P*/ 2, /*E*/ 2);
+      addHalfEdge(/*P*/ 1, /*E*/ 0);
     }
   }
 
@@ -281,18 +291,21 @@ struct TriangulateApp : IApp
     for(auto& p : m_points)
       p = randomPos();
 
-    auto byCoordinates = [] (Vec2 a, Vec2 b)
-      {
-        if(a.x != b.x)
-          return a.x < b.x;
+    // sort points from left to right
+    {
+      auto byCoordinates = [] (Vec2 a, Vec2 b)
+        {
+          if(a.x != b.x)
+            return a.x < b.x;
 
-        if(a.y != b.y)
-          return a.y < b.y;
+          if(a.y != b.y)
+            return a.y < b.y;
 
-        return true;
-      };
+          return true;
+        };
 
-    std::sort(m_points.begin(), m_points.end(), byCoordinates);
+      std::sort(m_points.begin(), m_points.end(), byCoordinates);
+    }
   }
 
   void draw(IDrawer* drawer) override
