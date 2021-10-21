@@ -204,10 +204,9 @@ std::vector<::Edge> triangulate(span<const Point> points)
 
     for(int i = r; i < (int)triangles.size(); ++i)
     {
-      auto& tri = triangles[i];
-      edges.push_back(tri.e0);
-      edges.push_back(tri.e1);
-      edges.push_back(tri.e2);
+      edges.push_back(triangles[i].e0);
+      edges.push_back(triangles[i].e1);
+      edges.push_back(triangles[i].e2);
     }
 
     triangles.resize(r); // drop encompassing triangles
