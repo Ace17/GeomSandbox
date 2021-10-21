@@ -143,9 +143,9 @@ Triangle createEnclosingTriangle(span<const Point> points)
   return Triangle{ p0, p1, p2 };
 }
 
-Delaunay triangulate(const std::vector<Point>& points)
+Delaunay triangulate(span<const Point> points)
 {
-  if(points.size() < 3)
+  if(points.len < 3)
     return {};
 
   auto d = Delaunay{};
