@@ -187,31 +187,32 @@ std::vector<::Edge> triangulate(span<const Point> points)
   if(points.len < 3)
     return {};
 
-  std::vector<Triangle> triangles;
+  std::vector<Triangle> triangulation;
 
-  triangles.emplace_back(createEnclosingTriangle(points));
+  triangulation.emplace_back(createEnclosingTriangle(points));
 
   for(auto const& pt : points)
   {
-    std::vector<Edge> edges;
-
-    auto isEncompassingTriangle = [pt] (const Triangle& tri)
+    auto shouldBeRemoved = [pt] (const Triangle& tri)
       {
         return tri.circle.isInside(pt);
       };
 
-    int r = split<Triangle>(triangles, isEncompassingTriangle);
+    const int r = split<Triangle>(triangulation, shouldBeRemoved);
 
-    for(int i = r; i < (int)triangles.size(); ++i)
+    // keep the edges of the triangles to remove
+    std::vector<Edge> edges;
+
+    for(int i = r; i < (int)triangulation.size(); ++i)
     {
-      edges.push_back(triangles[i].e0);
-      edges.push_back(triangles[i].e1);
-      edges.push_back(triangles[i].e2);
+      edges.push_back(triangulation[i].e0);
+      edges.push_back(triangulation[i].e1);
+      edges.push_back(triangulation[i].e2);
     }
 
-    triangles.resize(r); // drop encompassing triangles
+    triangulation.resize(r); // remove the triangles from the triangulation
 
-    /* Delete duplicate edges. */
+    // mark shared edges
     std::vector<bool> isShared(edges.size());
 
     for(int idx1 = 0; idx1 < (int)edges.size(); ++idx1)
@@ -223,7 +224,6 @@ std::vector<::Edge> triangulate(span<const Point> points)
       }
     }
 
-    /* Update triangulation. */
     for(auto const& e : edges)
     {
       const int idx = int(&e - edges.data());
@@ -231,13 +231,13 @@ std::vector<::Edge> triangulate(span<const Point> points)
       if(isShared[idx])
         continue;
 
-      triangles.push_back({ e.p0, e.p1, pt });
+      triangulation.push_back({ e.p0, e.p1, pt });
     }
   }
 
   std::vector<::Edge> r;
 
-  for(auto const& tri : triangles)
+  for(auto const& tri : triangulation)
   {
     for(auto const& edge : { tri.e0, tri.e1, tri.e2 })
     {
