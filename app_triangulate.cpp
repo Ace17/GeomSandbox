@@ -29,6 +29,53 @@ struct Edge
   int a, b;
 };
 
+// reorder 'elements' so that it can be split into two parts:
+// - [0 .. r[ : criteria is false
+// - [r .. N[ : criteria is true
+template<typename T, typename Lambda>
+int split(span<T> elements, Lambda predicate)
+{
+  int result = elements.len;
+
+  for(int i = 0; i < result;)
+  {
+    if(predicate(elements[i]))
+      std::swap(elements[i], elements[--result]);
+    else
+      ++i;
+  }
+
+  return result;
+}
+
+const int unittests_run = [] ()
+  {
+    // no-op
+    {
+      auto isGreaterThan10 = [] (int val) { return val > 10; };
+      std::vector<int> elements = { 4, 5, 3, 4, 5, 3 };
+      int r = split<int>(elements, isGreaterThan10);
+      assert(6 == r);
+    }
+
+    // simple
+    {
+      auto isEven = [] (int val) { return val % 2 == 0; };
+      std::vector<int> elements = { 1, 2, 3, 4, 5, 6, 7 };
+      int r = split<int>(elements, isEven);
+      assert(4 == r);
+      assert(!isEven(elements[0]));
+      assert(!isEven(elements[1]));
+      assert(!isEven(elements[2]));
+      assert(!isEven(elements[3]));
+      assert(isEven(elements[4]));
+      assert(isEven(elements[5]));
+      assert(isEven(elements[6]));
+    }
+
+    return 0;
+  }();
+
 /*
  * Bowyer-Watson algorithm
  * C++ implementation of http://paulbourke.net/papers/triangulate .
@@ -141,46 +188,6 @@ Triangle createEnclosingTriangle(span<const Point> points)
 
   return Triangle{ p0, p1, p2 };
 }
-
-// reorder 'elements' so that it can be split into two parts:
-// - [0 .. r[ : criteria is false
-// - [r .. N[ : criteria is true
-template<typename T, typename Lambda>
-int split(span<T> elements, Lambda predicate)
-{
-  int result = elements.len;
-
-  for(int i = 0; i < result;)
-  {
-    if(predicate(elements[i]))
-      std::swap(elements[i], elements[--result]);
-    else
-      ++i;
-  }
-
-  return result;
-}
-
-const int unittests_run = [] ()
-  {
-    // no-op
-    {
-      auto isGreaterThan10 = [] (int val) { return val > 10; };
-      std::vector<int> input = { 4, 5, 3, 4, 5, 3 };
-      int r = split<int>(input, isGreaterThan10);
-      assert(6 == r);
-    }
-
-    // simple
-    {
-      auto isEven = [] (int val) { return val % 2 == 0; };
-      std::vector<int> input = { 1, 2, 3, 4, 5, 6 };
-      int r = split<int>(input, isEven);
-      assert(3 == r);
-    }
-
-    return 0;
-  }();
 
 std::vector<::Edge> triangulate(span<const Point> points)
 {
