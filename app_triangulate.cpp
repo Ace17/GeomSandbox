@@ -39,6 +39,11 @@ struct Point
   float y = 0;
   int index = -1;
 
+  operator Vec2 () const
+  {
+    return { x, y };
+  }
+
   bool operator == (const Point& other) const
   {
     return other.x == x && other.y == y;
@@ -60,6 +65,14 @@ struct Edge
 struct Circle
 {
   T x, y, radius;
+
+  bool isInside(Vec2 pt) const
+  {
+    const auto d = pt - Vec2(x, y);
+    const auto dist = d.x * d.x + d.y * d.y;
+
+    return (dist - radius) <= eps;
+  }
 };
 
 struct Triangle
@@ -148,11 +161,7 @@ Delaunay triangulate(const std::vector<Point>& points)
 
     for(auto const& tri : d.triangles)
     {
-      /* Check if the point is inside the triangle circumcircle. */
-      const auto dist = (tri.circle.x - pt.x) * (tri.circle.x - pt.x) +
-        (tri.circle.y - pt.y) * (tri.circle.y - pt.y);
-
-      if((dist - tri.circle.radius) <= eps)
+      if(tri.circle.isInside(pt))
       {
         edges.push_back(tri.e0);
         edges.push_back(tri.e1);
