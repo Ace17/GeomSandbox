@@ -291,6 +291,14 @@ std::vector<Edge> triangulate(span<const Vec2> points)
 }
 
 [[maybe_unused]]
+std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> points)
+{
+  (void)points;
+  std::vector<Edge> edges;
+  return edges;
+}
+
+[[maybe_unused]]
 std::vector<Edge> triangulateMine(span<const Vec2> points)
 {
   std::vector<Edge> r;
@@ -359,18 +367,21 @@ struct TriangulateApp : IApp
     for(auto& p : m_points)
       p = randomPos();
 
-    auto byCoordinates = [] (Vec2 a, Vec2 b)
-      {
-        if(a.x != b.x)
-          return a.x < b.x;
+    if(0)
+    {
+      auto byCoordinates = [] (Vec2 a, Vec2 b)
+        {
+          if(a.x != b.x)
+            return a.x < b.x;
 
-        if(a.y != b.y)
-          return a.y < b.y;
+          if(a.y != b.y)
+            return a.y < b.y;
 
-        return true;
-      };
+          return true;
+        };
 
-    std::sort(m_points.begin(), m_points.end(), byCoordinates);
+      std::sort(m_points.begin(), m_points.end(), byCoordinates);
+    }
   }
 
   void draw(IDrawer* drawer) override
