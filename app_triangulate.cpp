@@ -55,8 +55,7 @@ struct Point
 
 struct Edge
 {
-  using Node = Point;
-  Node p0, p1;
+  Point p0, p1;
 
   bool operator == (const Edge& other) const
   {
@@ -81,12 +80,11 @@ struct Circle
 
 struct Triangle
 {
-  using Node = Point;
-  Node p0, p1, p2;
+  Point p0, p1, p2;
   Edge e0, e1, e2;
   Circle circle;
 
-  Triangle(const Node& _p0, const Node& _p1, const Node& _p2)
+  Triangle(const Point& _p0, const Point& _p1, const Point& _p2)
     : p0{_p0},
     p1{_p1},
     p2{_p2},
