@@ -280,7 +280,7 @@ float det2d(Vec2 a, Vec2 b)
   return a.x * b.y - a.y * b.x;
 }
 
-std::vector<Edge> triangulate(span<const Vec2> points)
+std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> points)
 {
   using namespace BowyerWatson;
   std::vector<Point> input;
@@ -413,7 +413,7 @@ struct TriangulateApp : IApp
   void keydown(Key key) override
   {
     if(key == Key::Space)
-      m_edges = triangulate({ m_points.size(), m_points.data() });
+      m_edges = triangulate_BowyerWatson({ m_points.size(), m_points.data() });
   }
 
   std::vector<Vec2> m_points;
