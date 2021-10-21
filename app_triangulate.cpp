@@ -50,7 +50,7 @@ struct Point
 
   bool operator == (const Point& other) const
   {
-    return other.x == x && other.y == y;
+    return index == other.index;
   }
 };
 
@@ -135,9 +135,9 @@ Triangle createEnclosingTriangle(span<const Point> points)
   const auto midx = (xmin + xmax) / 2.0f;
   const auto midy = (ymin + ymax) / 2.0f;
 
-  const auto p0 = Point{ midx - 20 * dmax, midy - dmax };
-  const auto p1 = Point{ midx, midy + 20 * dmax };
-  const auto p2 = Point{ midx + 20 * dmax, midy - dmax };
+  const auto p0 = Point{ midx - 20 * dmax, midy - dmax, -1 };
+  const auto p1 = Point{ midx, midy + 20 * dmax, -2 };
+  const auto p2 = Point{ midx + 20 * dmax, midy - dmax, -3 };
 
   return Triangle{ p0, p1, p2 };
 }
