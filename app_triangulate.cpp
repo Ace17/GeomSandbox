@@ -189,9 +189,7 @@ std::vector<::Edge> triangulate(span<const Point> points)
 
   std::vector<Triangle> triangles;
 
-  // Init Delaunay triangulation with an enclosing triangle
-  const Triangle enclosingTriangle = createEnclosingTriangle(points);
-  triangles.emplace_back(enclosingTriangle);
+  triangles.emplace_back(createEnclosingTriangle(points));
 
   for(auto const& pt : points)
   {
