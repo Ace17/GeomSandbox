@@ -285,11 +285,7 @@ std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> points)
   for(auto point : points)
     input.push_back({ point.x, point.y, i++ });
 
-  auto r = BowyerWatson::triangulate(input);
-
-  fprintf(stderr, "Triangulated, %d edges\n", (int)r.size());
-
-  return r;
+  return BowyerWatson::triangulate(input);
 }
 
 [[maybe_unused]]
@@ -408,7 +404,10 @@ struct TriangulateApp : IApp
   void keydown(Key key) override
   {
     if(key == Key::Space)
+    {
       m_edges = triangulate_BowyerWatson({ m_points.size(), m_points.data() });
+      fprintf(stderr, "Triangulated, %d edges\n", (int)m_edges.size());
+    }
   }
 
   std::vector<Vec2> m_points;
