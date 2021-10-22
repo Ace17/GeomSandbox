@@ -15,11 +15,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <limits>
 #include <map>
-#include <memory>
-#include <stdexcept>
-#include <utility>
 #include <vector>
 
 namespace
