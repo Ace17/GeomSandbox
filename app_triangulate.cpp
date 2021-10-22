@@ -128,19 +128,15 @@ struct Circle
 
 struct Triangle
 {
-  Point p0, p1, p2;
   Edge e0, e1, e2;
   Circle circle;
 
   Triangle() = default;
 
-  Triangle(const Point& _p0, const Point& _p1, const Point& _p2)
-    : p0{_p0},
-    p1{_p1},
-    p2{_p2},
-    e0{_p0, _p1},
-    e1{_p1, _p2},
-    e2{_p0, _p2},
+  Triangle(const Point& p0, const Point& p1, const Point& p2)
+    : e0{p0, p1},
+    e1{p1, p2},
+    e2{p0, p2},
     circle{}
   {
     const auto ax = p1.x - p0.x;
