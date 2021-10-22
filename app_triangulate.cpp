@@ -221,15 +221,16 @@ std::vector<::Edge> triangulate(span<const Point> points)
 
     triangulation.resize(r); // remove the triangles from the triangulation
 
-    // mark shared edges
-    std::vector<bool> isShared(edges.size());
+    // In the triangulation, the removed triangles make a 'hole'.
+    // Mark the edges on its contour.
+    std::vector<bool> isEdgeOnContour(edges.size(), true);
 
     for(int idx1 = 0; idx1 < (int)edges.size(); ++idx1)
     {
       for(int idx2 = idx1 + 1; idx2 < (int)edges.size(); ++idx2)
       {
         if(edges[idx1] == edges[idx2])
-          isShared[idx1] = isShared[idx2] = true;
+          isEdgeOnContour[idx1] = isEdgeOnContour[idx2] = false;
       }
     }
 
@@ -237,10 +238,8 @@ std::vector<::Edge> triangulate(span<const Point> points)
     {
       const int idx = int(&e - edges.data());
 
-      if(isShared[idx])
-        continue;
-
-      triangulation.push_back({ e.p0, e.p1, pt });
+      if(isEdgeOnContour[idx])
+        triangulation.push_back({ e.p0, e.p1, pt });
     }
   }
 
