@@ -68,7 +68,7 @@ Triangle makeTriangle(int p0, int p1, int p2, span<const Vec2> coords)
   return r;
 }
 
-Triangle createBigTriangle(std::vector<Vec2>& coords)
+Triangle createSuperTriangle(std::vector<Vec2>& coords)
 {
   float min_x = coords[0].x;
   float max_x = coords[0].x;
@@ -99,6 +99,25 @@ Triangle createBigTriangle(std::vector<Vec2>& coords)
 
   return makeTriangle(i0, i1, i2, coords);
 }
+
+// reorder 'elements' so that it can be split into two parts:
+// - [0 .. r[ : criteria is false
+// - [r .. N[ : criteria is true
+template<typename T, typename Lambda>
+int split(span<T> elements, Lambda predicate)
+{
+  int result = elements.len;
+
+  for(int i = 0; i < result;)
+  {
+    if(predicate(elements[i]))
+      std::swap(elements[i], elements[--result]);
+    else
+      ++i;
+  }
+
+  return result;
+}
 }
 
 std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> inputCoords)
@@ -109,27 +128,24 @@ std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> inputCoords)
     points[i] = inputCoords[i];
 
   std::vector<Triangle> triangulation;
-  triangulation.push_back(createBigTriangle(points));
+  triangulation.push_back(createSuperTriangle(points));
 
   for(int p = 0; p < (int)inputCoords.len; ++p)
   {
-    std::vector<Triangle> kept;
     std::vector<Edge> edges;
 
-    for(auto& t : triangulation)
-    {
-      if(pointInsideCircle(points[p], t.circleCenter, t.circleSquaredRadius))
+    auto containsPoint = [&] (const Triangle& t)
       {
-        for(auto& e : t.edges)
-          edges.push_back(e);
-      }
-      else
-      {
-        kept.push_back(t);
-      }
-    }
+        return pointInsideCircle(points[p], t.circleCenter, t.circleSquaredRadius);
+      };
 
-    triangulation = std::move(kept);
+    const int s = split<Triangle>(triangulation, containsPoint);
+
+    for(int i = s; i < (int)triangulation.size(); ++i)
+      for(auto& e : triangulation[i].edges)
+        edges.push_back(e);
+
+    triangulation.resize(s); // drop impacted triangles
 
     std::vector<int> edgeIsOnCountour(edges.size(), true);
 
@@ -160,8 +176,11 @@ std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> inputCoords)
 
   for(auto t : triangulation)
     for(auto e : t.edges)
+    {
+      // filter out edges connected to the super triangle
       if(e.a < (int)inputCoords.len && e.b < (int)inputCoords.len)
         edges.push_back(e);
+    }
 
   return edges;
 }
