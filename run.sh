@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-g++ -g3 -Wall -Wextra -Werror *.cpp `sdl2-config --cflags --libs` -o GeomSandbox.exe
+ctags -R
+make -j`nproc`
 ./GeomSandbox.exe "$@"

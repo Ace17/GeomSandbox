@@ -1,4 +1,5 @@
 *.swp
 *.exe
 /tags
+/bin
 session.vim
