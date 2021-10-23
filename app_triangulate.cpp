@@ -104,10 +104,7 @@ struct Point
     return { x, y };
   }
 
-  bool operator == (const Point& other) const
-  {
-    return index == other.index;
-  }
+  bool operator == (const Point& other) const { return index == other.index; }
 };
 
 struct Edge
@@ -148,21 +145,18 @@ struct Triangle
     e2{p0, p2},
     circle{}
   {
-    const auto ax = p1.x - p0.x;
-    const auto ay = p1.y - p0.y;
-    const auto bx = p2.x - p0.x;
-    const auto by = p2.y - p0.y;
+    const auto a = Vec2(p1) - p0;
+    const auto b = Vec2(p2) - p0;
 
-    const auto m = p1.x * p1.x - p0.x * p0.x + p1.y * p1.y - p0.y * p0.y;
-    const auto u = p2.x * p2.x - p0.x * p0.x + p2.y * p2.y - p0.y * p0.y;
-    const auto s = 1. / (2. * (ax * by - ay * bx));
+    const auto m = p1.x * p1.x + p1.y * p1.y - p0.x * p0.x - p0.y * p0.y;
+    const auto u = p2.x * p2.x + p2.y * p2.y - p0.x * p0.x - p0.y * p0.y;
+    const auto s = 1. / (2. * (a.x * b.y - a.y * b.x));
 
     circle.center.x = ((p2.y - p0.y) * m + (p0.y - p1.y) * u) * s;
     circle.center.y = ((p0.x - p2.x) * m + (p1.x - p0.x) * u) * s;
 
-    const auto dx = p0.x - circle.center.x;
-    const auto dy = p0.y - circle.center.y;
-    circle.squaredRadius = dx * dx + dy * dy;
+    const auto d = Vec2(p0) - circle.center;
+    circle.squaredRadius = d.x * d.x + d.y * d.y;
   }
 };
 
@@ -411,7 +405,7 @@ struct TriangulateApp : IApp
     {
       visu = &m_visu;
 
-      if(0)
+      if(1)
         m_edges = triangulate_BowyerWatson({ m_points.size(), m_points.data() });
       else
         m_edges = triangulateMine_BowyerWatson({ m_points.size(), m_points.data() });
