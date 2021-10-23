@@ -101,17 +101,17 @@ Triangle createSuperTriangle(std::vector<Vec2>& coords)
 }
 
 // reorder 'elements' so that it can be split into two parts:
-// - [0 .. r[ : criteria is false
-// - [r .. N[ : criteria is true
-template<typename T, typename Lambda>
-int split(span<T> elements, Lambda predicate)
+// - [0 .. r[ : triangle circles don't contain 'point'
+// - [r .. N[ : triangle circles contain 'point'
+// Returns 'r'.
+int reorder(span<Triangle> triangles, Vec2 point)
 {
-  int result = elements.len;
+  int result = triangles.len;
 
   for(int i = 0; i < result;)
   {
-    if(predicate(elements[i]))
-      std::swap(elements[i], elements[--result]);
+    if(pointInsideCircle(point, triangles[i].circleCenter, triangles[i].circleSquaredRadius))
+      std::swap(triangles[i], triangles[--result]);
     else
       ++i;
   }
@@ -134,12 +134,7 @@ std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> inputCoords)
   {
     std::vector<Edge> edges;
 
-    auto containsPoint = [&] (const Triangle& t)
-      {
-        return pointInsideCircle(points[p], t.circleCenter, t.circleSquaredRadius);
-      };
-
-    const int s = split<Triangle>(triangulation, containsPoint);
+    const int s = reorder(triangulation, points[p]);
 
     for(int i = s; i < (int)triangulation.size(); ++i)
       for(auto& e : triangulation[i].edges)
