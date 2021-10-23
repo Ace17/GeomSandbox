@@ -16,6 +16,8 @@
 #include "geom.h"
 #include "SDL.h"
 
+#undef main
+
 const int WIDTH = 1280;
 const int HEIGHT = 720;
 
