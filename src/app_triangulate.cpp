@@ -214,6 +214,9 @@ struct TriangulateApp : IApp
   {
     m_edges = triangulateMine_BowyerWatson({ m_points.size(), m_points.data() });
     fprintf(stderr, "Triangulated, %d edges\n", (int)m_edges.size());
+
+    // clear visualization
+    m_visu.m_lines.clear();
   }
 
   static void staticTriangulateFromFiber(void* userParam)

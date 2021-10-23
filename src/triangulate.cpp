@@ -176,12 +176,6 @@ std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> inputCoords)
         edges.push_back(e);
     }
 
-  // clear visualization
-  {
-    visu->begin();
-    visu->end();
-  }
-
   return edges;
 }
 
