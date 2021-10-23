@@ -20,7 +20,9 @@ const int WIDTH = 1280;
 const int HEIGHT = 720;
 
 float g_Scale = 20.0f;
+float g_TargetScale = 20.0f;
 Vec2 g_Pos {};
+Vec2 g_TargetPos {};
 
 Vec2 direction(float angle)
 {
@@ -172,22 +174,22 @@ bool readInput(IApp* app, bool& reset)
       switch(event.key.keysym.sym)
       {
       case SDLK_KP_PLUS:
-        g_Scale *= scaleSpeed;
+        g_TargetScale = g_Scale * scaleSpeed;
         break;
       case SDLK_KP_MINUS:
-        g_Scale *= 1.0f / scaleSpeed;
+        g_TargetScale = g_Scale / scaleSpeed;
         break;
       case SDLK_KP_4:
-        g_Pos.x -= scrollSpeed;
+        g_TargetPos = g_Pos + Vec2(-scrollSpeed, 0);
         break;
       case SDLK_KP_6:
-        g_Pos.x += scrollSpeed;
+        g_TargetPos = g_Pos + Vec2(+scrollSpeed, 0);
         break;
       case SDLK_KP_2:
-        g_Pos.y += scrollSpeed;
+        g_TargetPos = g_Pos + Vec2(0, +scrollSpeed);
         break;
       case SDLK_KP_8:
-        g_Pos.y -= scrollSpeed;
+        g_TargetPos = g_Pos + Vec2(0, -scrollSpeed);
         break;
       case SDLK_F2:
         reset = true;
@@ -257,6 +259,10 @@ int main(int argc, char* argv[])
         app.reset(func());
         reset = false;
       }
+
+      const float alpha = 0.8;
+      g_Pos = (g_TargetPos * (1 - alpha) + g_Pos * alpha);
+      g_Scale = (g_TargetScale * (1 - alpha) + g_Scale * alpha);
 
       app->tick();
       drawScreen(renderer, app.get());
