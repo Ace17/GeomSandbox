@@ -85,181 +85,6 @@ const int unittests_run = [] ()
     return 0;
   }();
 
-/*
- * Bowyer-Watson algorithm
- * C++ implementation of http://paulbourke.net/papers/triangulate .
- **/
-namespace BowyerWatson
-{
-constexpr double eps = 1e-4;
-
-struct Point
-{
-  float x = 0;
-  float y = 0;
-  int index = -1;
-
-  operator Vec2 () const
-  {
-    return { x, y };
-  }
-
-  bool operator == (const Point& other) const { return index == other.index; }
-};
-
-struct Edge
-{
-  Point p0, p1;
-
-  bool operator == (const Edge& other) const
-  {
-    return (other.p0 == p0 && other.p1 == p1) ||
-           (other.p0 == p1 && other.p1 == p0);
-  }
-};
-
-struct Circle
-{
-  Vec2 center;
-  float squaredRadius;
-
-  bool isInside(Vec2 pt) const
-  {
-    const auto d = pt - center;
-    const auto squaredDist = d.x * d.x + d.y * d.y;
-
-    return (squaredDist - squaredRadius) <= eps;
-  }
-};
-
-struct Triangle
-{
-  Edge e0, e1, e2;
-  Circle circle;
-
-  Triangle() = default;
-
-  Triangle(const Point& p0, const Point& p1, const Point& p2)
-    : e0{p0, p1},
-    e1{p1, p2},
-    e2{p0, p2},
-    circle{}
-  {
-    const auto a = Vec2(p1) - p0;
-    const auto b = Vec2(p2) - p0;
-
-    const auto m = p1.x * p1.x + p1.y * p1.y - p0.x * p0.x - p0.y * p0.y;
-    const auto u = p2.x * p2.x + p2.y * p2.y - p0.x * p0.x - p0.y * p0.y;
-    const auto s = 1. / (2. * (a.x * b.y - a.y * b.x));
-
-    circle.center.x = ((p2.y - p0.y) * m + (p0.y - p1.y) * u) * s;
-    circle.center.y = ((p0.x - p2.x) * m + (p1.x - p0.x) * u) * s;
-
-    const auto d = Vec2(p0) - circle.center;
-    circle.squaredRadius = d.x * d.x + d.y * d.y;
-  }
-};
-
-Triangle createEnclosingTriangle(span<const Point> points)
-{
-  auto xmin = points[0].x;
-  auto xmax = xmin;
-  auto ymin = points[0].y;
-  auto ymax = ymin;
-
-  for(auto const& pt : points)
-  {
-    xmin = std::min(xmin, pt.x);
-    xmax = std::max(xmax, pt.x);
-    ymin = std::min(ymin, pt.y);
-    ymax = std::max(ymax, pt.y);
-  }
-
-  const auto dx = xmax - xmin;
-  const auto dy = ymax - ymin;
-  const auto dmax = std::max(dx, dy);
-  const auto midx = (xmin + xmax) / 2.0f;
-  const auto midy = (ymin + ymax) / 2.0f;
-
-  const auto p0 = Point{ midx - 20 * dmax, midy - dmax, -1 };
-  const auto p1 = Point{ midx, midy + 20 * dmax, -2 };
-  const auto p2 = Point{ midx + 20 * dmax, midy - dmax, -3 };
-
-  return Triangle{ p0, p1, p2 };
-}
-
-std::vector<::Edge> triangulate(span<const Point> points)
-{
-  if(points.len < 3)
-    return {};
-
-  std::vector<Triangle> triangulation;
-  std::vector<Edge> edges;
-  edges.reserve(points.len);
-
-  triangulation.emplace_back(createEnclosingTriangle(points));
-
-  for(auto const& pt : points)
-  {
-    auto shouldBeRemoved = [pt] (const Triangle& tri)
-      {
-        return tri.circle.isInside(pt);
-      };
-
-    const int r = split<Triangle>(triangulation, shouldBeRemoved);
-
-    // keep the edges of the triangles to remove
-    edges.clear();
-
-    for(int i = r; i < (int)triangulation.size(); ++i)
-    {
-      edges.push_back(triangulation[i].e0);
-      edges.push_back(triangulation[i].e1);
-      edges.push_back(triangulation[i].e2);
-    }
-
-    triangulation.resize(r); // remove the triangles from the triangulation
-
-    // In the triangulation, the removed triangles make a 'hole'.
-    // Mark the edges on its contour.
-    std::vector<bool> isEdgeOnContour(edges.size(), true);
-
-    for(int idx1 = 0; idx1 < (int)edges.size(); ++idx1)
-    {
-      for(int idx2 = idx1 + 1; idx2 < (int)edges.size(); ++idx2)
-      {
-        if(edges[idx1] == edges[idx2])
-          isEdgeOnContour[idx1] = isEdgeOnContour[idx2] = false;
-      }
-    }
-
-    for(auto const& e : edges)
-    {
-      const int idx = int(&e - edges.data());
-
-      if(isEdgeOnContour[idx])
-        triangulation.push_back({ e.p0, e.p1, pt });
-    }
-  }
-
-  std::vector<::Edge> r;
-
-  for(auto const& tri : triangulation)
-  {
-    for(auto const& edge : { tri.e0, tri.e1, tri.e2 })
-    {
-      // a negative index refs to a point that is not part of the input.
-      if(edge.p0.index < 0 || edge.p1.index < 0)
-        continue;
-
-      r.push_back({ edge.p0.index, edge.p1.index });
-    }
-  }
-
-  return r;
-}
-} /* namespace BowyerWatson */
-
 float randomFloat(float min, float max)
 {
   return (rand() / float(RAND_MAX)) * (max - min) + min;
@@ -276,19 +101,6 @@ Vec2 randomPos()
 float det2d(Vec2 a, Vec2 b)
 {
   return a.x * b.y - a.y * b.x;
-}
-
-std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> points)
-{
-  using namespace BowyerWatson;
-  std::vector<Point> input;
-
-  int i = 0;
-
-  for(auto point : points)
-    input.push_back({ point.x, point.y, i++ });
-
-  return BowyerWatson::triangulate(input);
 }
 
 [[maybe_unused]]
@@ -403,10 +215,7 @@ struct TriangulateApp : IApp
     {
       visu = &m_visu;
 
-      if(0)
-        m_edges = triangulate_BowyerWatson({ m_points.size(), m_points.data() });
-      else
-        m_edges = triangulateMine_BowyerWatson({ m_points.size(), m_points.data() });
+      m_edges = triangulateMine_BowyerWatson({ m_points.size(), m_points.data() });
 
       fprintf(stderr, "Triangulated, %d edges\n", (int)m_edges.size());
     }
