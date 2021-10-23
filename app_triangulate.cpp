@@ -223,14 +223,20 @@ struct TriangulateApp : IApp
 
   void keydown(Key key) override
   {
-    if(key == Key::Space)
+    if(key == Key::Space || key == Key::Return)
     {
       visu = &m_visu;
 
       if(!m_fiber)
         m_fiber = std::make_unique<Fiber>(staticTriangulateFromFiber, this);
 
-      m_fiber->resume();
+      if(key == Key::Return)
+      {
+        while(!m_fiber->finished())
+          m_fiber->resume();
+      }
+      else
+        m_fiber->resume();
     }
   }
 

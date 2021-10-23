@@ -8,6 +8,7 @@ public:
   Fiber(void(*func)(void*), void* userParam);
 
   void resume();
+  bool finished() const { return m_finished; };
   static void yield();
 
 private:

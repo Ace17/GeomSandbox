@@ -25,6 +25,7 @@ struct IDrawer
 enum class Key
 {
   Unknown,
+  Return,
   Space,
   Left,
   Right,
