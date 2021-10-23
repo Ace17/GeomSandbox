@@ -13,10 +13,9 @@
 
 #include <algorithm>
 #include <cassert>
-#include <climits>
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
+#include <climits> // RAND_MAX
+#include <cstdio> // fprintf
+#include <cstdlib> // rand
 #include <map>
 #include <memory>
 #include <vector>
