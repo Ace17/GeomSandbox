@@ -25,7 +25,7 @@ struct Edge
   int a, b;
 };
 
-std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> points);
+std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> points);
 
 struct NullVisualizer : IVisualizer
 {
@@ -212,7 +212,7 @@ struct TriangulateApp : IApp
 
   void triangulateFromFiber()
   {
-    m_edges = triangulateMine_BowyerWatson({ m_points.size(), m_points.data() });
+    m_edges = triangulate_BowyerWatson({ m_points.size(), m_points.data() });
     fprintf(stderr, "Triangulated, %d edges\n", (int)m_edges.size());
 
     // clear visualization

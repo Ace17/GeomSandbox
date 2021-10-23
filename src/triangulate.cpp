@@ -120,7 +120,7 @@ int reorder(span<Triangle> triangles, Vec2 point)
 }
 }
 
-std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> inputCoords)
+std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> inputCoords)
 {
   std::vector<Vec2> points(inputCoords.len);
 
