@@ -8,6 +8,7 @@
 // Triangulation
 
 #include "app.h"
+#include "visualizer.h"
 
 #include <algorithm>
 #include <cassert>
@@ -18,13 +19,25 @@
 #include <map>
 #include <vector>
 
-namespace
-{
 struct Edge
 {
   int a, b;
 };
 
+std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> points);
+
+struct NullVisualizer : IVisualizer
+{
+  void begin() override {};
+  void end() override {};
+  void line(Vec2, Vec2) override {};
+};
+
+static NullVisualizer nullVisualizer;
+IVisualizer* visu = &nullVisualizer;
+
+namespace
+{
 // reorder 'elements' so that it can be split into two parts:
 // - [0 .. r[ : criteria is false
 // - [r .. N[ : criteria is true
@@ -285,14 +298,6 @@ std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> points)
 }
 
 [[maybe_unused]]
-std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> points)
-{
-  (void)points;
-  std::vector<Edge> edges;
-  return edges;
-}
-
-[[maybe_unused]]
 std::vector<Edge> triangulateMine(span<const Vec2> points)
 {
   std::vector<Edge> r;
@@ -395,19 +400,54 @@ struct TriangulateApp : IApp
     {
       drawer->line(m_points[edge.a], m_points[edge.b], Green);
     }
+
+    for(auto& line : m_visu.m_lines)
+      drawer->line(line.a, line.b, Yellow);
   }
 
   void keydown(Key key) override
   {
     if(key == Key::Space)
     {
-      m_edges = triangulate_BowyerWatson({ m_points.size(), m_points.data() });
+      visu = &m_visu;
+
+      if(0)
+        m_edges = triangulate_BowyerWatson({ m_points.size(), m_points.data() });
+      else
+        m_edges = triangulateMine_BowyerWatson({ m_points.size(), m_points.data() });
+
       fprintf(stderr, "Triangulated, %d edges\n", (int)m_edges.size());
     }
   }
 
   std::vector<Vec2> m_points;
   std::vector<Edge> m_edges;
+
+  struct Visualizer : IVisualizer
+  {
+    struct VisualLine
+    {
+      Vec2 a, b;
+    };
+
+    std::vector<VisualLine> m_lines;
+
+    void line(Vec2 a, Vec2 b) override
+    {
+      m_lines.push_back({ a, b });
+    }
+
+    void begin() override
+    {
+      m_lines.clear();
+    }
+
+    void end() override
+    {
+    }
+  };
+
+  Visualizer m_visu;
 };
 const int registered = registerApp("triangulate", [] () -> IApp* { return new TriangulateApp; });
 }

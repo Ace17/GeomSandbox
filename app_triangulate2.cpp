@@ -9,6 +9,7 @@
 
 #include "app.h"
 #include "fiber.h"
+#include "visualizer.h"
 
 #include <algorithm> // sort
 #include <cassert>
@@ -110,16 +111,6 @@ const int unittests_run = [] ()
 
     return 0;
   }();
-
-struct IVisualizer
-{
-  virtual ~IVisualizer() = default;
-
-  virtual void begin() = 0;
-  virtual void end() = 0;
-
-  virtual void line(Vec2 a, Vec2 b) = 0;
-};
 
 std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
 {
