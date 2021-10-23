@@ -381,6 +381,9 @@ struct TriangulateApp : IApp
   {
     int idx = 0;
 
+    for(auto& edge : m_edges)
+      drawer->line(m_points[edge.a], m_points[edge.b], Green);
+
     for(auto& p : m_points)
     {
       drawer->rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
@@ -388,11 +391,6 @@ struct TriangulateApp : IApp
       sprintf(buffer, "%d", idx);
       drawer->text(p + Vec2(0.3, 0), buffer, Red);
       idx++;
-    }
-
-    for(auto& edge : m_edges)
-    {
-      drawer->line(m_points[edge.a], m_points[edge.b], Green);
     }
 
     for(auto& line : m_visu.m_lines)
@@ -405,7 +403,7 @@ struct TriangulateApp : IApp
     {
       visu = &m_visu;
 
-      if(1)
+      if(0)
         m_edges = triangulate_BowyerWatson({ m_points.size(), m_points.data() });
       else
         m_edges = triangulateMine_BowyerWatson({ m_points.size(), m_points.data() });

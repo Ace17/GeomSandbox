@@ -145,6 +145,7 @@ std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> inputCoords)
     }
   }
 
+  if(0)
   {
     visu->begin();
 
