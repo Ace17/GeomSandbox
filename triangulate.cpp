@@ -147,6 +147,16 @@ std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> inputCoords)
 
     triangulation.resize(s); // drop impacted triangles
 
+    {
+      visu->begin();
+
+      for(auto t : triangulation)
+        for(auto e : t.edges)
+          visu->line(points[e.a], points[e.b]);
+
+      visu->end();
+    }
+
     std::vector<int> edgeIsOnCountour(edges.size(), true);
 
     for(int j = 0; j < (int)edges.size(); ++j)
@@ -159,17 +169,16 @@ std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> inputCoords)
       if(edgeIsOnCountour[j])
         triangulation.push_back(makeTriangle(edges[j].b, edges[j].a, p, points));
     }
-  }
 
-  if(0)
-  {
-    visu->begin();
+    {
+      visu->begin();
 
-    for(auto t : triangulation)
-      for(auto e : t.edges)
-        visu->line(points[e.a], points[e.b]);
+      for(auto t : triangulation)
+        for(auto e : t.edges)
+          visu->line(points[e.a], points[e.b]);
 
-    visu->end();
+      visu->end();
+    }
   }
 
   std::vector<Edge> edges;
@@ -182,6 +191,9 @@ std::vector<Edge> triangulateMine_BowyerWatson(span<const Vec2> inputCoords)
         edges.push_back(e);
     }
 
+  visu->begin();
+
+  visu->end();
   return edges;
 }
 

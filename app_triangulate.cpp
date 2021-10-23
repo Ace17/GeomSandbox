@@ -8,6 +8,7 @@
 // Triangulation
 
 #include "app.h"
+#include "fiber.h"
 #include "visualizer.h"
 
 #include <algorithm>
@@ -17,6 +18,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <map>
+#include <memory>
 #include <vector>
 
 struct Edge
@@ -209,20 +211,33 @@ struct TriangulateApp : IApp
       drawer->line(line.a, line.b, Yellow);
   }
 
+  void triangulateFromFiber()
+  {
+    m_edges = triangulateMine_BowyerWatson({ m_points.size(), m_points.data() });
+    fprintf(stderr, "Triangulated, %d edges\n", (int)m_edges.size());
+  }
+
+  static void staticTriangulateFromFiber(void* userParam)
+  {
+    ((TriangulateApp*)userParam)->triangulateFromFiber();
+  }
+
   void keydown(Key key) override
   {
     if(key == Key::Space)
     {
       visu = &m_visu;
 
-      m_edges = triangulateMine_BowyerWatson({ m_points.size(), m_points.data() });
+      if(!m_fiber)
+        m_fiber = std::make_unique<Fiber>(staticTriangulateFromFiber, this);
 
-      fprintf(stderr, "Triangulated, %d edges\n", (int)m_edges.size());
+      m_fiber->resume();
     }
   }
 
   std::vector<Vec2> m_points;
   std::vector<Edge> m_edges;
+  std::unique_ptr<Fiber> m_fiber;
 
   struct Visualizer : IVisualizer
   {
@@ -245,6 +260,7 @@ struct TriangulateApp : IApp
 
     void end() override
     {
+      Fiber::yield();
     }
   };
 
