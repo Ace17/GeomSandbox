@@ -10,6 +10,8 @@ TARGETS+=$(BIN)/GeomSandbox.exe
 
 PKGS+=sdl2
 
+HOST:=$(shell $(CXX) -dumpmachine | sed 's/.*-//')
+
 CXXFLAGS+=$(shell pkg-config $(PKGS) --cflags)
 LDFLAGS+=$(shell pkg-config $(PKGS) --libs)
 
@@ -20,7 +22,7 @@ SRCS:=\
 			src/app_collide2d.cpp\
 			src/app_triangulate2.cpp\
 			src/collide2d.cpp\
-			src/fiber_gnu.cpp\
+			src/fiber_$(HOST).cpp\
 			src/triangulate.cpp\
 			src/main.cpp\
 

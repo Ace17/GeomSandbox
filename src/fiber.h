@@ -25,6 +25,6 @@ private:
   // OS-specific metadata
   struct Priv;
   Priv* priv;
-  alignas(void*) uint8_t privBuffer[2048];
+  alignas(void*) uint8_t privBuffer[4096];
 };
 
