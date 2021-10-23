@@ -139,20 +139,26 @@ std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> inputCoords)
     points[i] = inputCoords[i];
 
   std::vector<Triangle> triangulation;
+
+  // Init the triangulation with a super-triangle containing all the inputs points.
   triangulation.push_back(createSuperTriangle(points));
 
   for(int p = 0; p < (int)inputCoords.len; ++p)
   {
     std::vector<Edge> edges;
 
+    // Put at the end of the array the triangles whose circles contains 'p'.
     const int s = reorder(triangulation, points[p]);
 
+    // Save their edges ...
     for(int i = s; i < (int)triangulation.size(); ++i)
       for(auto& e : triangulation[i].edges)
         edges.push_back(e);
 
-    triangulation.resize(s); // drop impacted triangles
+    // ... and remove them from the triangulation.
+    triangulation.resize(s);
 
+    // This creates a hole. Compute its contour.
     std::vector<int> edgeIsOnCountour(edges.size(), true);
 
     for(int j = 0; j < (int)edges.size(); ++j)
@@ -160,12 +166,14 @@ std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> inputCoords)
         if((edges[j].a == edges[k].a && edges[j].b == edges[k].b) || (edges[j].a == edges[k].b && edges[j].b == edges[k].a))
           edgeIsOnCountour[j] = edgeIsOnCountour[k] = false;
 
+    // For each edge on the contour of the hole, create a new triangle using 'p'.
     for(int j = 0; j < (int)edges.size(); ++j)
     {
       if(edgeIsOnCountour[j])
         triangulation.push_back(makeTriangle(edges[j].b, edges[j].a, p, points));
     }
 
+    // Export internal state for visualisation.
     print2d(triangulation, points);
   }
 
