@@ -133,16 +133,14 @@ void print2d(span<const Triangle> triangulation, span<const Vec2> points)
 
 std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> inputCoords)
 {
-  std::vector<Vec2> points(inputCoords.len);
-
-  for(int i = 0; i < (int)inputCoords.len; ++i)
-    points[i] = inputCoords[i];
+  std::vector<Vec2> points(inputCoords.ptr, inputCoords.ptr + inputCoords.len);
 
   std::vector<Triangle> triangulation;
 
   // Init the triangulation with a super-triangle containing all the inputs points.
   triangulation.push_back(createSuperTriangle(points));
 
+  // Add, one by one, all input points.
   for(int p = 0; p < (int)inputCoords.len; ++p)
   {
     std::vector<Edge> edges;
@@ -177,12 +175,14 @@ std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> inputCoords)
     print2d(triangulation, points);
   }
 
+  // Recompute an edge list from the triangle list.
   std::vector<Edge> edges;
 
   for(auto t : triangulation)
     for(auto e : t.edges)
     {
-      // filter out edges connected to the super triangle
+      // Filter out edges connected to the super-triangle
+      // (whose points are not part of the input).
       if(e.a < (int)inputCoords.len && e.b < (int)inputCoords.len)
         edges.push_back(e);
     }
