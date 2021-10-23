@@ -118,6 +118,17 @@ int reorder(span<Triangle> triangles, Vec2 point)
 
   return result;
 }
+
+void print2d(span<const Triangle> triangulation, span<const Vec2> points)
+{
+  visu->begin();
+
+  for(auto t : triangulation)
+    for(auto e : t.edges)
+      visu->line(points[e.a], points[e.b]);
+
+  visu->end();
+}
 }
 
 std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> inputCoords)
@@ -155,15 +166,7 @@ std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> inputCoords)
         triangulation.push_back(makeTriangle(edges[j].b, edges[j].a, p, points));
     }
 
-    {
-      visu->begin();
-
-      for(auto t : triangulation)
-        for(auto e : t.edges)
-          visu->line(points[e.a], points[e.b]);
-
-      visu->end();
-    }
+    print2d(triangulation, points);
   }
 
   std::vector<Edge> edges;
