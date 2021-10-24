@@ -27,6 +27,8 @@ struct Edge
 
 std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> points);
 
+static Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
+
 struct NullVisualizer : IVisualizer
 {
   void begin() override {};
@@ -104,10 +106,63 @@ float det2d(Vec2 a, Vec2 b)
   return a.x * b.y - a.y * b.x;
 }
 
-[[maybe_unused]]
-std::vector<Edge> triangulateMine(span<const Vec2> points)
+void printHull(std::map<int, int> hull, span<const Vec2> points, int head)
 {
-  std::vector<Edge> r;
+  visu->begin();
+
+  int curr = head;
+
+  do
+  {
+    int next = hull[curr];
+    visu->line(points[curr], points[next]);
+    curr = next;
+  }
+  while (curr != head);
+
+  visu->line(points[head] + Vec2(-1, -1), points[head] + Vec2(+1, +1));
+  visu->line(points[head] + Vec2(-1, +1), points[head] + Vec2(+1, -1));
+
+  visu->end();
+}
+
+struct Triangle
+{
+  int a, b, c;
+};
+
+std::vector<int> sortPointsFromLeftToRight(span<const Vec2> points)
+{
+  std::vector<int> order(points.len);
+
+  for(int i = 0; i < points.len; ++i)
+    order[i] = i;
+
+  auto byCoordinates = [&] (int ia, int ib)
+    {
+      auto a = points[ia];
+      auto b = points[ib];
+
+      if(a.x != b.x)
+        return a.x < b.x;
+
+      if(a.y != b.y)
+        return a.y < b.y;
+
+      return true;
+    };
+
+  std::sort(order.begin(), order.end(), byCoordinates);
+
+  return order;
+}
+
+std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
+{
+  const auto order = sortPointsFromLeftToRight(points);
+  span<const int> queue = order;
+
+  std::vector<Triangle> triangles;
   std::map<int, int> hull;
 
   if(points.len < 3)
@@ -115,28 +170,43 @@ std::vector<Edge> triangulateMine(span<const Vec2> points)
 
   // bootstrap triangulation with first triangle
   {
-    int i0 = 0;
-    int i1 = 1;
-    int i2 = 2;
+    int i0 = queue.pop();
+    int i1 = queue.pop();
+    int i2 = queue.pop();
 
     // make the triangle CCW if needed
     if(det2d(points[i1] - points[i0], points[i2] - points[i0]) < 0)
       std::swap(i1, i2);
 
-    r.push_back({ i0, i1 });
-    r.push_back({ i1, i2 });
-    r.push_back({ i2, i0 });
+    triangles.push_back({ i0, i1, i2 });
 
     hull[i0] = i1;
     hull[i1] = i2;
     hull[i2] = i0;
   }
 
-  for(int idx = 3; idx < (int)points.len; ++idx)
-  {
-    auto p = points[idx];
+  int hullHead = hull.begin()->first;
 
-    int hullFirst = hull.begin()->first;
+  printHull(hull, points, hullHead);
+
+  while(queue.len > 0)
+  {
+    const int idx = queue[0];
+    const auto p = points[idx];
+
+    // recompute hullHead so its on the left of the hull
+    while(1)
+    {
+      auto a = points[hullHead];
+      auto b = points[hull[hullHead]];
+
+      if(det2d(p - a, b - a) <= 0)
+        break;
+
+      hullHead = hull[hullHead];
+    }
+
+    const int hullFirst = hullHead;
     int hullCurr = hullFirst;
 
     do
@@ -146,18 +216,38 @@ std::vector<Edge> triangulateMine(span<const Vec2> points)
       const auto a = points[hullCurr];
       const auto b = points[hullNext];
 
-      if(det2d(p - a, b - a) > 0)
+      if(det2d(p - a, b - a) > 0.001)
       {
-        r.push_back(Edge{ hullCurr, idx });
-        r.push_back(Edge{ idx, hullNext });
+        triangles.push_back({ hullCurr, idx, hullNext });
 
         hull[idx] = hullNext;
         hull[hullCurr] = idx;
+        hullHead = idx;
+
+        printHull(hull, points, hullHead);
       }
 
       hullCurr = hullNext;
     }
     while (hullCurr != hullFirst);
+
+    queue += 1;
+  }
+
+  return triangles;
+}
+
+std::vector<Edge> triangulateMine_Sweep(span<const Vec2> points)
+{
+  auto triangles = createBasicTriangulation(points);
+
+  std::vector<Edge> r;
+
+  for(auto& t : triangles)
+  {
+    r.push_back({ t.a, t.b });
+    r.push_back({ t.b, t.c });
+    r.push_back({ t.c, t.a });
   }
 
   return r;
@@ -172,22 +262,6 @@ struct TriangulateApp : IApp
 
     for(auto& p : m_points)
       p = randomPos();
-
-    if(0)
-    {
-      auto byCoordinates = [] (Vec2 a, Vec2 b)
-        {
-          if(a.x != b.x)
-            return a.x < b.x;
-
-          if(a.y != b.y)
-            return a.y < b.y;
-
-          return true;
-        };
-
-      std::sort(m_points.begin(), m_points.end(), byCoordinates);
-    }
   }
 
   void draw(IDrawer* drawer) override
@@ -212,7 +286,11 @@ struct TriangulateApp : IApp
 
   void triangulateFromFiber()
   {
-    m_edges = triangulate_BowyerWatson({ m_points.size(), m_points.data() });
+    if(0)
+      m_edges = triangulate_BowyerWatson({ m_points.size(), m_points.data() });
+    else
+      m_edges = triangulateMine_Sweep({ m_points.size(), m_points.data() });
+
     fprintf(stderr, "Triangulated, %d edges\n", (int)m_edges.size());
 
     // clear visualization

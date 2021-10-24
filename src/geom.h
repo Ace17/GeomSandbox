@@ -45,6 +45,9 @@ struct span
   span() = default;
   span(size_t N, T* tab) :  len(N), ptr(tab) {}
 
+  void operator += (int i) { ptr += i; len -= i; }
+  auto & pop() { auto& r = ptr[0]; (*this) += 1; return r; }
+
   // construction from vector/string
   template<typename U, typename = decltype(((U*)0)->data())>
   span(U& s)
