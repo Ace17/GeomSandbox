@@ -233,6 +233,9 @@ int main(int argc, char* argv[])
     if(i_func == Registry().end())
     {
       fprintf(stderr, "Unknown app: '%s'\n", appName.c_str());
+      fprintf(stderr, "Available apps:\n");
+      for(auto& app : Registry())
+        fprintf(stderr, "  %s\n", app.first.c_str());
       return 1;
     }
 
