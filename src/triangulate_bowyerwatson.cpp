@@ -8,13 +8,9 @@
 // Triangulation, Bowyer-Watson algorithm
 
 #include "geom.h"
+#include "triangulate.h"
 #include "visualizer.h"
 #include <vector>
-
-struct Edge
-{
-  int a, b;
-};
 
 namespace
 {

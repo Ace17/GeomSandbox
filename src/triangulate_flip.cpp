@@ -8,15 +8,11 @@
 // Triangulation, Flip algorithm
 
 #include "geom.h"
+#include "triangulate.h"
 #include "visualizer.h"
 #include <algorithm>
 #include <map>
 #include <vector>
-
-struct Edge
-{
-  int a, b;
-};
 
 namespace
 {
