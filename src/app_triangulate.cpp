@@ -11,12 +11,10 @@
 #include "fiber.h"
 #include "visualizer.h"
 
-#include <algorithm>
 #include <cassert>
 #include <climits> // RAND_MAX
-#include <cstdio> // fprintf
+#include <cstdio>  // fprintf
 #include <cstdlib> // rand
-#include <map>
 #include <memory>
 #include <vector>
 
@@ -26,8 +24,7 @@ struct Edge
 };
 
 std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> points);
-
-static Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
+std::vector<Edge> triangulate_Flip(span<const Vec2> points);
 
 struct NullVisualizer : IVisualizer
 {
@@ -41,53 +38,6 @@ IVisualizer* visu = &nullVisualizer;
 
 namespace
 {
-// reorder 'elements' so that it can be split into two parts:
-// - [0 .. r[ : criteria is false
-// - [r .. N[ : criteria is true
-template<typename T, typename Lambda>
-int split(span<T> elements, Lambda predicate)
-{
-  int result = elements.len;
-
-  for(int i = 0; i < result;)
-  {
-    if(predicate(elements[i]))
-      std::swap(elements[i], elements[--result]);
-    else
-      ++i;
-  }
-
-  return result;
-}
-
-const int unittests_run = [] ()
-  {
-    // no-op
-    {
-      auto isGreaterThan10 = [] (int val) { return val > 10; };
-      std::vector<int> elements = { 4, 5, 3, 4, 5, 3 };
-      int r = split<int>(elements, isGreaterThan10);
-      assert(6 == r);
-    }
-
-    // simple
-    {
-      auto isEven = [] (int val) { return val % 2 == 0; };
-      std::vector<int> elements = { 1, 2, 3, 4, 5, 6, 7 };
-      int r = split<int>(elements, isEven);
-      assert(4 == r);
-      assert(!isEven(elements[0]));
-      assert(!isEven(elements[1]));
-      assert(!isEven(elements[2]));
-      assert(!isEven(elements[3]));
-      assert(isEven(elements[4]));
-      assert(isEven(elements[5]));
-      assert(isEven(elements[6]));
-    }
-
-    return 0;
-  }();
-
 float randomFloat(float min, float max)
 {
   return (rand() / float(RAND_MAX)) * (max - min) + min;
@@ -98,158 +48,6 @@ Vec2 randomPos()
   Vec2 r;
   r.x = randomFloat(-20, 20);
   r.y = randomFloat(-10, 10);
-  return r;
-}
-
-float det2d(Vec2 a, Vec2 b)
-{
-  return a.x * b.y - a.y * b.x;
-}
-
-void printHull(std::map<int, int> hull, span<const Vec2> points, int head)
-{
-  visu->begin();
-
-  int curr = head;
-
-  do
-  {
-    int next = hull[curr];
-    visu->line(points[curr], points[next]);
-    curr = next;
-  }
-  while (curr != head);
-
-  visu->line(points[head] + Vec2(-1, -1), points[head] + Vec2(+1, +1));
-  visu->line(points[head] + Vec2(-1, +1), points[head] + Vec2(+1, -1));
-
-  visu->end();
-}
-
-struct Triangle
-{
-  int a, b, c;
-};
-
-std::vector<int> sortPointsFromLeftToRight(span<const Vec2> points)
-{
-  std::vector<int> order(points.len);
-
-  for(int i = 0; i < points.len; ++i)
-    order[i] = i;
-
-  auto byCoordinates = [&] (int ia, int ib)
-    {
-      auto a = points[ia];
-      auto b = points[ib];
-
-      if(a.x != b.x)
-        return a.x < b.x;
-
-      if(a.y != b.y)
-        return a.y < b.y;
-
-      return true;
-    };
-
-  std::sort(order.begin(), order.end(), byCoordinates);
-
-  return order;
-}
-
-std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
-{
-  const auto order = sortPointsFromLeftToRight(points);
-  span<const int> queue = order;
-
-  std::vector<Triangle> triangles;
-  std::map<int, int> hull;
-
-  if(points.len < 3)
-    return {};
-
-  // bootstrap triangulation with first triangle
-  {
-    int i0 = queue.pop();
-    int i1 = queue.pop();
-    int i2 = queue.pop();
-
-    // make the triangle CCW if needed
-    if(det2d(points[i1] - points[i0], points[i2] - points[i0]) < 0)
-      std::swap(i1, i2);
-
-    triangles.push_back({ i0, i1, i2 });
-
-    hull[i0] = i1;
-    hull[i1] = i2;
-    hull[i2] = i0;
-  }
-
-  int hullHead = hull.begin()->first;
-
-  printHull(hull, points, hullHead);
-
-  while(queue.len > 0)
-  {
-    const int idx = queue[0];
-    const auto p = points[idx];
-
-    // recompute hullHead so its on the left of the hull
-    while(1)
-    {
-      auto a = points[hullHead];
-      auto b = points[hull[hullHead]];
-
-      if(det2d(p - a, b - a) <= 0)
-        break;
-
-      hullHead = hull[hullHead];
-    }
-
-    const int hullFirst = hullHead;
-    int hullCurr = hullFirst;
-
-    do
-    {
-      const int hullNext = hull[hullCurr];
-
-      const auto a = points[hullCurr];
-      const auto b = points[hullNext];
-
-      if(det2d(p - a, b - a) > 0.001)
-      {
-        triangles.push_back({ hullCurr, idx, hullNext });
-
-        hull[idx] = hullNext;
-        hull[hullCurr] = idx;
-        hullHead = idx;
-
-        printHull(hull, points, hullHead);
-      }
-
-      hullCurr = hullNext;
-    }
-    while (hullCurr != hullFirst);
-
-    queue += 1;
-  }
-
-  return triangles;
-}
-
-std::vector<Edge> triangulateMine_Sweep(span<const Vec2> points)
-{
-  auto triangles = createBasicTriangulation(points);
-
-  std::vector<Edge> r;
-
-  for(auto& t : triangles)
-  {
-    r.push_back({ t.a, t.b });
-    r.push_back({ t.b, t.c });
-    r.push_back({ t.c, t.a });
-  }
-
   return r;
 }
 
@@ -289,7 +87,7 @@ struct TriangulateApp : IApp
     if(0)
       m_edges = triangulate_BowyerWatson({ m_points.size(), m_points.data() });
     else
-      m_edges = triangulateMine_Sweep({ m_points.size(), m_points.data() });
+      m_edges = triangulate_Flip({ m_points.size(), m_points.data() });
 
     fprintf(stderr, "Triangulated, %d edges\n", (int)m_edges.size());
 
@@ -334,24 +132,16 @@ struct TriangulateApp : IApp
 
     std::vector<VisualLine> m_lines;
 
-    void line(Vec2 a, Vec2 b) override
-    {
-      m_lines.push_back({ a, b });
-    }
+    void line(Vec2 a, Vec2 b) override { m_lines.push_back({ a, b }); }
 
-    void begin() override
-    {
-      m_lines.clear();
-    }
+    void begin() override { m_lines.clear(); }
 
-    void end() override
-    {
-      Fiber::yield();
-    }
+    void end() override { Fiber::yield(); }
   };
 
   Visualizer m_visu;
 };
-const int registered = registerApp("triangulate", [] () -> IApp* { return new TriangulateApp; });
-}
+const int registered =
+  registerApp("triangulate", [] () -> IApp* { return new TriangulateApp; });
+} // namespace
 

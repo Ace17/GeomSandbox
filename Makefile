@@ -23,7 +23,8 @@ SRCS:=\
 			src/app_triangulate2.cpp\
 			src/collide2d.cpp\
 			src/fiber_$(HOST).cpp\
-			src/triangulate.cpp\
+			src/triangulate_bowyerwatson.cpp\
+			src/triangulate_flip.cpp\
 			src/main.cpp\
 
 $(BIN)/GeomSandbox.exe: $(SRCS:%=$(BIN)/%.o)
