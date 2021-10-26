@@ -188,10 +188,10 @@ bool readInput(IApp* app, bool& reset)
         g_TargetPos = g_Pos + Vec2(+scrollSpeed, 0);
         break;
       case SDLK_KP_2:
-        g_TargetPos = g_Pos + Vec2(0, +scrollSpeed);
+        g_TargetPos = g_Pos + Vec2(0, -scrollSpeed);
         break;
       case SDLK_KP_8:
-        g_TargetPos = g_Pos + Vec2(0, -scrollSpeed);
+        g_TargetPos = g_Pos + Vec2(0, +scrollSpeed);
         break;
       case SDLK_F2:
         reset = true;
