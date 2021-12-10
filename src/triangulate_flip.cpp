@@ -147,21 +147,102 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
 
   return triangles;
 }
+
+struct HalfEdge
+{
+  int point;
+  int next;
+  int twin = -1;
+};
+
+std::vector<HalfEdge> convertToHalfEdge(span<const Vec2> points, span<const Triangle> triangles)
+{
+  std::vector<HalfEdge> he;
+  std::map<std::pair<int, int>, int> pointToEdge;
+
+  auto findHalfEdge = [&] (int a, int b)
+    {
+      auto i = pointToEdge.find({ a, b });
+
+      if(i == pointToEdge.end())
+        return -1;
+
+      return i->second;
+    };
+
+  for(auto& t : triangles)
+  {
+    const auto e0 = (int)he.size() + 0;
+    const auto e1 = (int)he.size() + 1;
+    const auto e2 = (int)he.size() + 2;
+    he.push_back({ t.a, e1 });
+    he.push_back({ t.b, e2 });
+    he.push_back({ t.c, e0 });
+
+    // search for a twin for e0 (=the edge that links [t.a -> t.b])
+    he[e0].twin = findHalfEdge(t.b, t.a);
+    he[e1].twin = findHalfEdge(t.c, t.b);
+    he[e2].twin = findHalfEdge(t.a, t.c);
+
+    pointToEdge[{ t.a, t.b }] = e0;
+    pointToEdge[{ t.b, t.c }] = e1;
+    pointToEdge[{ t.c, t.a }] = e2;
+  }
+
+  return he;
+}
+
+std::vector<Edge> flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
+{
+  std::vector<int> stack;
+  stack.reserve(he.len);
+
+  for(int i = 0; i < (int)he.len; ++i)
+    if(i > he[i].twin) // of both twins, only push one
+      stack.push_back(i);
+
+  while(!stack.empty())
+  {
+    // |              .
+    // |             /|\
+    // |         L1 / | \ R2
+    // |           /  |  \
+    // |          /   |   \
+    // |          \  E|   /
+    // |           \  |  /
+    // |         L2 \ | / R1
+    // |             \|/
+    // |              .
+    const auto E = stack.back();
+    stack.pop_back();
+
+    const auto L1 = he[E].next;
+    const auto L2 = he[L1].next;
+
+    const auto R1 = he[he[E].twin].next;
+    const auto R2 = he[L1].next;
+
+    {
+      visu->begin();
+
+      for(auto edge : he)
+        visu->line(points[edge.point], points[he[edge.next].point]);
+
+      visu->end();
+    }
+  }
+
+  std::vector<Edge> r;
+
+  return r;
+}
 } // namespace
 
 std::vector<Edge> triangulate_Flip(span<const Vec2> points)
 {
   auto triangles = createBasicTriangulation(points);
+  auto he = convertToHalfEdge(points, triangles);
 
-  std::vector<Edge> r;
-
-  for(auto& t : triangles)
-  {
-    r.push_back({ t.a, t.b });
-    r.push_back({ t.b, t.c });
-    r.push_back({ t.c, t.a });
-  }
-
-  return r;
+  return flipTriangulation(points, he);
 }
 
