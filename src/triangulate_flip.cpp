@@ -20,8 +20,6 @@ float det2d(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
 
 void printHull(std::map<int, int> hull, span<const Vec2> points, int head)
 {
-  gVisualizer->begin();
-
   int curr = head;
 
   do
@@ -35,7 +33,7 @@ void printHull(std::map<int, int> hull, span<const Vec2> points, int head)
   gVisualizer->line(points[head] + Vec2(-1, -1), points[head] + Vec2(+1, +1));
   gVisualizer->line(points[head] + Vec2(-1, +1), points[head] + Vec2(+1, -1));
 
-  gVisualizer->end();
+  gVisualizer->step();
 }
 
 struct Triangle
@@ -222,14 +220,10 @@ std::vector<Edge> flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
     const auto R1 = he[he[E].twin].next;
     const auto R2 = he[L1].next;
 
-    {
-      gVisualizer->begin();
+    for(auto edge : he)
+      gVisualizer->line(points[edge.point], points[he[edge.next].point]);
 
-      for(auto edge : he)
-        gVisualizer->line(points[edge.point], points[he[edge.next].point]);
-
-      gVisualizer->end();
-    }
+    gVisualizer->step();
   }
 
   std::vector<Edge> r;

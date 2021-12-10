@@ -117,13 +117,11 @@ int reorder(span<Triangle> triangles, Vec2 point)
 
 void print2d(span<const Triangle> triangulation, span<const Vec2> points)
 {
-  gVisualizer->begin();
-
   for(auto t : triangulation)
     for(auto e : t.edges)
       gVisualizer->line(points[e.a], points[e.b]);
 
-  gVisualizer->end();
+  gVisualizer->step();
 }
 }
 

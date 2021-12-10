@@ -113,9 +113,7 @@ struct TriangulateApp : IApp
 
     void line(Vec2 a, Vec2 b) override { m_lines.push_back({ a, b }); }
 
-    void begin() override { m_lines.clear(); }
-
-    void end() override { Fiber::yield(); }
+    void step() override { Fiber::yield(); m_lines.clear();}
   };
 
   Visualizer m_visu;

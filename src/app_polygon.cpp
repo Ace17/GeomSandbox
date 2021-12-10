@@ -107,14 +107,10 @@ struct PolygonApp : IApp
       m_lines.push_back({ a, b });
     }
 
-    void begin() override
-    {
-      m_lines.clear();
-    }
-
-    void end() override
+    void step() override
     {
       Fiber::yield();
+      m_lines.clear();
     }
   };
 

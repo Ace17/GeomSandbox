@@ -6,10 +6,11 @@ struct IVisualizer
 {
   virtual ~IVisualizer() = default;
 
-  virtual void begin() = 0;
-  virtual void end() = 0;
-
+  // submit primitives for drawing
   virtual void line(Vec2 a, Vec2 b) = 0;
+
+  // pause execution and display submitted primitives
+  virtual void step() = 0;
 };
 
 extern IVisualizer* gVisualizer;

@@ -184,9 +184,8 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
       while (edge != hullHead);
     };
 
-  vis->begin();
   drawHull();
-  vis->end();
+  vis->step();
 
   for(int idx = 3; idx < (int)points.len; ++idx)
   {
@@ -248,9 +247,8 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
 
         printHull();
 
-        vis->begin();
         drawHull();
-        vis->end();
+        vis->step();
       }
 
       hullCurr = hullNext;
@@ -368,14 +366,10 @@ struct TriangulateApp : IApp
       m_lines.push_back({ a, b });
     }
 
-    void begin() override
-    {
-      m_lines.clear();
-    }
-
-    void end() override
+    void step() override
     {
       Fiber::yield();
+      m_lines.clear();
     }
   };
 

@@ -3,9 +3,8 @@
 
 struct NullVisualizer : IVisualizer
 {
-  void begin() override {};
-  void end() override {};
   void line(Vec2, Vec2) override {};
+  void step() override {};
 };
 
 static NullVisualizer nullVisualizer;
