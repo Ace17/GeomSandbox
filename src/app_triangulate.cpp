@@ -12,20 +12,15 @@
 #include "visualizer.h"
 
 #include <cassert>
-#include <climits> // RAND_MAX
 #include <cstdio>  // fprintf
-#include <cstdlib> // rand
 #include <memory>
 #include <vector>
 
+#include "random.h"
 #include "triangulate.h"
 
 namespace
 {
-float randomFloat(float min, float max)
-{
-  return (rand() / float(RAND_MAX)) * (max - min) + min;
-}
 
 Vec2 randomPos()
 {

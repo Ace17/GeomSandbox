@@ -27,6 +27,7 @@ SRCS:=\
 			src/fiber_$(HOST).cpp\
 			src/triangulate_bowyerwatson.cpp\
 			src/triangulate_flip.cpp\
+			src/random.cpp\
 			src/main.cpp\
 
 $(BIN)/GeomSandbox.exe: $(SRCS:%=$(BIN)/%.o)

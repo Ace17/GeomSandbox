@@ -10,23 +10,16 @@
 #include "app.h"
 #include "fiber.h"
 #include "visualizer.h"
+#include "random.h"
 
-#include <algorithm>
 #include <cassert>
-#include <climits> // RAND_MAX
 #include <cmath>
-#include <cstdio> // fprintf
-#include <cstdlib> // rand
-#include <map>
+#include <cstdio> // sprintf
 #include <memory>
 #include <vector>
 
 namespace
 {
-float randomFloat(float min, float max)
-{
-  return (rand() / float(RAND_MAX)) * (max - min) + min;
-}
 
 Vec2 randomPos()
 {

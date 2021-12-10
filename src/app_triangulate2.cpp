@@ -10,13 +10,12 @@
 #include "app.h"
 #include "fiber.h"
 #include "visualizer.h"
+#include "random.h"
 
 #include <algorithm> // sort
 #include <cassert>
-#include <climits> // RAND_MAX
 #include <cmath>
 #include <cstdio>
-#include <cstdlib> // rand
 #include <memory>
 #include <vector>
 
@@ -27,11 +26,6 @@ static Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
 static Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
 template<typename T>
 T lerp(T a, T b, float alpha) { return a * (1.0f - alpha) + b * alpha; }
-
-float randomFloat(float min, float max)
-{
-  return (rand() / float(RAND_MAX)) * (max - min) + min;
-}
 
 Vec2 randomPos()
 {
