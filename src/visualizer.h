@@ -12,5 +12,5 @@ struct IVisualizer
   virtual void line(Vec2 a, Vec2 b) = 0;
 };
 
-extern IVisualizer* visu;
+extern IVisualizer* gVisualizer;
 

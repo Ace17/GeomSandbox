@@ -20,16 +20,6 @@
 
 #include "triangulate.h"
 
-struct NullVisualizer : IVisualizer
-{
-  void begin() override {};
-  void end() override {};
-  void line(Vec2, Vec2) override {};
-};
-
-static NullVisualizer nullVisualizer;
-IVisualizer* visu = &nullVisualizer;
-
 namespace
 {
 float randomFloat(float min, float max)
@@ -98,7 +88,7 @@ struct TriangulateApp : IApp
   {
     if(key == Key::Space || key == Key::Return)
     {
-      visu = &m_visu;
+      gVisualizer = &m_visu;
 
       if(!m_fiber)
         m_fiber = std::make_unique<Fiber>(staticTriangulateFromFiber, this);

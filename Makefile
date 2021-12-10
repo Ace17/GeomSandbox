@@ -23,6 +23,7 @@ SRCS:=\
 			src/app_collide2d.cpp\
 			src/app_triangulate2.cpp\
 			src/collide2d.cpp\
+			src/visualizer.cpp\
 			src/fiber_$(HOST).cpp\
 			src/triangulate_bowyerwatson.cpp\
 			src/triangulate_flip.cpp\

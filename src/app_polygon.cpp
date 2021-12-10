@@ -82,7 +82,7 @@ struct PolygonApp : IApp
   {
     if(key == Key::Space || key == Key::Return)
     {
-      visu = &m_visu;
+      gVisualizer = &m_visu;
 
       if(!m_fiber)
         m_fiber = std::make_unique<Fiber>(staticRun, this);
