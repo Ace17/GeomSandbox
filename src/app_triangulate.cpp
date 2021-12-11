@@ -22,14 +22,6 @@
 namespace
 {
 
-Vec2 randomPos()
-{
-  Vec2 r;
-  r.x = randomFloat(-20, 20);
-  r.y = randomFloat(-10, 10);
-  return r;
-}
-
 struct TriangulateApp : IApp
 {
   TriangulateApp()
@@ -38,7 +30,7 @@ struct TriangulateApp : IApp
     m_points.resize(N);
 
     for(auto& p : m_points)
-      p = randomPos();
+      p = randomPos({-20,-10}, {20,10});
   }
 
   void draw(IDrawer* drawer) override

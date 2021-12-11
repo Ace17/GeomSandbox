@@ -27,14 +27,6 @@ static Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
 template<typename T>
 T lerp(T a, T b, float alpha) { return a * (1.0f - alpha) + b * alpha; }
 
-Vec2 randomPos()
-{
-  Vec2 r;
-  r.x = randomFloat(-20, 20);
-  r.y = randomFloat(-10, 10);
-  return r;
-}
-
 struct Edge
 {
   int a, b;
@@ -272,7 +264,7 @@ struct TriangulateApp : IApp
     m_points.resize(N);
 
     for(auto& p : m_points)
-      p = randomPos();
+      p = randomPos({-20,-10}, {20,10});
 
     // sort points from left to right
     {
