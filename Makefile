@@ -18,18 +18,20 @@ LDFLAGS+=$(shell pkg-config $(PKGS) --libs)
 CXXFLAGS+=-g3
 
 SRCS:=\
-			src/app_polygon.cpp\
-			src/app_triangulate_flip.cpp\
-			src/app_triangulate_bowyerwatson.cpp\
-			src/app_collide2d.cpp\
-			src/app_triangulate2.cpp\
+			src/main.cpp\
 			src/collide2d.cpp\
 			src/visualizer.cpp\
+			src/random.cpp\
 			src/fiber_$(HOST).cpp\
+
+SRCS+=\
+			src/app_collide2d.cpp\
+			src/app_polygon.cpp\
+			src/app_triangulate2.cpp\
+			src/app_triangulate_bowyerwatson.cpp\
+			src/app_triangulate_flip.cpp\
 			src/triangulate_bowyerwatson.cpp\
 			src/triangulate_flip.cpp\
-			src/random.cpp\
-			src/main.cpp\
 
 $(BIN)/GeomSandbox.exe: $(SRCS:%=$(BIN)/%.o)
 
