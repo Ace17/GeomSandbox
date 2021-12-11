@@ -43,7 +43,7 @@ struct AlgorithmApp : IApp
   {
     Algorithm::drawInput(drawer, m_input);
 
-    for(auto& line : m_visu.m_lines)
+    for(auto& line : m_visu.m_frontScreen.lines)
       drawer->line(line.a, line.b, Yellow);
 
     Algorithm::drawOutput(drawer, m_input, m_output);
@@ -56,6 +56,9 @@ struct AlgorithmApp : IApp
 
   void executeFromFiber()
   {
+    // clear visualization
+    m_visu.m_screen = {};
+
     m_output = Algorithm::execute(m_input);
   }
 
@@ -82,15 +85,29 @@ struct AlgorithmApp : IApp
 
   struct Visualizer : IVisualizer
   {
-    void line(Vec2 a, Vec2 b) override { m_lines.push_back({ a, b }); }
-    void step() override { Fiber::yield(); m_lines.clear();}
-
     struct VisualLine
     {
       Vec2 a, b;
     };
 
-    std::vector<VisualLine> m_lines;
+    struct ScreenState
+    {
+      std::vector<VisualLine> lines;
+    };
+
+    ScreenState m_screen; // the frame we're building
+    ScreenState m_frontScreen; // the frame we're currently showing
+
+    void line(Vec2 a, Vec2 b) override
+    {
+      m_screen.lines.push_back({ a, b });
+    }
+
+    void step() override
+    {
+      m_frontScreen = std::move(m_screen);
+      Fiber::yield();
+    }
   };
 
   Visualizer m_visu;
