@@ -19,7 +19,8 @@ CXXFLAGS+=-g3
 
 SRCS:=\
 			src/app_polygon.cpp\
-			src/app_triangulate.cpp\
+			src/app_triangulate_flip.cpp\
+			src/app_triangulate_bowyerwatson.cpp\
 			src/app_collide2d.cpp\
 			src/app_triangulate2.cpp\
 			src/collide2d.cpp\
