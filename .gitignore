@@ -1,5 +1,6 @@
 *.swp
 *.exe
+*.orig
 /tags
 /bin
 session.vim

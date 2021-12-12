@@ -6,6 +6,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Triangulation, Bowyer-Watson algorithm
+// This is the algorithm implementation.
 
 #include "geom.h"
 #include "triangulate.h"

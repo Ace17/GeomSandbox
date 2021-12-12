@@ -25,6 +25,7 @@ SRCS:=\
 			src/fiber_$(HOST).cpp\
 
 SRCS+=\
+			src/app_example.cpp\
 			src/app_collide2d.cpp\
 			src/app_polygon.cpp\
 			src/app_triangulate2.cpp\
