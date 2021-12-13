@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "app.h"
 #include "fiber.h"
@@ -8,10 +9,10 @@
 // Example algorithm :
 // struct MyAlgorithm
 // {
-//   static std::vector<Vec2> generateInput();
-//   static std::vector<Edge> execute(std::vector<Vec2> input);
-//   static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input);
-//   static void drawOutput(IDrawer* drawer, const std::vector<Edge>& output);
+// static std::vector<Vec2> generateInput();
+// static std::vector<Edge> execute(std::vector<Vec2> input);
+// static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input);
+// static void drawOutput(IDrawer* drawer, const std::vector<Edge>& output);
 // };
 
 template<typename>
@@ -43,8 +44,7 @@ struct AlgorithmApp : IApp
   {
     Algorithm::drawInput(drawer, m_input);
 
-    for(auto& line : m_visu.m_frontScreen.lines)
-      drawer->line(line.a, line.b, Yellow);
+    m_visu.draw(drawer);
 
     Algorithm::drawOutput(drawer, m_input, m_output);
   }
@@ -88,19 +88,58 @@ struct AlgorithmApp : IApp
     struct VisualLine
     {
       Vec2 a, b;
+      Color color;
+    };
+
+    struct VisualRect
+    {
+      Vec2 a, b;
+      Color color;
+    };
+
+    struct VisualCircle
+    {
+      Vec2 center;
+      float radius;
+      Color color;
+    };
+
+    struct VisualText
+    {
+      Vec2 pos;
+      std::string text;
+      Color color;
     };
 
     struct ScreenState
     {
       std::vector<VisualLine> lines;
+      std::vector<VisualRect> rects;
+      std::vector<VisualCircle> circles;
+      std::vector<VisualText> texts;
     };
 
     ScreenState m_screen; // the frame we're building
     ScreenState m_frontScreen; // the frame we're currently showing
 
-    void line(Vec2 a, Vec2 b) override
+    void rect(Vec2 a, Vec2 b, Color color)
     {
-      m_screen.lines.push_back({ a, b });
+      m_screen.rects.push_back({ a, b, color });
+    }
+
+    void circle(Vec2 center, float radius, Color color)
+    {
+      m_screen.circles.push_back({ center, radius, color });
+    }
+
+    void text(Vec2 pos, const char* text, Color color)
+    {
+      m_screen.texts.push_back({ pos, text, color });
+    }
+
+    void line(Vec2 a, Vec2 b, Color c) override
+    {
+      m_screen.lines.push_back({ a, b, c });
     }
 
     void step() override
@@ -108,7 +147,24 @@ struct AlgorithmApp : IApp
       m_frontScreen = std::move(m_screen);
       Fiber::yield();
     }
+
+    void draw(IDrawer* drawer)
+    {
+
+      for(auto& line : m_frontScreen.lines)
+        drawer->line(line.a, line.b, line.color);
+
+      for(auto& rect : m_frontScreen.rects)
+        drawer->rect(rect.a, rect.b, rect.color);
+
+      for(auto& circle : m_frontScreen.circles)
+        drawer->circle(circle.center, circle.radius, circle.color);
+
+      for(auto& text : m_frontScreen.texts)
+        drawer->text(text.pos, text.text.c_str(), text.color);
+    }
   };
 
   Visualizer m_visu;
 };
+

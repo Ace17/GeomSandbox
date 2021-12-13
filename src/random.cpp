@@ -24,3 +24,4 @@ Vec2 randomPos(Vec2 min, Vec2 max)
   r.y = randomFloat(min.y, max.y);
   return r;
 }
+

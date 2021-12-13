@@ -1,14 +1,11 @@
 #pragma once
 
+#include "drawer.h"
+
 struct Vec2;
 
-struct IVisualizer
+struct IVisualizer : IDrawer
 {
-  virtual ~IVisualizer() = default;
-
-  // submit primitives for drawing
-  virtual void line(Vec2 a, Vec2 b) = 0;
-
   // pause execution and display submitted primitives
   virtual void step() = 0;
 };

@@ -7,9 +7,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Example algorithm: split a convex polygon into triangles
 
+#include <cmath>
 #include <cstdio>  // snprintf
 #include <vector>
-#include <cmath>
 
 #include "algorithm_app.h"
 #include "random.h"
@@ -29,7 +29,8 @@ struct ExampleAlgorithm
     const int N = int(randomFloat(3, 15));
     const float radiusX = randomFloat(5, 15);
     const float radiusY = randomFloat(5, 15);
-    for(int i=0;i < N;++i)
+
+    for(int i = 0; i < N; ++i)
     {
       const float angle = 3.14 * 2 * i / N;
       Vec2 pos;
@@ -37,6 +38,7 @@ struct ExampleAlgorithm
       pos.y = sin(angle) * radiusY;
       points.push_back(pos);
     }
+
     return points;
   }
 
@@ -44,26 +46,27 @@ struct ExampleAlgorithm
   {
     std::vector<Segment> result;
 
-    for(int i=2;i+1 < (int)input.size();++i)
+    for(int i = 2; i + 1 < (int)input.size(); ++i)
     {
-      result.push_back({0, i});
+      result.push_back({ 0, i });
 
       gVisualizer->line(input[0], input[i]);
       gVisualizer->step();
     }
+
     return result;
   }
 
   static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input)
   {
-    for(int idx=0;idx < input.size();++idx)
+    for(int idx = 0; idx < input.size(); ++idx)
     {
       char buffer[16];
       snprintf(buffer, sizeof buffer, "%d", idx);
       drawer->rect(input[idx] - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
       drawer->text(input[idx] + Vec2(0.3, 0), buffer, Red);
 
-      const int next_idx = (idx+1) % input.size();
+      const int next_idx = (idx + 1) % input.size();
       drawer->line(input[idx], input[next_idx]);
     }
   }
@@ -77,3 +80,4 @@ struct ExampleAlgorithm
 
 const int reg = registerApp("Example", [] () -> IApp* { return new AlgorithmApp<ExampleAlgorithm>; });
 }
+

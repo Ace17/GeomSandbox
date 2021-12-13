@@ -24,7 +24,7 @@ struct BowyerWatsonTriangulationAlgorithm
     std::vector<Vec2> r(15);
 
     for(auto& p : r)
-      p = randomPos({-20,-10}, {20,10});
+      p = randomPos({ -20, -10 }, { 20, 10 });
 
     return r;
   }
@@ -39,6 +39,7 @@ struct BowyerWatsonTriangulationAlgorithm
   static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input)
   {
     int idx = 0;
+
     for(auto& p : input)
     {
       drawer->rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));

@@ -7,11 +7,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Triangulation
 
-#include "app.h"
 #include "algorithm_app.h"
+#include "app.h"
 #include "fiber.h"
-#include "visualizer.h"
 #include "random.h"
+#include "visualizer.h"
 
 #include <algorithm> // sort
 #include <cassert>
@@ -264,7 +264,7 @@ struct TriangulateAlgorithm
     std::vector<Vec2> r(7);
 
     for(auto& p : r)
-      p = randomPos({-20,-10}, {20,10});
+      p = randomPos({ -20, -10 }, { 20, 10 });
 
     // sort points from left to right
     {

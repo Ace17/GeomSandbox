@@ -9,6 +9,7 @@
 
 #include "app.h"
 #include "collide2d.h"
+#include "drawer.h"
 #include <cmath>
 #include <vector>
 using namespace std;

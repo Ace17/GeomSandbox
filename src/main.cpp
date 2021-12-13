@@ -12,6 +12,7 @@
 #include <stdexcept>
 
 #include "app.h"
+#include "drawer.h"
 #include "font.h"
 #include "geom.h"
 #include "SDL.h"
