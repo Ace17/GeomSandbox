@@ -8,6 +8,7 @@
 // Triangulation
 
 #include "app.h"
+#include "algorithm_app.h"
 #include "fiber.h"
 #include "visualizer.h"
 #include "random.h"
@@ -256,14 +257,13 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
   return r;
 }
 
-struct TriangulateApp : IApp
+struct TriangulateAlgorithm
 {
-  TriangulateApp()
+  static std::vector<Vec2> generateInput()
   {
-    const int N = 7;
-    m_points.resize(N);
+    std::vector<Vec2> r(7);
 
-    for(auto& p : m_points)
+    for(auto& p : r)
       p = randomPos({-20,-10}, {20,10});
 
     // sort points from left to right
@@ -279,15 +279,22 @@ struct TriangulateApp : IApp
           return true;
         };
 
-      std::sort(m_points.begin(), m_points.end(), byCoordinates);
+      std::sort(r.begin(), r.end(), byCoordinates);
     }
+
+    return r;
   }
 
-  void draw(IDrawer* drawer) override
+  static std::vector<Edge> execute(std::vector<Vec2> input)
+  {
+    return triangulate({ input.size(), input.data() }, gVisualizer);
+  }
+
+  static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input)
   {
     int idx = 0;
 
-    for(auto& p : m_points)
+    for(auto& p : input)
     {
       drawer->rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
       char buffer[16];
@@ -295,20 +302,23 @@ struct TriangulateApp : IApp
       drawer->text(p + Vec2(0.3, 0), buffer, Red);
       idx++;
     }
+  }
 
-    idx = 0;
+  static void drawOutput(IDrawer* drawer, const std::vector<Vec2>& input, const std::vector<Edge>& output)
+  {
+    int idx = 0;
 
-    for(auto& edge : m_edges)
+    for(auto& edge : output)
     {
-      auto center = (m_points[edge.a] + m_points[edge.b]) * 0.5;
-      auto N = normalize(m_points[edge.b] - m_points[edge.a]);
+      auto center = (input[edge.a] + input[edge.b]) * 0.5;
+      auto N = normalize(input[edge.b] - input[edge.a]);
       auto T = rotateLeft(N);
 
-      drawer->line(m_points[edge.a], m_points[edge.b], Green);
+      drawer->line(input[edge.a], input[edge.b], Green);
 
       for(int i = 0; i < 10; ++i)
       {
-        auto pos = lerp(m_points[edge.a], m_points[edge.b], i / 10.0f);
+        auto pos = lerp(input[edge.a], input[edge.b], i / 10.0f);
         drawer->line(pos, pos - N * 0.25 + T * 0.25, Green);
       }
 
@@ -317,59 +327,9 @@ struct TriangulateApp : IApp
       drawer->text(center + T * 1.0, buffer, Green);
       idx++;
     }
-
-    for(auto& line : m_visu.m_lines)
-      drawer->line(line.a, line.b, Yellow);
   }
-
-  void keydown(Key key) override
-  {
-    if(key == Key::Space)
-    {
-      if(!m_fiber)
-        m_fiber = std::make_unique<Fiber>(&staticTriangulateFromFiber, this);
-
-      m_fiber->resume();
-    }
-  }
-
-  static void staticTriangulateFromFiber(void* userParam)
-  {
-    auto pThis = (TriangulateApp*)userParam;
-    pThis->triangulateFromFiber();
-  }
-
-  void triangulateFromFiber()
-  {
-    m_edges = triangulate({ m_points.size(), m_points.data() }, &m_visu);
-  }
-
-  struct Visualizer : IVisualizer
-  {
-    struct VisualLine
-    {
-      Vec2 a, b;
-    };
-
-    std::vector<VisualLine> m_lines;
-
-    void line(Vec2 a, Vec2 b) override
-    {
-      m_lines.push_back({ a, b });
-    }
-
-    void step() override
-    {
-      Fiber::yield();
-      m_lines.clear();
-    }
-  };
-
-  Visualizer m_visu;
-  std::unique_ptr<Fiber> m_fiber;
-  std::vector<Vec2> m_points;
-  std::vector<Edge> m_edges;
 };
-const int registered = registerApp("triangulate2", [] () -> IApp* { return new TriangulateApp; });
+
+const int registered = registerApp("triangulate2", [] () -> IApp* { return new AlgorithmApp<TriangulateAlgorithm>; });
 }
 
