@@ -43,8 +43,7 @@ $(BIN)/%.exe:
 
 $(BIN)/%.cpp.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) -c $(CXXFLAGS) -o "$@" $<
-	@$(CXX) -MM -MT "$@" -c $(CXXFLAGS) -o "$@.dep" $<
+	$(CXX) -MMD -MT "$@" -MF "$@.dep" -c $(CXXFLAGS) -o "$@" $<
 
 include $(shell test -d $(BIN) && find $(BIN) -name "*.dep")
 
