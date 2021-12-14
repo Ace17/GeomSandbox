@@ -60,6 +60,9 @@ struct AlgorithmApp : IApp
     m_visu.m_screen = {};
 
     m_output = Algorithm::execute(m_input);
+
+    // clear last step's visualisation
+    m_visu.m_frontScreen = {};
   }
 
   void keydown(Key key) override
