@@ -1,5 +1,7 @@
 #pragma once
 
+#include "geom.h" // Vec2
+
 struct Color
 {
   float r, g, b, a;
