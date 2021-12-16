@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Triangulation: Flip algorithm
 
-#include <cstdio>  // fprintf
+#include <cstdio> // fprintf
 #include <vector>
 
 #include "algorithm_app.h"
@@ -23,14 +23,14 @@ struct FlipTriangulationAlgorithm
     std::vector<Vec2> r(15);
 
     for(auto& p : r)
-      p = randomPos({ -20, -10 }, { 20, 10 });
+      p = randomPos({-20, -10}, {20, 10});
 
     return r;
   }
 
   static std::vector<Edge> execute(std::vector<Vec2> input)
   {
-    auto result = triangulate_Flip({ input.size(), input.data() });
+    auto result = triangulate_Flip({input.size(), input.data()});
     fprintf(stderr, "Triangulated, %d edges\n", (int)result.size());
     return result;
   }
@@ -56,6 +56,6 @@ struct FlipTriangulationAlgorithm
   }
 };
 
-const int reg = registerApp("FlipTriangulation", [] () -> IApp* { return new AlgorithmApp<FlipTriangulationAlgorithm>; });
+const int reg =
+      registerApp("FlipTriangulation", []() -> IApp* { return new AlgorithmApp<FlipTriangulationAlgorithm>; });
 } // namespace
-

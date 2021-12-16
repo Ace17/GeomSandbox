@@ -8,7 +8,7 @@
 // Example algorithm: split a convex polygon into triangles
 
 #include <cmath>
-#include <cstdio>  // snprintf
+#include <cstdio> // snprintf
 #include <vector>
 
 #include "algorithm_app.h"
@@ -48,7 +48,7 @@ struct ExampleAlgorithm
 
     for(int i = 2; i + 1 < (int)input.size(); ++i)
     {
-      result.push_back({ 0, i });
+      result.push_back({0, i});
 
       gVisualizer->line(input[0], input[i]);
       gVisualizer->step();
@@ -78,6 +78,5 @@ struct ExampleAlgorithm
   }
 };
 
-const int reg = registerApp("Example", [] () -> IApp* { return new AlgorithmApp<ExampleAlgorithm>; });
+const int reg = registerApp("Example", []() -> IApp* { return new AlgorithmApp<ExampleAlgorithm>; });
 }
-

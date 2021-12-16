@@ -12,15 +12,19 @@ struct Vec2
   float x, y;
 
   Vec2() = default;
-  Vec2(float x_, float y_) : x(x_), y(y_) {}
+  Vec2(float x_, float y_)
+      : x(x_)
+      , y(y_)
+  {
+  }
 
-  void operator += (Vec2 other) { *this = *this + other; }
-  void operator -= (Vec2 other) { *this = *this - other; }
-  float operator * (Vec2 other) const { return x * other.x + y * other.y; }
+  void operator+=(Vec2 other) { *this = *this + other; }
+  void operator-=(Vec2 other) { *this = *this - other; }
+  float operator*(Vec2 other) const { return x * other.x + y * other.y; }
 
-  Vec2 operator + (Vec2 other) const { return Vec2 { x + other.x, y + other.y }; }
-  Vec2 operator - (Vec2 other) const { return Vec2 { x - other.x, y - other.y }; }
-  Vec2 operator * (float f) const { return Vec2 { x* f, y* f }; }
+  Vec2 operator+(Vec2 other) const { return Vec2{x + other.x, y + other.y}; }
+  Vec2 operator-(Vec2 other) const { return Vec2{x - other.x, y - other.y}; }
+  Vec2 operator*(float f) const { return Vec2{x * f, y * f}; }
 
   static Vec2 zero() { return Vec2(0, 0); }
 };
@@ -37,16 +41,29 @@ struct span
   const T* begin() const { return ptr; }
   const T* end() const { return ptr + len; }
 
-  T& operator [] (int idx) { return ptr[idx]; }
-  const T& operator [] (int idx) const { return ptr[idx]; }
+  T& operator[](int idx) { return ptr[idx]; }
+  const T& operator[](int idx) const { return ptr[idx]; }
 
-  span sub(int offset) { return span{ len - offset, ptr + offset }; }
+  span sub(int offset) { return span{len - offset, ptr + offset}; }
 
   span() = default;
-  span(size_t N, T* tab) :  len(N), ptr(tab) {}
+  span(size_t N, T* tab)
+      : len(N)
+      , ptr(tab)
+  {
+  }
 
-  void operator += (int i) { ptr += i; len -= i; }
-  auto & pop() { auto& r = ptr[0]; (*this) += 1; return r; }
+  void operator+=(int i)
+  {
+    ptr += i;
+    len -= i;
+  }
+  auto& pop()
+  {
+    auto& r = ptr[0];
+    (*this) += 1;
+    return r;
+  }
 
   // construction from vector/string
   template<typename U, typename = decltype(((U*)0)->data())>
@@ -56,4 +73,3 @@ struct span
     len = s.size();
   }
 };
-

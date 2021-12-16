@@ -7,11 +7,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Collision detection and response
 
+#include <cmath>
+#include <vector>
+
 #include "app.h"
 #include "collide2d.h"
 #include "drawer.h"
-#include <cmath>
-#include <vector>
 using namespace std;
 namespace
 {
@@ -31,10 +32,7 @@ struct World
   vector<Segment> segments;
 };
 
-Vec2 direction(float angle)
-{
-  return Vec2(cos(angle), sin(angle));
-}
+Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
 
 template<size_t N>
 void pushPolygon(vector<Segment>& out, Vec2 const (&data)[N])
@@ -43,7 +41,7 @@ void pushPolygon(vector<Segment>& out, Vec2 const (&data)[N])
   {
     auto a = data[(i + 0) % N];
     auto b = data[(i + 1) % N];
-    out.push_back(Segment { a, b });
+    out.push_back(Segment{a, b});
   }
 }
 
@@ -54,86 +52,81 @@ World createWorld()
   world.pos = Vec2(4, 2);
   world.angle = 0;
 
-  static const Vec2 points1[] =
-  {
-    Vec2(8, -3),
-    Vec2(8, 2),
-    Vec2(12, 2),
-    Vec2(12, 3),
-    Vec2(12, 5),
-    Vec2(14, 5),
-    Vec2(12, 5),
-    Vec2(12, 7),
-    Vec2(15, 7),
-    Vec2(15, 16),
-    Vec2(-3, 16),
-    Vec2(-3, 14),
-    Vec2(10, 14),
-    Vec2(10, 4),
-    Vec2(8, 4),
-    Vec2(4, 4),
-    Vec2(4, 5),
-    Vec2(8, 8),
-    Vec2(3, 8),
-    Vec2(3, 13),
-    Vec2(1, 13),
-    Vec2(-1, 13),
-    Vec2(-3, 13),
-    Vec2(-3, 10),
-    Vec2(1, 10),
-    Vec2(1, 8),
-    Vec2(0, 8),
-    Vec2(-1, 3.5),
-    Vec2(-2, 3.5),
-    Vec2(-2, 3.0),
-    Vec2(-3, 3.0),
-    Vec2(-3, 2.5),
-    Vec2(-4, 2.5),
-    Vec2(-4, 2),
-    Vec2(-5, 2),
-    Vec2(-5, -3),
+  static const Vec2 points1[] = {
+        Vec2(8, -3),
+        Vec2(8, 2),
+        Vec2(12, 2),
+        Vec2(12, 3),
+        Vec2(12, 5),
+        Vec2(14, 5),
+        Vec2(12, 5),
+        Vec2(12, 7),
+        Vec2(15, 7),
+        Vec2(15, 16),
+        Vec2(-3, 16),
+        Vec2(-3, 14),
+        Vec2(10, 14),
+        Vec2(10, 4),
+        Vec2(8, 4),
+        Vec2(4, 4),
+        Vec2(4, 5),
+        Vec2(8, 8),
+        Vec2(3, 8),
+        Vec2(3, 13),
+        Vec2(1, 13),
+        Vec2(-1, 13),
+        Vec2(-3, 13),
+        Vec2(-3, 10),
+        Vec2(1, 10),
+        Vec2(1, 8),
+        Vec2(0, 8),
+        Vec2(-1, 3.5),
+        Vec2(-2, 3.5),
+        Vec2(-2, 3.0),
+        Vec2(-3, 3.0),
+        Vec2(-3, 2.5),
+        Vec2(-4, 2.5),
+        Vec2(-4, 2),
+        Vec2(-5, 2),
+        Vec2(-5, -3),
   };
 
   pushPolygon(world.segments, points1);
 
-  static const Vec2 points2[] =
-  {
-    Vec2(-1, -2.0),
-    Vec2(-2, -2.0),
-    Vec2(-1.5, -1),
+  static const Vec2 points2[] = {
+        Vec2(-1, -2.0),
+        Vec2(-2, -2.0),
+        Vec2(-1.5, -1),
   };
 
   pushPolygon(world.segments, points2);
 
-  static const Vec2 points3[] =
-  {
-    Vec2(2, -3),
-    Vec2(3, -2),
-    Vec2(4, -3),
-    Vec2(3, -2),
-    Vec2(4, -1),
-    Vec2(5, -2),
-    Vec2(6, -3),
+  static const Vec2 points3[] = {
+        Vec2(2, -3),
+        Vec2(3, -2),
+        Vec2(4, -3),
+        Vec2(3, -2),
+        Vec2(4, -1),
+        Vec2(5, -2),
+        Vec2(6, -3),
   };
 
   pushPolygon(world.segments, points3);
 
-  static const Vec2 points4[] =
-  {
-    Vec2(12, 7),
-    Vec2(12, 9),
-    Vec2(13, 9),
-    Vec2(13, 7),
+  static const Vec2 points4[] = {
+        Vec2(12, 7),
+        Vec2(12, 9),
+        Vec2(13, 9),
+        Vec2(13, 7),
   };
 
   pushPolygon(world.segments, points4);
 
-  static const Vec2 points5[] =
-  {
-    Vec2(12, 9),
-    Vec2(12, 11),
-    Vec2(13, 11),
-    Vec2(13, 9),
+  static const Vec2 points5[] = {
+        Vec2(12, 9),
+        Vec2(12, 11),
+        Vec2(13, 11),
+        Vec2(13, 9),
   };
 
   pushPolygon(world.segments, points5);
@@ -163,7 +156,7 @@ void tick(World& world, Input input)
   world.angle += omega;
   auto const delta = direction(world.angle) * thrust;
 
-  auto segments = span<Segment> { world.segments.size(), world.segments.data() };
+  auto segments = span<Segment>{world.segments.size(), world.segments.data()};
 
   if(input.force)
     world.pos += delta;
@@ -173,10 +166,7 @@ void tick(World& world, Input input)
 
 struct Collide2DApp : IApp
 {
-  Collide2DApp()
-  {
-    world = createWorld();
-  }
+  Collide2DApp() { world = createWorld(); }
 
   void tick() override
   {
@@ -219,16 +209,12 @@ struct Collide2DApp : IApp
       input.changeShape = true;
   }
 
-  void keyup(Key key) override
-  {
-    keyState[(int)key] = false;
-  }
+  void keyup(Key key) override { keyState[(int)key] = false; }
 
-  bool keyState[128] {};
-  World world {};
-  Input input {};
+  bool keyState[128]{};
+  World world{};
+  Input input{};
 };
 
-const int registered = registerApp("collide2d", [] () -> IApp* { return new Collide2DApp; });
+const int registered = registerApp("collide2d", []() -> IApp* { return new Collide2DApp; });
 }
-

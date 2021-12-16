@@ -4,18 +4,18 @@
 
 class Fiber
 {
-public:
-  Fiber(void(*func)(void*), void* userParam);
+  public:
+  Fiber(void (*func)(void*), void* userParam);
 
   void resume();
   bool finished() const { return m_finished; };
   static void yield();
 
-private:
+  private:
   static void launcherFunc();
 
   // Function to run inside the fiber
-  void(*const m_func)(void*);
+  void (*const m_func)(void*);
   void* const m_userParam;
 
   // Execution state
@@ -27,4 +27,3 @@ private:
   Priv* priv;
   alignas(void*) uint8_t privBuffer[4096];
 };
-

@@ -35,10 +35,7 @@ struct AlgorithmApp : IApp
   InputType m_input;
   OutputType m_output;
 
-  AlgorithmApp()
-  {
-    m_input = Algorithm::generateInput();
-  }
+  AlgorithmApp() { m_input = Algorithm::generateInput(); }
 
   void draw(IDrawer* drawer) override
   {
@@ -49,10 +46,7 @@ struct AlgorithmApp : IApp
     Algorithm::drawOutput(drawer, m_input, m_output);
   }
 
-  static void staticExecute(void* userParam)
-  {
-    ((AlgorithmApp<Algorithm>*)userParam)->executeFromFiber();
-  }
+  static void staticExecute(void* userParam) { ((AlgorithmApp<Algorithm>*)userParam)->executeFromFiber(); }
 
   void executeFromFiber()
   {
@@ -125,25 +119,13 @@ struct AlgorithmApp : IApp
     ScreenState m_screen; // the frame we're building
     ScreenState m_frontScreen; // the frame we're currently showing
 
-    void rect(Vec2 a, Vec2 b, Color color)
-    {
-      m_screen.rects.push_back({ a, b, color });
-    }
+    void rect(Vec2 a, Vec2 b, Color color) { m_screen.rects.push_back({a, b, color}); }
 
-    void circle(Vec2 center, float radius, Color color)
-    {
-      m_screen.circles.push_back({ center, radius, color });
-    }
+    void circle(Vec2 center, float radius, Color color) { m_screen.circles.push_back({center, radius, color}); }
 
-    void text(Vec2 pos, const char* text, Color color)
-    {
-      m_screen.texts.push_back({ pos, text, color });
-    }
+    void text(Vec2 pos, const char* text, Color color) { m_screen.texts.push_back({pos, text, color}); }
 
-    void line(Vec2 a, Vec2 b, Color c) override
-    {
-      m_screen.lines.push_back({ a, b, c });
-    }
+    void line(Vec2 a, Vec2 b, Color c) override { m_screen.lines.push_back({a, b, c}); }
 
     void step() override
     {
@@ -170,4 +152,3 @@ struct AlgorithmApp : IApp
 
   Visualizer m_visu;
 };
-

@@ -1,6 +1,7 @@
-#include "fiber.h"
 #include <cassert>
 #include <ucontext.h>
+
+#include "fiber.h"
 
 static thread_local Fiber* ThisFiber;
 
@@ -17,7 +18,9 @@ void Fiber::launcherFunc()
   yield();
 }
 
-Fiber::Fiber(void(*func)(void*), void* userParam) : m_func(func), m_userParam(userParam)
+Fiber::Fiber(void (*func)(void*), void* userParam)
+    : m_func(func)
+    , m_userParam(userParam)
 {
   static_assert(sizeof(Fiber::Priv) < sizeof(Fiber::privBuffer));
 
@@ -47,4 +50,3 @@ void Fiber::yield()
   ThisFiber = nullptr;
   swapcontext(&pThis->priv->client, &pThis->priv->main);
 }
-

@@ -7,10 +7,10 @@ struct Color
   float r, g, b, a;
 };
 
-constexpr Color White{ 1, 1, 1, 1 };
-constexpr Color Red{ 1, 0, 0, 1 };
-constexpr Color Green{ 0, 1, 0, 1 };
-constexpr Color Yellow{ 1, 1, 0, 1 };
+constexpr Color White{1, 1, 1, 1};
+constexpr Color Red{1, 0, 0, 1};
+constexpr Color Green{0, 1, 0, 1};
+constexpr Color Yellow{1, 1, 0, 1};
 
 struct IDrawer
 {
@@ -21,4 +21,3 @@ struct IDrawer
   virtual void circle(Vec2 center, float radius, Color color = White) = 0;
   virtual void text(Vec2 pos, const char* text, Color color = White) = 0;
 };
-

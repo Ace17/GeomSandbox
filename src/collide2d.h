@@ -19,4 +19,3 @@ enum Shape
 void slideMove(Vec2& pos, Shape shape, Vec2 delta, span<Segment> segments);
 
 static auto const RADIUS = 0.8f;
-

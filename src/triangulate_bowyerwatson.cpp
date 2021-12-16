@@ -8,10 +8,11 @@
 // Triangulation, Bowyer-Watson algorithm
 // This is the algorithm implementation.
 
+#include <vector>
+
 #include "geom.h"
 #include "triangulate.h"
 #include "visualizer.h"
-#include <vector>
 
 namespace
 {
@@ -37,9 +38,9 @@ Triangle makeTriangle(int p0, int p1, int p2, span<const Vec2> coords)
   auto c2 = coords[p2];
 
   Triangle r;
-  r.edges[0] = { p0, p1 };
-  r.edges[1] = { p1, p2 };
-  r.edges[2] = { p2, p0 };
+  r.edges[0] = {p0, p1};
+  r.edges[1] = {p1, p2};
+  r.edges[2] = {p2, p0};
 
   // compute both perpendicular bissectors
   auto A = (c0 + c1) * 0.5;
@@ -88,11 +89,11 @@ Triangle createSuperTriangle(std::vector<Vec2>& coords)
   min_y -= margin;
 
   const int i0 = (int)coords.size();
-  coords.push_back({ min_x, min_y });
+  coords.push_back({min_x, min_y});
   const int i1 = (int)coords.size();
-  coords.push_back({ max_x + (max_x - min_x) * 2.0f, min_y });
+  coords.push_back({max_x + (max_x - min_x) * 2.0f, min_y});
   const int i2 = (int)coords.size();
-  coords.push_back({ min_x, max_y + (max_y - min_y) * 2.0f });
+  coords.push_back({min_x, max_y + (max_y - min_y) * 2.0f});
 
   return makeTriangle(i0, i1, i2, coords);
 }
@@ -156,7 +157,8 @@ std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> inputCoords)
 
     for(int j = 0; j < (int)edges.size(); ++j)
       for(int k = j + 1; k < (int)edges.size(); ++k)
-        if((edges[j].a == edges[k].a && edges[j].b == edges[k].b) || (edges[j].a == edges[k].b && edges[j].b == edges[k].a))
+        if((edges[j].a == edges[k].a && edges[j].b == edges[k].b) ||
+              (edges[j].a == edges[k].b && edges[j].b == edges[k].a))
           edgeIsOnCountour[j] = edgeIsOnCountour[k] = false;
 
     // For each edge on the contour of the hole, create a new triangle using 'p'.
@@ -184,4 +186,3 @@ std::vector<Edge> triangulate_BowyerWatson(span<const Vec2> inputCoords)
 
   return edges;
 }
-

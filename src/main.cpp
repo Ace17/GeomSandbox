@@ -11,11 +11,11 @@
 #include <memory>
 #include <stdexcept>
 
+#include "SDL.h"
 #include "app.h"
 #include "drawer.h"
 #include "font.h"
 #include "geom.h"
-#include "SDL.h"
 
 #undef main
 
@@ -24,13 +24,10 @@ const int HEIGHT = 720;
 
 float g_Scale = 20.0f;
 float g_TargetScale = 20.0f;
-Vec2 g_Pos {};
-Vec2 g_TargetPos {};
+Vec2 g_Pos{};
+Vec2 g_TargetPos{};
 
-Vec2 direction(float angle)
-{
-  return Vec2(cos(angle), sin(angle));
-}
+Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
 
 SDL_Point transform(Vec2 v)
 {
@@ -84,7 +81,7 @@ struct SdlDrawer : IDrawer
   {
     setColor(color);
     auto const N = 20;
-    SDL_Point PREV {};
+    SDL_Point PREV{};
 
     for(int i = 0; i <= N; ++i)
     {
@@ -147,13 +144,20 @@ Key fromSdlKey(int key)
 {
   switch(key)
   {
-  case SDLK_LEFT: return Key::Left;
-  case SDLK_RIGHT: return Key::Right;
-  case SDLK_UP:   return Key::Up;
-  case SDLK_DOWN: return Key::Down;
-  case SDLK_SPACE: return Key::Space;
-  case SDLK_HOME: return Key::Home;
-  case SDLK_RETURN: return Key::Return;
+  case SDLK_LEFT:
+    return Key::Left;
+  case SDLK_RIGHT:
+    return Key::Right;
+  case SDLK_UP:
+    return Key::Up;
+  case SDLK_DOWN:
+    return Key::Down;
+  case SDLK_SPACE:
+    return Key::Space;
+  case SDLK_HOME:
+    return Key::Home;
+  case SDLK_RETURN:
+    return Key::Return;
   }
 
   return Key::Unknown;
@@ -208,7 +212,7 @@ bool readInput(IApp* app, bool& reset)
   return true;
 }
 
-std::map<std::string, CreationFunc*> & Registry()
+std::map<std::string, CreationFunc*>& Registry()
 {
   static std::map<std::string, CreationFunc*> registry;
   return registry;
@@ -287,4 +291,3 @@ int main(int argc, char* argv[])
     return 1;
   }
 }
-

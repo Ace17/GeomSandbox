@@ -7,12 +7,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Triangulation
 
-#include "algorithm_app.h"
-#include "app.h"
-#include "fiber.h"
-#include "random.h"
-#include "visualizer.h"
-
 #include <algorithm> // sort
 #include <cassert>
 #include <cmath>
@@ -20,23 +14,29 @@
 #include <memory>
 #include <vector>
 
+#include "algorithm_app.h"
+#include "app.h"
+#include "fiber.h"
+#include "random.h"
+#include "visualizer.h"
+
 namespace
 {
 static float magnitude(Vec2 v) { return sqrt(v * v); }
 static Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
 static Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
 template<typename T>
-T lerp(T a, T b, float alpha) { return a * (1.0f - alpha) + b * alpha; }
+T lerp(T a, T b, float alpha)
+{
+  return a * (1.0f - alpha) + b * alpha;
+}
 
 struct Edge
 {
   int a, b;
 };
 
-float det2d(Vec2 a, Vec2 b)
-{
-  return a.x * b.y - a.y * b.x;
-}
+float det2d(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
 
 struct HalfEdge
 {
@@ -60,44 +60,41 @@ int nextEdgeOnHull(span<const HalfEdge> he, int edge)
   return edge;
 }
 
-const int unittests_run = [] ()
+const int unittests_run = []() {
+  // simple
   {
-    // simple
-    {
-      std::vector<HalfEdge> he =
-      {
-        { 0, 1, -1 },
-        { 1, 2, -1 },
-        { 2, 4, -1 },
-      };
+    std::vector<HalfEdge> he = {
+          {0, 1, -1},
+          {1, 2, -1},
+          {2, 4, -1},
+    };
 
-      assert(1 == nextEdgeOnHull(he, 0));
-      assert(2 == nextEdgeOnHull(he, 1));
-    }
+    assert(1 == nextEdgeOnHull(he, 0));
+    assert(2 == nextEdgeOnHull(he, 1));
+  }
 
-    // internal edge
-    {
-      // |          P3
-      // |           |
-      // |           |
-      // |         E1|E2
-      // |           |
-      // |      E0   |  E3
-      // |  P0 ---- P1 ----- P2
-      //
-      std::vector<HalfEdge> he =
-      {
-        /* E0 */ { 0, 1, -1 },
-        /* E1 */ { 1, 1000, 2 },
-        /* E2 */ { 3, 3, 1 },
-        /* E3 */ { 1, 1001, -1 },
-      };
+  // internal edge
+  {
+    // |          P3
+    // |           |
+    // |           |
+    // |         E1|E2
+    // |           |
+    // |      E0   |  E3
+    // |  P0 ---- P1 ----- P2
+    //
+    std::vector<HalfEdge> he = {
+          /* E0 */ {0, 1, -1},
+          /* E1 */ {1, 1000, 2},
+          /* E2 */ {3, 3, 1},
+          /* E3 */ {1, 1001, -1},
+    };
 
-      assert(3 == nextEdgeOnHull(he, 0));
-    }
+    assert(3 == nextEdgeOnHull(he, 0));
+  }
 
-    return 0;
-  }();
+  return 0;
+}();
 
 std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
 {
@@ -107,14 +104,13 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
   if(points.len < 3)
     return {};
 
-  auto addHalfEdge = [&] (int p0, int nextEdge) -> int
-    {
-      const int edge = (int)he.size();
-      pointToEdge[p0] = edge;
-      he.push_back({ p0, -1, -1 });
-      he[edge].nextEdge = nextEdge;
-      return edge;
-    };
+  auto addHalfEdge = [&](int p0, int nextEdge) -> int {
+    const int edge = (int)he.size();
+    pointToEdge[p0] = edge;
+    he.push_back({p0, -1, -1});
+    he[edge].nextEdge = nextEdge;
+    return edge;
+  };
 
   // bootstrap triangulation with first triangle
   {
@@ -135,47 +131,43 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
 
   int hullHead = 0;
 
-  auto printHull = [&] ()
+  auto printHull = [&]() {
+    int k = 0;
+    int edge = hullHead;
+    fprintf(stderr, "[");
+
+    do
     {
-      int k = 0;
-      int edge = hullHead;
-      fprintf(stderr, "[");
+      fprintf(stderr, "E%d (P%d) ", edge, he[edge].point);
+      edge = nextEdgeOnHull(he, edge);
 
-      do
+      if(++k > 10)
       {
-        fprintf(stderr, "E%d (P%d) ", edge, he[edge].point);
-        edge = nextEdgeOnHull(he, edge);
-
-        if(++k > 10)
-        {
-          fprintf(stderr, "... ");
-          break;
-        }
+        fprintf(stderr, "... ");
+        break;
       }
-      while (edge != hullHead);
+    } while(edge != hullHead);
 
-      fprintf(stderr, "]\n");
-    };
+    fprintf(stderr, "]\n");
+  };
 
-  auto drawHull = [&] ()
+  auto drawHull = [&]() {
+    int k = 0;
+    int edge = hullHead;
+
+    do
     {
-      int k = 0;
-      int edge = hullHead;
+      const int prev = edge;
+      edge = nextEdgeOnHull(he, edge);
 
-      do
+      vis->line(points[he[edge].point], points[he[prev].point]);
+
+      if(++k > 10)
       {
-        const int prev = edge;
-        edge = nextEdgeOnHull(he, edge);
-
-        vis->line(points[he[edge].point], points[he[prev].point]);
-
-        if(++k > 10)
-        {
-          break;
-        }
+        break;
       }
-      while (edge != hullHead);
-    };
+    } while(edge != hullHead);
+  };
 
   drawHull();
   vis->step();
@@ -245,14 +237,13 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
       }
 
       hullCurr = hullNext;
-    }
-    while (he[hullCurr].point != loopPoint);
+    } while(he[hullCurr].point != loopPoint);
   }
 
   std::vector<Edge> r;
 
   for(auto& e : he)
-    r.push_back({ e.point, he[e.nextEdge].point });
+    r.push_back({e.point, he[e.nextEdge].point});
 
   return r;
 }
@@ -264,20 +255,19 @@ struct TriangulateAlgorithm
     std::vector<Vec2> r(7);
 
     for(auto& p : r)
-      p = randomPos({ -20, -10 }, { 20, 10 });
+      p = randomPos({-20, -10}, {20, 10});
 
     // sort points from left to right
     {
-      auto byCoordinates = [] (Vec2 a, Vec2 b)
-        {
-          if(a.x != b.x)
-            return a.x < b.x;
+      auto byCoordinates = [](Vec2 a, Vec2 b) {
+        if(a.x != b.x)
+          return a.x < b.x;
 
-          if(a.y != b.y)
-            return a.y < b.y;
+        if(a.y != b.y)
+          return a.y < b.y;
 
-          return true;
-        };
+        return true;
+      };
 
       std::sort(r.begin(), r.end(), byCoordinates);
     }
@@ -287,7 +277,7 @@ struct TriangulateAlgorithm
 
   static std::vector<Edge> execute(std::vector<Vec2> input)
   {
-    return triangulate({ input.size(), input.data() }, gVisualizer);
+    return triangulate({input.size(), input.data()}, gVisualizer);
   }
 
   static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input)
@@ -330,6 +320,5 @@ struct TriangulateAlgorithm
   }
 };
 
-const int registered = registerApp("triangulate2", [] () -> IApp* { return new AlgorithmApp<TriangulateAlgorithm>; });
+const int registered = registerApp("triangulate2", []() -> IApp* { return new AlgorithmApp<TriangulateAlgorithm>; });
 }
-

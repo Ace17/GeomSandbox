@@ -1,14 +1,15 @@
-#include "fiber.h"
 #include <cassert>
 #include <windows.h>
 #include <winnt.h>
+
+#include "fiber.h"
 
 static thread_local Fiber* ThisFiber;
 
 struct Fiber::Priv
 {
-  CONTEXT client {};
-  CONTEXT main {};
+  CONTEXT client{};
+  CONTEXT main{};
 };
 
 void Fiber::launcherFunc()
@@ -18,7 +19,9 @@ void Fiber::launcherFunc()
   yield();
 }
 
-Fiber::Fiber(void(*func)(void*), void* userParam) : m_func(func), m_userParam(userParam)
+Fiber::Fiber(void (*func)(void*), void* userParam)
+    : m_func(func)
+    , m_userParam(userParam)
 {
   static_assert(sizeof(Fiber::Priv) < sizeof(Fiber::privBuffer));
 
@@ -55,4 +58,3 @@ void Fiber::yield()
   RtlCaptureContext(&pThis->priv->client);
   RtlRestoreContext(&pThis->priv->main, nullptr);
 }
-

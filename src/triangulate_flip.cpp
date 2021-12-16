@@ -7,12 +7,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Triangulation, Flip algorithm
 
-#include "geom.h"
-#include "triangulate.h"
-#include "visualizer.h"
 #include <algorithm>
 #include <map>
 #include <vector>
+
+#include "geom.h"
+#include "triangulate.h"
+#include "visualizer.h"
 
 namespace
 {
@@ -27,8 +28,7 @@ void printHull(std::map<int, int> hull, span<const Vec2> points, int head)
     int next = hull[curr];
     gVisualizer->line(points[curr], points[next]);
     curr = next;
-  }
-  while (curr != head);
+  } while(curr != head);
 
   gVisualizer->line(points[head] + Vec2(-1, -1), points[head] + Vec2(+1, +1));
   gVisualizer->line(points[head] + Vec2(-1, +1), points[head] + Vec2(+1, -1));
@@ -48,18 +48,18 @@ std::vector<int> sortPointsFromLeftToRight(span<const Vec2> points)
   for(int i = 0; i < points.len; ++i)
     order[i] = i;
 
-  auto byCoordinates = [&] (int ia, int ib) {
-      auto a = points[ia];
-      auto b = points[ib];
+  auto byCoordinates = [&](int ia, int ib) {
+    auto a = points[ia];
+    auto b = points[ib];
 
-      if(a.x != b.x)
-        return a.x < b.x;
+    if(a.x != b.x)
+      return a.x < b.x;
 
-      if(a.y != b.y)
-        return a.y < b.y;
+    if(a.y != b.y)
+      return a.y < b.y;
 
-      return true;
-    };
+    return true;
+  };
 
   std::sort(order.begin(), order.end(), byCoordinates);
 
@@ -87,7 +87,7 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
     if(det2d(points[i1] - points[i0], points[i2] - points[i0]) < 0)
       std::swap(i1, i2);
 
-    triangles.push_back({ i0, i1, i2 });
+    triangles.push_back({i0, i1, i2});
 
     hull[i0] = i1;
     hull[i1] = i2;
@@ -127,7 +127,7 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
 
       if(det2d(p - a, b - a) > 0.001)
       {
-        triangles.push_back({ hullCurr, idx, hullNext });
+        triangles.push_back({hullCurr, idx, hullNext});
 
         hull[idx] = hullNext;
         hull[hullCurr] = idx;
@@ -137,8 +137,7 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
       }
 
       hullCurr = hullNext;
-    }
-    while (hullCurr != hullFirst);
+    } while(hullCurr != hullFirst);
 
     queue += 1;
   }
@@ -158,33 +157,32 @@ std::vector<HalfEdge> convertToHalfEdge(span<const Vec2> points, span<const Tria
   std::vector<HalfEdge> he;
   std::map<std::pair<int, int>, int> pointToEdge;
 
-  auto findHalfEdge = [&] (int a, int b)
-    {
-      auto i = pointToEdge.find({ a, b });
+  auto findHalfEdge = [&](int a, int b) {
+    auto i = pointToEdge.find({a, b});
 
-      if(i == pointToEdge.end())
-        return -1;
+    if(i == pointToEdge.end())
+      return -1;
 
-      return i->second;
-    };
+    return i->second;
+  };
 
   for(auto& t : triangles)
   {
     const auto e0 = (int)he.size() + 0;
     const auto e1 = (int)he.size() + 1;
     const auto e2 = (int)he.size() + 2;
-    he.push_back({ t.a, e1 });
-    he.push_back({ t.b, e2 });
-    he.push_back({ t.c, e0 });
+    he.push_back({t.a, e1});
+    he.push_back({t.b, e2});
+    he.push_back({t.c, e0});
 
     // search for a twin for e0 (=the edge that links [t.a -> t.b])
     he[e0].twin = findHalfEdge(t.b, t.a);
     he[e1].twin = findHalfEdge(t.c, t.b);
     he[e2].twin = findHalfEdge(t.a, t.c);
 
-    pointToEdge[{ t.a, t.b }] = e0;
-    pointToEdge[{ t.b, t.c }] = e1;
-    pointToEdge[{ t.c, t.a }] = e2;
+    pointToEdge[{t.a, t.b}] = e0;
+    pointToEdge[{t.b, t.c}] = e1;
+    pointToEdge[{t.c, t.a}] = e2;
   }
 
   return he;
@@ -239,4 +237,3 @@ std::vector<Edge> triangulate_Flip(span<const Vec2> points)
 
   return flipTriangulation(points, he);
 }
-

@@ -4,6 +4,7 @@
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
 #include "collide2d.h"
+
 #include <cmath>
 
 static float magnitude(Vec2 v) { return sqrt(v * v); }
@@ -40,11 +41,11 @@ static Collision collideCircleWithSegment(Vec2 circleCenter, Segment seg)
   auto const delta = circleCenter - closestPointOnSegment(circleCenter, seg);
 
   if(delta * delta > RADIUS * RADIUS)
-    return Collision {};
+    return Collision{};
 
   auto const dist = magnitude(delta);
   auto const N = delta * (1.0 / dist);
-  return Collision { RADIUS - dist, N };
+  return Collision{RADIUS - dist, N};
 }
 
 struct Range
@@ -61,7 +62,7 @@ static Range projectBoxOnAxis(Vec2 boxCenter, Vec2 boxHalfSize, Vec2 N)
   auto boxMin = boxPos - boxEffectiveRadius;
   auto boxMax = boxPos + boxEffectiveRadius;
 
-  return Range { boxMin, boxMax };
+  return Range{boxMin, boxMax};
 }
 
 static Range projectSegmentOnAxis(Segment seg, Vec2 N)
@@ -71,7 +72,7 @@ static Range projectSegmentOnAxis(Segment seg, Vec2 N)
   auto segMin = min(seg.a * N, seg.b * N) - THICKNESS;
   auto segMax = max(seg.a * N, seg.b * N) + THICKNESS;
 
-  return Range { segMin, segMax };
+  return Range{segMin, segMax};
 }
 
 static Collision collideBoxWithSegment(Vec2 center, Segment seg)
@@ -93,7 +94,7 @@ static Collision collideBoxWithSegment(Vec2 center, Segment seg)
   if((center - seg.a) * (seg.a - seg.b) > 0)
     axes[axeCount++] = normalize(center - seg.a);
 
-  auto r = Collision { 1.0f / 0.0f, Vec2 {} };
+  auto r = Collision{1.0f / 0.0f, Vec2{}};
 
   for(int i = 0; i < axeCount; ++i)
   {
@@ -103,14 +104,14 @@ static Collision collideBoxWithSegment(Vec2 center, Segment seg)
     auto const segRange = projectSegmentOnAxis(seg, N);
 
     if(boxRange.min > segRange.max || boxRange.max < segRange.min)
-      return Collision {}; // box and segments are separated by N
+      return Collision{}; // box and segments are separated by N
 
     Collision c;
 
     if(boxRange.middle() > segRange.middle())
-      c = Collision { segRange.max - boxRange.min, N };
+      c = Collision{segRange.max - boxRange.min, N};
     else
-      c = Collision { boxRange.max - segRange.min, N* -1.0 };
+      c = Collision{boxRange.max - segRange.min, N * -1.0};
 
     if(c.depth < r.depth)
       r = c;
@@ -153,4 +154,3 @@ void slideMove(Vec2& pos, Shape shape, Vec2 delta, span<Segment> segments)
     pos += collision.N * collision.depth;
   }
 }
-

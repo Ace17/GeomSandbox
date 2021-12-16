@@ -12,10 +12,7 @@
 #include <climits> // RAND_MAX
 #include <cstdlib> // rand
 
-float randomFloat(float min, float max)
-{
-  return (rand() / float(RAND_MAX)) * (max - min) + min;
-}
+float randomFloat(float min, float max) { return (rand() / float(RAND_MAX)) * (max - min) + min; }
 
 Vec2 randomPos(Vec2 min, Vec2 max)
 {
@@ -24,4 +21,3 @@ Vec2 randomPos(Vec2 min, Vec2 max)
   r.y = randomFloat(min.y, max.y);
   return r;
 }
-
