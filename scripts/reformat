@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+
+import glob
+import os
+import sys
+import subprocess
+
+def reformat_one_file(filename):
+  result = subprocess.run(["clang-format", filename], check=True, stdout=subprocess.PIPE)
+
+  with open(filename, "rb") as f1:
+      original = f1.read()
+
+  if original != result.stdout:
+    with open(filename, "wb") as f2:
+      f2.write(result.stdout)
+
+for x in os.listdir('src'):
+    if x.endswith('.cpp') or x.endswith('.h'):
+        reformat_one_file(os.path.join('src', x))
+

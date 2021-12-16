@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import subprocess
+
+def main():
+    subprocess.run([sys.executable, os.path.join("scripts", "reformat")], check=True);
+    subprocess.run(["make", "-j8"], check=True);
+    print("OK")
+    return 0
+
+sys.exit(main())
