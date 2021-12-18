@@ -27,6 +27,7 @@ SRCS:=\
 SRCS+=\
 			src/app_example.cpp\
 			src/app_collide2d.cpp\
+			src/app_random_polygon.cpp\
 			src/app_douglas_peucker.cpp\
 			src/app_triangulate2.cpp\
 			src/app_triangulate_bowyerwatson.cpp\
