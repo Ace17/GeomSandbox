@@ -34,17 +34,15 @@ static float DistanceBetweenLineAndPoint(Vec2 lineA, Vec2 lineB, Vec2 point)
   return magnitude(projection - point);
 }
 
-
 void DrawRectangleAroundSegment(Vec2 start, Vec2 end, float width, Color color)
 {
   const Vec2 direction = normalize(end - start);
   const Vec2 perpendicular{-direction.y, direction.x};
-  const Vec2 corners[] =
-  {
-    start + perpendicular * width,
-    end + perpendicular * width,
-    end - perpendicular * width,
-    start - perpendicular * width,
+  const Vec2 corners[] = {
+        start + perpendicular * width,
+        end + perpendicular * width,
+        end - perpendicular * width,
+        start - perpendicular * width,
   };
 
   gVisualizer->line(start, end, color);
@@ -57,12 +55,11 @@ void DrawRectangleAroundSegment(Vec2 start, Vec2 end, float width, Color color)
 void DrawCross(Vec2 position, Color color)
 {
   const float crossBoxSize = 0.5;
-  const Vec2 corners[] =
-  {
-    position + Vec2(-crossBoxSize, -crossBoxSize),
-    position + Vec2( crossBoxSize, -crossBoxSize),
-    position + Vec2( crossBoxSize,  crossBoxSize),
-    position + Vec2(-crossBoxSize,  crossBoxSize),
+  const Vec2 corners[] = {
+        position + Vec2(-crossBoxSize, -crossBoxSize),
+        position + Vec2(crossBoxSize, -crossBoxSize),
+        position + Vec2(crossBoxSize, crossBoxSize),
+        position + Vec2(-crossBoxSize, crossBoxSize),
   };
 
   gVisualizer->line(corners[0], corners[2], color);
@@ -77,7 +74,7 @@ std::vector<Segment> DouglasPeucker(const std::vector<Vec2>& input, float maxDis
   DrawRectangleAroundSegment(start, end, maxDistanceToSimplify, Yellow);
   gVisualizer->step();
 
-  if (range.b == range.a + 1)
+  if(range.b == range.a + 1)
   {
     std::vector<Segment> result;
     result.push_back(range);
@@ -86,10 +83,10 @@ std::vector<Segment> DouglasPeucker(const std::vector<Vec2>& input, float maxDis
 
   float maxDistance = 0.0f;
   int fartherIdx;
-  for (int idx = range.a + 1; idx <= range.b - 1; idx++)
+  for(int idx = range.a + 1; idx <= range.b - 1; idx++)
   {
     const float distance = DistanceBetweenLineAndPoint(start, end, input[idx]);
-    if (maxDistance == 0.0 || maxDistance < distance)
+    if(maxDistance == 0.0 || maxDistance < distance)
     {
       maxDistance = distance;
       fartherIdx = idx;
@@ -98,9 +95,9 @@ std::vector<Segment> DouglasPeucker(const std::vector<Vec2>& input, float maxDis
 
   std::vector<Segment> result;
   DrawRectangleAroundSegment(start, end, maxDistanceToSimplify, Yellow);
-  if (maxDistance <= maxDistanceToSimplify)
+  if(maxDistance <= maxDistanceToSimplify)
   {
-    for (int idx = range.a + 1; idx <= range.b - 1; idx++)
+    for(int idx = range.a + 1; idx <= range.b - 1; idx++)
       DrawCross(input[idx], Red);
     gVisualizer->step();
 
@@ -158,7 +155,7 @@ struct DouglasPeuckerAlgorithm
       drawer->text(input[idx] + Vec2(0.3, 0), buffer, Red);
 
       const int next_idx = (idx + 1);
-      if (next_idx < input.size())
+      if(next_idx < input.size())
         drawer->line(input[idx], input[next_idx]);
     }
   }
@@ -170,5 +167,5 @@ struct DouglasPeuckerAlgorithm
   }
 };
 
-const int reg = registerApp("DouglasPeucker", [] () -> IApp* { return new AlgorithmApp<DouglasPeuckerAlgorithm>; });
+const int reg = registerApp("DouglasPeucker", []() -> IApp* { return new AlgorithmApp<DouglasPeuckerAlgorithm>; });
 }
