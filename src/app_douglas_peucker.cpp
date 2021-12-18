@@ -25,7 +25,7 @@ static float magnitude(Vec2 v) { return sqrt(v * v); }
 static Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
 static float dot(Vec2 v, Vec2 w) { return v.x * w.x + v.y * w.y; }
 
-static float DistanceBetweenLineAndPoint(Vec2 lineA, Vec2 lineB, Vec2 point)
+static float distanceBetweenLineAndPoint(Vec2 lineA, Vec2 lineB, Vec2 point)
 {
   const Vec2 segment = (lineB - lineA);
   const float lengthSq = segment * segment;
@@ -34,7 +34,7 @@ static float DistanceBetweenLineAndPoint(Vec2 lineA, Vec2 lineB, Vec2 point)
   return magnitude(projection - point);
 }
 
-void DrawHalfCircle(Vec2 center, Vec2 direction, float radius, Color color)
+void drawHalfCircle(Vec2 center, Vec2 direction, float radius, Color color)
 {
   const int N = 20;
   Vec2 halfCirclePoints[N];
@@ -55,7 +55,7 @@ void DrawHalfCircle(Vec2 center, Vec2 direction, float radius, Color color)
   }
 }
 
-void DrawDistanceShapeAroundSegment(Vec2 start, Vec2 end, float width, Color color)
+void drawDistanceShapeAroundSegment(Vec2 start, Vec2 end, float width, Color color)
 {
   const Vec2 direction = normalize(end - start);
   const Vec2 perpendicular = {-direction.y, direction.x};
@@ -70,11 +70,11 @@ void DrawDistanceShapeAroundSegment(Vec2 start, Vec2 end, float width, Color col
   gVisualizer->line(corners[0], corners[1], color);
   gVisualizer->line(corners[2], corners[3], color);
 
-  DrawHalfCircle(start, direction, width, color);
-  DrawHalfCircle(end, -direction, width, color);
+  drawHalfCircle(start, direction, width, color);
+  drawHalfCircle(end, -direction, width, color);
 }
 
-void DrawPointWithIdentifier(IDrawer* drawer, Vec2 position, int index, Color pointColor, Color textColor)
+void drawPointWithIdentifier(IDrawer* drawer, Vec2 position, int index, Color pointColor, Color textColor)
 {
   char buffer[16];
   snprintf(buffer, sizeof buffer, "%d", index);
@@ -82,15 +82,15 @@ void DrawPointWithIdentifier(IDrawer* drawer, Vec2 position, int index, Color po
   drawer->text(position + Vec2(0.3, 0), buffer, textColor);
 }
 
-void DrawContainedPointsIdentifiers(const std::vector<Vec2>& input, Segment range, Color color)
+void drawContainedPointsIdentifiers(const std::vector<Vec2>& input, Segment range, Color color)
 {
   for(int idx = range.a + 1; idx < range.b; idx++)
   {
-    DrawPointWithIdentifier(gVisualizer, input[idx], idx, color, color);
+    drawPointWithIdentifier(gVisualizer, input[idx], idx, color, color);
   }
 }
 
-void DrawCross(Vec2 position, Color color)
+void drawCross(Vec2 position, Color color)
 {
   const float crossBoxSize = 0.5;
   const Vec2 corners[] = {
@@ -104,13 +104,13 @@ void DrawCross(Vec2 position, Color color)
   gVisualizer->line(corners[1], corners[3], color);
 }
 
-std::vector<Segment> DouglasPeucker(const std::vector<Vec2>& input, float maxDistanceToSimplify, Segment range)
+std::vector<Segment> simplify_DouglasPeucker(const std::vector<Vec2>& input, float maxDistanceToSimplify, Segment range)
 {
   const Vec2& start = input[range.a];
   const Vec2& end = input[range.b];
 
-  DrawDistanceShapeAroundSegment(start, end, maxDistanceToSimplify, Yellow);
-  DrawContainedPointsIdentifiers(input, range, Yellow);
+  drawDistanceShapeAroundSegment(start, end, maxDistanceToSimplify, Yellow);
+  drawContainedPointsIdentifiers(input, range, Yellow);
   gVisualizer->step();
 
   if(range.b == range.a + 1)
@@ -124,7 +124,7 @@ std::vector<Segment> DouglasPeucker(const std::vector<Vec2>& input, float maxDis
   int fartherIdx;
   for(int idx = range.a + 1; idx <= range.b - 1; idx++)
   {
-    const float distance = DistanceBetweenLineAndPoint(start, end, input[idx]);
+    const float distance = distanceBetweenLineAndPoint(start, end, input[idx]);
     if(maxDistance == 0.0 || maxDistance < distance)
     {
       maxDistance = distance;
@@ -133,22 +133,24 @@ std::vector<Segment> DouglasPeucker(const std::vector<Vec2>& input, float maxDis
   }
 
   std::vector<Segment> result;
-  DrawDistanceShapeAroundSegment(start, end, maxDistanceToSimplify, Yellow);
+  drawDistanceShapeAroundSegment(start, end, maxDistanceToSimplify, Yellow);
   if(maxDistance <= maxDistanceToSimplify)
   {
     for(int idx = range.a + 1; idx <= range.b - 1; idx++)
-      DrawCross(input[idx], Red);
+      drawCross(input[idx], Red);
     gVisualizer->step();
 
     result.push_back(range);
   }
   else
   {
-    DrawPointWithIdentifier(gVisualizer, input[fartherIdx], fartherIdx, Green, Green);
+    drawPointWithIdentifier(gVisualizer, input[fartherIdx], fartherIdx, Green, Green);
     gVisualizer->step();
 
-    std::vector<Segment> beforeFartherPoint = DouglasPeucker(input, maxDistanceToSimplify, {range.a, fartherIdx});
-    std::vector<Segment> afterFartherPoint = DouglasPeucker(input, maxDistanceToSimplify, {fartherIdx, range.b});
+    std::vector<Segment> beforeFartherPoint =
+          simplify_DouglasPeucker(input, maxDistanceToSimplify, {range.a, fartherIdx});
+    std::vector<Segment> afterFartherPoint =
+          simplify_DouglasPeucker(input, maxDistanceToSimplify, {fartherIdx, range.b});
     result.insert(result.end(), beforeFartherPoint.begin(), beforeFartherPoint.end());
     result.insert(result.end(), afterFartherPoint.begin(), afterFartherPoint.end());
   }
@@ -180,7 +182,7 @@ struct DouglasPeuckerAlgorithm
     const float maxDistanceToSimplify = 3.0f;
 
     std::vector<Segment> result;
-    result = DouglasPeucker(input, maxDistanceToSimplify, {0, int(input.size() - 1)});
+    result = simplify_DouglasPeucker(input, maxDistanceToSimplify, {0, int(input.size() - 1)});
     return result;
   }
 
@@ -188,7 +190,7 @@ struct DouglasPeuckerAlgorithm
   {
     for(int idx = 0; idx < input.size(); ++idx)
     {
-      DrawPointWithIdentifier(drawer, input[idx], idx, White, Red);
+      drawPointWithIdentifier(drawer, input[idx], idx, White, Red);
 
       const int next_idx = (idx + 1);
       if(next_idx < input.size())
