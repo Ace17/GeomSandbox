@@ -22,6 +22,8 @@ struct Vec2
   void operator-=(Vec2 other) { *this = *this - other; }
   float operator*(Vec2 other) const { return x * other.x + y * other.y; }
 
+  Vec2 operator-() const { return Vec2{-x, -y}; }
+
   Vec2 operator+(Vec2 other) const { return Vec2{x + other.x, y + other.y}; }
   Vec2 operator-(Vec2 other) const { return Vec2{x - other.x, y - other.y}; }
   Vec2 operator*(float f) const { return Vec2{x * f, y * f}; }

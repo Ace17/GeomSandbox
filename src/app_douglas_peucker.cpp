@@ -34,10 +34,31 @@ static float DistanceBetweenLineAndPoint(Vec2 lineA, Vec2 lineB, Vec2 point)
   return magnitude(projection - point);
 }
 
-void DrawRectangleAroundSegment(Vec2 start, Vec2 end, float width, Color color)
+void DrawHalfCircle(Vec2 center, Vec2 direction, float radius, Color color)
+{
+  const int N = 20;
+  Vec2 halfCirclePoints[N];
+
+  const float startAngle = asin(direction.x);
+  for(int i = 0; i < N; i++)
+  {
+    float angle = startAngle + 3.14 * i / (N - 1);
+    if(direction.y > 0)
+      angle = -angle;
+    halfCirclePoints[i].x = center.x + cos(angle) * radius;
+    halfCirclePoints[i].y = center.y + sin(angle) * radius;
+  }
+
+  for(int i = 0; i < N - 1; i++)
+  {
+    gVisualizer->line(halfCirclePoints[i], halfCirclePoints[i + 1], color);
+  }
+}
+
+void DrawDistanceShapeAroundSegment(Vec2 start, Vec2 end, float width, Color color)
 {
   const Vec2 direction = normalize(end - start);
-  const Vec2 perpendicular{-direction.y, direction.x};
+  const Vec2 perpendicular = {-direction.y, direction.x};
   const Vec2 corners[] = {
         start + perpendicular * width,
         end + perpendicular * width,
@@ -47,9 +68,10 @@ void DrawRectangleAroundSegment(Vec2 start, Vec2 end, float width, Color color)
 
   gVisualizer->line(start, end, color);
   gVisualizer->line(corners[0], corners[1], color);
-  gVisualizer->line(corners[1], corners[2], color);
   gVisualizer->line(corners[2], corners[3], color);
-  gVisualizer->line(corners[3], corners[0], color);
+
+  DrawHalfCircle(start, direction, width, color);
+  DrawHalfCircle(end, -direction, width, color);
 }
 
 void DrawCross(Vec2 position, Color color)
@@ -71,7 +93,7 @@ std::vector<Segment> DouglasPeucker(const std::vector<Vec2>& input, float maxDis
   const Vec2& start = input[range.a];
   const Vec2& end = input[range.b];
 
-  DrawRectangleAroundSegment(start, end, maxDistanceToSimplify, Yellow);
+  DrawDistanceShapeAroundSegment(start, end, maxDistanceToSimplify, Yellow);
   gVisualizer->step();
 
   if(range.b == range.a + 1)
@@ -94,7 +116,7 @@ std::vector<Segment> DouglasPeucker(const std::vector<Vec2>& input, float maxDis
   }
 
   std::vector<Segment> result;
-  DrawRectangleAroundSegment(start, end, maxDistanceToSimplify, Yellow);
+  DrawDistanceShapeAroundSegment(start, end, maxDistanceToSimplify, Yellow);
   if(maxDistance <= maxDistanceToSimplify)
   {
     for(int idx = range.a + 1; idx <= range.b - 1; idx++)
