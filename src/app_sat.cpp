@@ -9,6 +9,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <vector>
 
 #include "app.h"
 #include "drawer.h"
@@ -23,15 +24,26 @@ float magnitude(Vec2 v) { return sqrt(v * v); }
 Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
 Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
 
-// The obstacle is an AABB, whose position and halfSize are given as parameters.
-// The return value represents the allowed move, as a fraction of the desired move (delta).
-float raycast(Vec2 pos, Vec2 delta, Vec2 obstaclePos, Vec2 obstacleHalfSize)
+struct ProjectionOnAxis
 {
-  const Vec2 axes[] = {
-        {1, 0},
-        {0, 1},
-        rotateLeft(normalize(delta)),
-  };
+  float center;
+  float min, max;
+};
+
+struct IShape
+{
+  virtual ProjectionOnAxis projectOnAxis(Vec2 axis) const = 0;
+  virtual std::vector<Vec2> axesToTest() const = 0;
+};
+
+// Cast a ray from 'pos' to 'pos+delta', stops when colliding with 'obstacle'.
+// The return value represents the allowed move, as a fraction of the desired move (delta).
+// (The final position is then 'pos + return_value * delta')
+float raycast(Vec2 pos, Vec2 delta, IShape* obstacle)
+{
+  auto axes = obstacle->axesToTest();
+
+  axes.push_back(rotateLeft(normalize(delta)));
 
   float fraction = 0;
 
@@ -41,25 +53,22 @@ float raycast(Vec2 pos, Vec2 delta, Vec2 obstaclePos, Vec2 obstacleHalfSize)
     if(axis * delta < 0)
       axis = axis * -1;
 
-    const float obstacleExtent = fabs(obstacleHalfSize.x * axis.x) + fabs(obstacleHalfSize.y * axis.y);
-
     // compute projections on the axis
     const float startPos = pos * axis;
     const float targetPos = (pos + delta) * axis;
-    const float obstacleMin = obstaclePos * axis - obstacleExtent;
-    const float obstacleMax = obstaclePos * axis + obstacleExtent;
+    const auto projectedObstacle = obstacle->projectOnAxis(axis);
 
     assert(startPos <= targetPos || fabs(startPos - targetPos) < 0.0001);
 
-    if(targetPos < obstacleMin)
+    if(targetPos < projectedObstacle.min)
       return 1; // all the axis-projected move is before the obstacle
 
-    if(startPos >= obstacleMax)
+    if(startPos >= projectedObstacle.max)
       return 1; //  all the axis-projected move is after the obstacle
 
     if(fabs(startPos - targetPos) > 0.00001)
     {
-      float f = (obstacleMin - startPos) / (targetPos - startPos);
+      float f = (projectedObstacle.min - startPos) / (targetPos - startPos);
       if(f > fraction)
         fraction = f;
     }
@@ -67,6 +76,56 @@ float raycast(Vec2 pos, Vec2 delta, Vec2 obstaclePos, Vec2 obstacleHalfSize)
 
   return fraction;
 }
+
+struct BoxShape : IShape
+{
+  ProjectionOnAxis projectOnAxis(Vec2 axis) const override
+  {
+    ProjectionOnAxis r;
+
+    const float projectedExtent = fabs(halfSize.x * axis.x) + fabs(halfSize.y * axis.y);
+
+    r.center = center * axis;
+    r.min = r.center - projectedExtent;
+    r.max = r.center + projectedExtent;
+
+    return r;
+  }
+
+  std::vector<Vec2> axesToTest() const override { return {{1, 0}, {0, 1}}; }
+
+  Vec2 center;
+  Vec2 halfSize;
+};
+
+struct CombinedShape : IShape
+{
+  IShape* shapeA;
+  IShape* shapeB;
+
+  ProjectionOnAxis projectOnAxis(Vec2 axis) const override
+  {
+    ProjectionOnAxis projA = shapeA->projectOnAxis(axis);
+    ProjectionOnAxis projB = shapeB->projectOnAxis(axis);
+
+    ProjectionOnAxis r;
+    r.center = projA.center;
+    r.min = projA.min - (projB.center - projB.min);
+    r.max = projA.max + (projB.max - projB.center);
+
+    return r;
+  }
+
+  std::vector<Vec2> axesToTest() const override
+  {
+    std::vector<Vec2> r;
+    for(auto& axis : shapeA->axesToTest())
+      r.push_back(axis);
+    for(auto& axis : shapeB->axesToTest())
+      r.push_back(axis);
+    return r;
+  }
+};
 
 struct SeparatingAxisTestApp : IApp
 {
@@ -124,7 +183,21 @@ struct SeparatingAxisTestApp : IApp
   void compute()
   {
     const auto delta = Vec2(boxTarget - boxStart);
-    const auto fraction = raycast(boxStart, delta, obstacleBoxPos, obstacleBoxHalfSize + boxHalfSize);
+
+    BoxShape moverShape{};
+    moverShape.halfSize = boxHalfSize;
+
+    BoxShape obstacleShape{};
+    obstacleShape.halfSize = obstacleBoxHalfSize;
+    obstacleShape.center = obstacleBoxPos;
+
+    // instead of casting a shape (mover) against another shape (obstacle),
+    // we cast a ray against the minkowski sum of both shapes.
+    CombinedShape combinedShape;
+    combinedShape.shapeA = &obstacleShape;
+    combinedShape.shapeB = &moverShape;
+
+    const auto fraction = raycast(boxStart, delta, &combinedShape);
     boxFinish = boxStart + delta * fraction;
   }
 
