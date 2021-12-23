@@ -1,6 +1,6 @@
 # GeomSandbox
 
-Author: Sebastien Alaiwan
+Authors: Sebastien Alaiwan, Vivien Bonnet
 
 Description
 -----------
@@ -10,6 +10,12 @@ It uses fibers to allow visual single-stepping through algorithms,
 while keeping intrusivity minimal.
 
 It uses SDL2.
+
+<p align="center"><img src="doc/app_bowyerwatsontriangulation.png" width="50%"></p>
+
+<p align="center"><img src="doc/app_douglaspeucker.png" width="50%"></p>
+
+<p align="center"><img src="doc/app_sat.png" width="50%"></p>
 
 Build
 -----
