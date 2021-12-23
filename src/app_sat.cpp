@@ -86,7 +86,7 @@ struct SeparatingAxisTestApp : IApp
   {
     drawBox(drawer, boxStart, boxHalfSize, Green, "start");
     drawBox(drawer, boxTarget, boxHalfSize, Red, "target");
-    drawBox(drawer, boxFinish, boxHalfSize, Blue, "finish");
+    drawBox(drawer, boxFinish, boxHalfSize, LightBlue, "finish");
     drawBox(drawer, obstacleBoxPos, obstacleBoxHalfSize, Yellow, "obstacle");
 
     drawer->line(boxStart, boxTarget, White);

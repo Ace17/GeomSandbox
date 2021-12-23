@@ -11,6 +11,7 @@ constexpr Color White{1, 1, 1, 1};
 constexpr Color Red{1, 0, 0, 1};
 constexpr Color Green{0, 1, 0, 1};
 constexpr Color Blue{0, 0, 1, 1};
+constexpr Color LightBlue{0.5, 0.5, 1, 1};
 constexpr Color Yellow{1, 1, 0, 1};
 
 struct IDrawer
