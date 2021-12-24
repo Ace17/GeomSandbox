@@ -137,6 +137,8 @@ struct PolygonShape : IShape
   }
 };
 
+// Minkowski sum of two shapes, centered on shapeA
+// (shapeB's position is ignored).
 struct CombinedShape : IShape
 {
   IShape* shapeA;
