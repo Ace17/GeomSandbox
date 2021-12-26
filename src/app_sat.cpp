@@ -98,6 +98,45 @@ struct BoxShape : IShape
   Vec2 halfSize;
 };
 
+struct PolygonShape : IShape
+{
+  Vec2 center;
+  std::vector<Vec2> vertices;
+
+  ProjectionOnAxis projectOnAxis(Vec2 axis) const override
+  {
+    ProjectionOnAxis r;
+
+    r.center = center * axis;
+
+    r.min = vertices[0] * axis;
+    r.max = vertices[0] * axis;
+
+    for(auto& v : vertices)
+    {
+      r.min = std::min<float>(r.min, v * axis);
+      r.max = std::max<float>(r.max, v * axis);
+    }
+
+    assert(r.min <= r.max);
+
+    return r;
+  }
+
+  std::vector<Vec2> axesToTest() const override
+  {
+    std::vector<Vec2> r;
+    for(int i = 0; i < (int)vertices.size(); ++i)
+    {
+      auto v0 = vertices[i];
+      auto v1 = vertices[(i + 1) % vertices.size()];
+      auto delta = v1 - v0;
+      r.push_back(rotateLeft(normalize(delta)));
+    }
+    return r;
+  }
+};
+
 struct CombinedShape : IShape
 {
   IShape* shapeA;
@@ -131,38 +170,75 @@ struct SeparatingAxisTestApp : IApp
 {
   SeparatingAxisTestApp()
   {
-    boxHalfSize = randomPos({2, 2}, {5, 5});
+    boxHalfSize = randomPos({1, 1}, {3, 3});
     boxStart = randomPos({-20, -10}, {20, 10});
     boxTarget = randomPos({-20, -10}, {20, 10});
 
-    obstacleBoxPos = randomPos({-5, -5}, {5, 5});
-    obstacleBoxHalfSize = randomPos({2, 2}, {5, 5});
+    {
+      obstacleBox.halfSize = randomPos({2, 2}, {5, 5});
+      obstacleBox.center = randomPos({5, -5}, {15, 5});
+    }
+
+    {
+      obstaclePolygon.center = randomPos({-25, -5}, {-5, 5});
+
+      const int N = randomInt(3, 12);
+      const float radiusX = randomFloat(2, 5);
+      const float radiusY = randomFloat(2, 5);
+      const float phase = randomFloat(0, 2 * M_PI);
+      for(int i = 0; i < N; ++i)
+      {
+        Vec2 v;
+        v.x = cos(i * M_PI * 2 / N + phase) * radiusX;
+        v.y = sin(i * M_PI * 2 / N + phase) * radiusY;
+        obstaclePolygon.vertices.push_back(obstaclePolygon.center + v);
+      }
+    }
 
     compute();
   }
 
   void draw(IDrawer* drawer) override
   {
-    drawBox(drawer, boxStart, boxHalfSize, Green, "start");
-    drawBox(drawer, boxTarget, boxHalfSize, Red, "target");
-    drawBox(drawer, boxFinish, boxHalfSize, LightBlue, "finish");
-    drawBox(drawer, obstacleBoxPos, obstacleBoxHalfSize, Yellow, "obstacle");
-
+    // draw selection
     {
       const auto hs = boxHalfSize * 0.95;
       auto& box = currentSelection == 0 ? boxStart : boxTarget;
       drawer->rect(box - hs, hs * 2, White);
     }
 
+    // draw trajectory
     drawer->line(boxStart, boxTarget, White);
+
+    // draw obstacles
+    drawBox(drawer, obstacleBox.center, obstacleBox.halfSize, Yellow, "obstacle");
+
+    for(int i = 0; i < (int)obstaclePolygon.vertices.size(); ++i)
+    {
+      auto v0 = obstaclePolygon.vertices[i];
+      auto v1 = obstaclePolygon.vertices[(i + 1) % obstaclePolygon.vertices.size()];
+      drawer->line(v0, v1, Yellow);
+    }
+    drawer->text(obstaclePolygon.center, "obstacle", Yellow);
+    drawCross(drawer, obstaclePolygon.center, Yellow);
+
+    // draw start, target, and finish positions
+    drawBox(drawer, boxStart, boxHalfSize, Green, "start");
+    drawBox(drawer, boxTarget, boxHalfSize, Red, "target");
+    drawBox(drawer, boxFinish, boxHalfSize, LightBlue, "finish");
   }
 
   void drawBox(IDrawer* drawer, Vec2 pos, Vec2 halfSize, Color color, const char* name)
   {
     drawer->rect(pos - halfSize, halfSize * 2, color);
+    drawCross(drawer, pos, color);
+    drawer->text(pos, name, color);
+  }
+
+  void drawCross(IDrawer* drawer, Vec2 pos, Color color)
+  {
     drawer->line(pos - Vec2{1, 0}, pos + Vec2{1, 0}, color);
     drawer->line(pos - Vec2{0, 1}, pos + Vec2{0, 1}, color);
-    drawer->text(pos, name, color);
   }
 
   void keydown(Key key) override
@@ -198,18 +274,24 @@ struct SeparatingAxisTestApp : IApp
     BoxShape moverShape{};
     moverShape.halfSize = boxHalfSize;
 
-    BoxShape obstacleShape{};
-    obstacleShape.halfSize = obstacleBoxHalfSize;
-    obstacleShape.center = obstacleBoxPos;
+    IShape* obstacleShapes[] = {&obstaclePolygon, &obstacleBox};
 
-    // instead of casting a shape (mover) against another shape (obstacle),
-    // we cast a ray against the minkowski sum of both shapes.
-    CombinedShape combinedShape;
-    combinedShape.shapeA = &obstacleShape;
-    combinedShape.shapeB = &moverShape;
+    float minFraction = 1;
 
-    const auto fraction = raycast(boxStart, delta, &combinedShape);
-    boxFinish = boxStart + delta * fraction;
+    for(auto obstacleShape : obstacleShapes)
+    {
+      // instead of sweeping a shape (mover) against another shape (obstacle),
+      // we cast a ray against the minkowski sum of both shapes.
+      CombinedShape combinedShape;
+      combinedShape.shapeA = obstacleShape;
+      combinedShape.shapeB = &moverShape;
+
+      const auto fraction = raycast(boxStart, delta, &combinedShape);
+      if(fraction < minFraction)
+        minFraction = fraction;
+    }
+
+    boxFinish = boxStart + delta * minFraction;
   }
 
   Vec2 boxHalfSize;
@@ -218,8 +300,8 @@ struct SeparatingAxisTestApp : IApp
   Vec2 boxTarget; // the target position
   Vec2 boxFinish; // the position we actually reach (=target if we don't hit the obstacle)
 
-  Vec2 obstacleBoxPos;
-  Vec2 obstacleBoxHalfSize;
+  BoxShape obstacleBox{};
+  PolygonShape obstaclePolygon{};
 
   int currentSelection = 0;
 };
