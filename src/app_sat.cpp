@@ -148,6 +148,12 @@ struct SeparatingAxisTestApp : IApp
     drawBox(drawer, boxFinish, boxHalfSize, LightBlue, "finish");
     drawBox(drawer, obstacleBoxPos, obstacleBoxHalfSize, Yellow, "obstacle");
 
+    {
+      const auto hs = boxHalfSize * 0.95;
+      auto& box = currentSelection == 0 ? boxStart : boxTarget;
+      drawer->rect(box - hs, hs * 2, White);
+    }
+
     drawer->line(boxStart, boxTarget, White);
   }
 
@@ -161,19 +167,24 @@ struct SeparatingAxisTestApp : IApp
 
   void keydown(Key key) override
   {
+    auto& box = currentSelection == 0 ? boxStart : boxTarget;
+
     switch(key)
     {
     case Key::Left:
-      boxStart.x -= 1;
+      box.x -= 1;
       break;
     case Key::Right:
-      boxStart.x += 1;
+      box.x += 1;
       break;
     case Key::Up:
-      boxStart.y += 1;
+      box.y += 1;
       break;
     case Key::Down:
-      boxStart.y -= 1;
+      box.y -= 1;
+      break;
+    case Key::Space:
+      currentSelection = 1 - currentSelection;
       break;
     }
 
@@ -209,6 +220,8 @@ struct SeparatingAxisTestApp : IApp
 
   Vec2 obstacleBoxPos;
   Vec2 obstacleBoxHalfSize;
+
+  int currentSelection = 0;
 };
 
 const int registered = registerApp("SAT", []() -> IApp* { return new SeparatingAxisTestApp; });
