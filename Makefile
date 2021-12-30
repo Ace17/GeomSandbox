@@ -30,6 +30,7 @@ SRCS+=\
 			src/app_random_polygon.cpp\
 			src/app_douglas_peucker.cpp\
 			src/app_sat.cpp\
+			src/app_thickline.cpp\
 			src/app_triangulate2.cpp\
 			src/app_triangulate_bowyerwatson.cpp\
 			src/app_triangulate_flip.cpp\
