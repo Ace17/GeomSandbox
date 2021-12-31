@@ -333,12 +333,9 @@ Polygon2f createRandomPolygon2f(IVisualizer* visualizer)
   Polygon2f r = createRegularPolygon2f(N, radius1, radius2);
 
   auto drawAndStep = [&]() {
-    if(visualizer)
-    {
-      for(auto face : r.faces)
-        visualizer->line(r.vertices[face.a], r.vertices[face.b]);
-      visualizer->step();
-    }
+    for(auto face : r.faces)
+      visualizer->line(r.vertices[face.a], r.vertices[face.b]);
+    visualizer->step();
   };
 
   drawAndStep();

@@ -12,4 +12,5 @@ struct NullVisualizer : IVisualizer
 };
 
 static NullVisualizer nullVisualizer;
+IVisualizer* const gNullVisualizer = &nullVisualizer;
 IVisualizer* gVisualizer = &nullVisualizer;

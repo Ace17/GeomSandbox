@@ -11,3 +11,4 @@ struct IVisualizer : IDrawer
 };
 
 extern IVisualizer* gVisualizer;
+extern IVisualizer* const gNullVisualizer;

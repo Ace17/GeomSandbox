@@ -114,24 +114,27 @@ Segment clipEar(Polygon2f& polygon)
   return {};
 }
 
+void recenterPolygon(Polygon2f& polygon)
+{
+  BoundingBox bbox;
+
+  Vec2 polygonBoxMax = polygon.vertices.front();
+  for(const Vec2 vertex : polygon.vertices)
+    bbox.add(vertex);
+
+  const Vec2 polygonCenter = (bbox.min + bbox.max) / 2.0f;
+  for(Vec2& vertex : polygon.vertices)
+  {
+    vertex -= polygonCenter;
+  }
+}
+
 struct EarClippingAlgorithm
 {
   static Polygon2f generateInput()
   {
-    IVisualizer* visualizerForPolygon = nullptr;
-    Polygon2f polygon = createRandomPolygon2f(visualizerForPolygon);
-
-    BoundingBox bbox;
-
-    Vec2 polygonBoxMax = polygon.vertices.front();
-    for(const Vec2 vertex : polygon.vertices)
-      bbox.add(vertex);
-
-    const Vec2 polygonCenter = (bbox.min + bbox.max) / 2.0f;
-    for(Vec2& vertex : polygon.vertices)
-    {
-      vertex -= polygonCenter;
-    }
+    Polygon2f polygon = createRandomPolygon2f(gNullVisualizer);
+    recenterPolygon(polygon);
 
     return polygon;
   }
