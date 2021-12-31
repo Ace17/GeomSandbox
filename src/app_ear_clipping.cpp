@@ -26,7 +26,24 @@ struct EarClippingAlgorithm
   static Polygon2f generateInput()
   {
     IVisualizer* visualizerForPolygon = nullptr;
-    return createRandomPolygon2f(visualizerForPolygon);
+    Polygon2f polygon = createRandomPolygon2f(visualizerForPolygon);
+
+    Vec2 polygonBoxMin = polygon.vertices.front();
+    Vec2 polygonBoxMax = polygon.vertices.front();
+    for(const Vec2 vertex : polygon.vertices)
+    {
+      polygonBoxMin.x = std::min(polygonBoxMin.x, vertex.x);
+      polygonBoxMin.y = std::min(polygonBoxMin.y, vertex.y);
+      polygonBoxMax.x = std::max(polygonBoxMax.x, vertex.x);
+      polygonBoxMax.y = std::max(polygonBoxMax.y, vertex.y);
+    }
+    const Vec2 polygonCenter = polygonBoxMin + polygonBoxMax / 2.0f;
+    for(Vec2& vertex : polygon.vertices)
+    {
+      vertex -= polygonCenter / 2.0f;
+    }
+
+    return polygon;
   }
 
   static std::vector<Segment> execute(Polygon2f input)
