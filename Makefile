@@ -29,10 +29,12 @@ SRCS+=\
 			src/app_collide2d.cpp\
 			src/app_random_polygon.cpp\
 			src/app_douglas_peucker.cpp\
+			src/app_ear_clipping.cpp\
 			src/app_sat.cpp\
 			src/app_triangulate2.cpp\
 			src/app_triangulate_bowyerwatson.cpp\
 			src/app_triangulate_flip.cpp\
+			src/random_polygon.cpp\
 			src/triangulate_bowyerwatson.cpp\
 			src/triangulate_flip.cpp\
 
