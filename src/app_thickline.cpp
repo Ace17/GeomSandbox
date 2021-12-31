@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "app.h"
+#include "bounding_box.h"
 #include "drawer.h"
 #include "geom.h"
 #include "random.h"
@@ -23,25 +24,6 @@ float abs(float a) { return a >= 0 ? a : -a; }
 float magnitude(Vec2 v) { return sqrt(v * v); }
 Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
 Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
-
-struct BoundingBox
-{
-  BoundingBox()
-  {
-    min.x = min.y = 1.0 / 0.0;
-    max.x = max.y = -1.0 / 0.0;
-  }
-
-  void add(Vec2 p)
-  {
-    min.x = std::min(min.x, p.x);
-    max.x = std::max(max.x, p.x);
-    min.y = std::min(min.y, p.y);
-    max.y = std::max(max.y, p.y);
-  }
-
-  Vec2 min, max;
-};
 
 void rescale(std::vector<Vec2>& polyline, Vec2 mins, Vec2 maxs)
 {

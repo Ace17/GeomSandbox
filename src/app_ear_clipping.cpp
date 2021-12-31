@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "algorithm_app.h"
+#include "bounding_box.h"
 #include "random.h"
 #include "random_polygon.h"
 
@@ -120,19 +121,16 @@ struct EarClippingAlgorithm
     IVisualizer* visualizerForPolygon = nullptr;
     Polygon2f polygon = createRandomPolygon2f(visualizerForPolygon);
 
-    Vec2 polygonBoxMin = polygon.vertices.front();
+    BoundingBox bbox;
+
     Vec2 polygonBoxMax = polygon.vertices.front();
     for(const Vec2 vertex : polygon.vertices)
-    {
-      polygonBoxMin.x = std::min(polygonBoxMin.x, vertex.x);
-      polygonBoxMin.y = std::min(polygonBoxMin.y, vertex.y);
-      polygonBoxMax.x = std::max(polygonBoxMax.x, vertex.x);
-      polygonBoxMax.y = std::max(polygonBoxMax.y, vertex.y);
-    }
-    const Vec2 polygonCenter = polygonBoxMin + polygonBoxMax / 2.0f;
+      bbox.add(vertex);
+
+    const Vec2 polygonCenter = (bbox.min + bbox.max) / 2.0f;
     for(Vec2& vertex : polygon.vertices)
     {
-      vertex -= polygonCenter / 2.0f;
+      vertex -= polygonCenter;
     }
 
     return polygon;
