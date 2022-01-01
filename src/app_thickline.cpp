@@ -107,12 +107,8 @@ struct ThickLineAlgorithm
       const auto L1 = v1 + N1 * input.thickness;
       const auto R0 = R;
       const auto R1 = v1 - N1 * input.thickness;
-      gVisualizer->line(L0, L1, Red);
-      gVisualizer->line(L0, R0, Red);
-      gVisualizer->line(R0, R1, Red);
-      gVisualizer->line(L1, R1, Red);
-      gVisualizer->step();
 
+      const int i0 = (int)segments.size();
       segments.push_back({L0, L1});
       segments.push_back({L0, R0});
       segments.push_back({R0, R1});
@@ -121,6 +117,10 @@ struct ThickLineAlgorithm
       L = L1;
       R = R1;
       N = N1;
+
+      for(int i=i0;i < (int)segments.size();++i)
+        gVisualizer->line(segments[i].a, segments[i].b, Red);
+      gVisualizer->step();
     }
 
     return segments;
