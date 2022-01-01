@@ -11,7 +11,7 @@
 #include <cmath>
 #include <vector>
 
-#include "app.h"
+#include "algorithm_app.h"
 #include "bounding_box.h"
 #include "drawer.h"
 #include "geom.h"
@@ -41,32 +41,40 @@ void rescale(std::vector<Vec2>& polyline, Vec2 mins, Vec2 maxs)
   }
 }
 
-struct ThickLineApp : IApp
+struct ThickLineAlgorithm
 {
-  ThickLineApp()
+  struct Input
   {
+    std::vector<Vec2> polyline;
+    float thickness;
+  };
+
+  struct Segment
+  {
+    Vec2 a, b;
+  };
+
+  static Input generateInput()
+  {
+    Input input;
+
     const int N = randomInt(4, 15);
     Vec2 pos{};
     for(int i = 0; i < N; ++i)
     {
       pos += randomPos({-4, -4}, {10, 4}) * 4;
-      polyline.push_back(pos);
+      input.polyline.push_back(pos);
     }
 
-    rescale(polyline, {-16, -16}, {16, 16});
+    rescale(input.polyline, {-16, -16}, {16, 16});
 
-    thickness = randomFloat(1, 3);
+    input.thickness = randomFloat(1, 3);
+    return input;
   }
 
-  void draw(IDrawer* drawer) override
+  static std::vector<Segment> execute(Input input)
   {
-    for(int i = 1; i < (int)polyline.size(); ++i)
-    {
-      auto v0 = polyline[i - 1];
-      auto v1 = polyline[i];
-      drawer->line(v0, v1, Yellow);
-    }
-
+    auto& polyline = input.polyline;
     auto clamp = [](int val, int min, int max) {
       if(val < min)
         return min;
@@ -82,6 +90,8 @@ struct ThickLineApp : IApp
 
     auto normal = [&](int segmentIndex) { return rotateLeft(tangent(segmentIndex)); };
 
+    std::vector<Segment> segments;
+
     for(int i = 0; i + 1 < (int)polyline.size(); ++i)
     {
       auto v0 = polyline[i];
@@ -89,20 +99,41 @@ struct ThickLineApp : IApp
       const auto N0 = normalize(normal(i) + normal(i - 1));
       const auto N1 = normalize(normal(i) + normal(i + 1));
 
-      const auto L0 = v0 + N0 * thickness;
-      const auto L1 = v1 + N1 * thickness;
-      const auto R0 = v0 - N0 * thickness;
-      const auto R1 = v1 - N1 * thickness;
-      drawer->line(L0, L1, Red);
-      drawer->line(L0, R0, Red);
-      drawer->line(R0, R1, Red);
-      drawer->line(L1, R1, Red);
+      const auto L0 = v0 + N0 * input.thickness;
+      const auto L1 = v1 + N1 * input.thickness;
+      const auto R0 = v0 - N0 * input.thickness;
+      const auto R1 = v1 - N1 * input.thickness;
+      gVisualizer->line(L0, L1, Red);
+      gVisualizer->line(L0, R0, Red);
+      gVisualizer->line(R0, R1, Red);
+      gVisualizer->line(L1, R1, Red);
+      gVisualizer->step();
+
+      segments.push_back({L0, L1});
+      segments.push_back({L0, R0});
+      segments.push_back({R0, R1});
+      segments.push_back({L1, R1});
+    }
+
+    return segments;
+  }
+
+  static void drawInput(IDrawer* drawer, const Input& input)
+  {
+    for(int i = 1; i < (int)input.polyline.size(); ++i)
+    {
+      auto v0 = input.polyline[i - 1];
+      auto v1 = input.polyline[i];
+      drawer->line(v0, v1, Yellow);
     }
   }
 
-  float thickness = 0;
-  std::vector<Vec2> polyline;
+  static void drawOutput(IDrawer* drawer, const Input& input, const std::vector<Segment>& output)
+  {
+    for(auto& s : output)
+      drawer->line(s.a, s.b, Green);
+  }
 };
 
-const int registered = registerApp("ThickLine", []() -> IApp* { return new ThickLineApp; });
+const int registered = registerApp("ThickLine", []() -> IApp* { return new AlgorithmApp<ThickLineAlgorithm>; });
 }
