@@ -94,16 +94,18 @@ struct ThickLineAlgorithm
 
     std::vector<Segment> segments;
 
-    for(int i = 0; i + 1 < (int)polyline.size(); ++i)
-    {
-      auto v0 = polyline[i];
-      auto v1 = polyline[i + 1];
-      const auto N0 = normalize(normal(i) + normal(i - 1));
-      const auto N1 = normalize(normal(i) + normal(i + 1));
+    Vec2 N = normal(0);
+    Vec2 L = polyline[0] + N * input.thickness;
+    Vec2 R = polyline[0] - N * input.thickness;
 
-      const auto L0 = v0 + N0 * input.thickness;
+    for(int i = 1; i < (int)polyline.size(); ++i)
+    {
+      auto v1 = polyline[i];
+      const auto N1 = normalize(N + normal(i));
+
+      const auto L0 = L;
       const auto L1 = v1 + N1 * input.thickness;
-      const auto R0 = v0 - N0 * input.thickness;
+      const auto R0 = R;
       const auto R1 = v1 - N1 * input.thickness;
       gVisualizer->line(L0, L1, Red);
       gVisualizer->line(L0, R0, Red);
@@ -115,6 +117,10 @@ struct ThickLineAlgorithm
       segments.push_back({L0, R0});
       segments.push_back({R0, R1});
       segments.push_back({L1, R1});
+
+      L = L1;
+      R = R1;
+      N = N1;
     }
 
     return segments;
