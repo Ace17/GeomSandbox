@@ -10,6 +10,12 @@ struct BoundingBox
     max.x = max.y = -1.0 / 0.0;
   }
 
+  BoundingBox(Vec2 pMin, Vec2 pMax)
+  {
+    min = pMin;
+    max = pMax;
+  }
+
   void add(Vec2 p)
   {
     min.x = std::min(min.x, p.x);
