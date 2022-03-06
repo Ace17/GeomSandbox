@@ -29,24 +29,23 @@ struct VoronoiDiagram
   std::vector<Edge> edges;
 };
 
-const BoundingBox box{{-20, -10}, {20, 10}};
-
-struct Edge;
+const BoundingBox box {{-20, -10}, {20, 10}};
 
 struct Arc
 {
   Vec2 site;
+  Arc* left = nullptr;
+  Arc* right = nullptr;
 
   float pointOn(float x, float lineY) const
   {
     return 1 / (2 * (site.y - lineY)) * powf(x - site.x, 2.f) + (site.y + lineY) / 2.f;
   };
 };
-using ArcList = std::vector<Arc>;
 
-void drawArc(IDrawer* drawer, const Arc& arc, float lineY, Color color)
+void drawArc(IDrawer* drawer, const Arc* arc, float lineY, Color color)
 {
-  const Vec2 site = arc.site;
+  const Vec2 site = arc->site;
   const float stepSize = 1.f;
   const int stepCount = 20;
   const float startX = site.x - stepCount / 2 * stepSize;
@@ -54,13 +53,17 @@ void drawArc(IDrawer* drawer, const Arc& arc, float lineY, Color color)
   for(float x = startX; x < endX; x += stepSize)
   {
     const float nextX = x + stepSize;
-    drawer->line({x, arc.pointOn(x, lineY)}, {nextX, arc.pointOn(nextX, lineY)}, color);
+    drawer->line({x, arc->pointOn(x, lineY)}, {nextX, arc->pointOn(nextX, lineY)}, color);
   }
 }
 
-static float dot(Vec2 v, Vec2 w) { return v.x * w.x + v.y * w.y; }
-
-static constexpr float clamp(float value, float min, float max) { return std::min(max, std::max(min, value)); }
+void drawLine(IDrawer* drawer, const Arc* rightArc, const Arc* leftArc, Color color)
+{
+  const Vec2 linePerpendicular = leftArc->site - rightArc->site;
+  const Vec2 direction = Vec2(-linePerpendicular.y, linePerpendicular.x);
+  const Vec2 origin = ((leftArc->site + rightArc->site) / 2.f);
+  drawer->line(origin, origin + direction * 1000.f, color);
+}
 
 class Event;
 struct CompareEvents;
@@ -69,13 +72,32 @@ struct Event
 {
   virtual ~Event() = default;
   virtual Vec2 pos() const = 0;
-  virtual void happen(EventQueue& eventQueue, ArcList& arcList) = 0;
+  virtual void happen(EventQueue& eventQueue, Arc*& rootArc) = 0;
 };
 
 struct CompareEvents
 {
   bool operator()(Event* eventA, Event* eventB) { return eventA->pos().y < eventB->pos().y; }
 };
+
+Arc* findAboveArc(Arc* rootArc, Vec2 pos)
+{
+  // TODO arcs are sorted, we could implement a binary search.
+  Arc* arc = rootArc;
+  Arc* lowestArc = arc;
+  float lowestArcPositionY = arc->pointOn(pos.x, pos.y);
+  while(arc->right)
+  {
+    arc = arc->right;
+    const float arcPositionY = arc->pointOn(pos.x, pos.y);
+    if(arcPositionY < lowestArcPositionY)
+    {
+      lowestArcPositionY = arcPositionY;
+      lowestArc = arc;
+    }
+  }
+  return lowestArc;
+}
 
 struct siteEvent final : public Event
 {
@@ -87,7 +109,46 @@ struct siteEvent final : public Event
   }
 
   Vec2 pos() const override { return Pos; }
-  void happen(EventQueue& eventQueue, ArcList& arcList) override { arcList.push_back({Pos}); }
+  void happen(EventQueue& eventQueue, Arc*& rootArc) override
+  {
+    Arc* newArc = new Arc({Pos});
+    if(!rootArc)
+      rootArc = newArc;
+    else
+    {
+      Arc* aboveArc = findAboveArc(rootArc, Pos);
+      Arc* newLeftArc = new Arc({aboveArc->site});
+      Arc* newRightArc = new Arc({aboveArc->site});
+
+      gVisualizer->line(Pos, {Pos.x, aboveArc->pointOn(Pos.x, Pos.y)}, Green);
+      drawArc(gVisualizer, aboveArc, Pos.y, Green);
+      drawLine(gVisualizer, newLeftArc, newArc, Green);
+      drawLine(gVisualizer, newArc, newRightArc, Green);
+
+      newArc->left = newLeftArc;
+      newArc->right = newRightArc;
+      newLeftArc->left = aboveArc->left;
+      newLeftArc->right = newArc;
+      newRightArc->left = newArc;
+      newRightArc->right = aboveArc->right;
+
+      if(aboveArc->left)
+      {
+        aboveArc->left->right = newLeftArc;
+      }
+      if(aboveArc->right)
+      {
+        aboveArc->right->left = newRightArc;
+      }
+      delete aboveArc;
+
+      rootArc = newLeftArc;
+      while(rootArc->left)
+      {
+        rootArc = rootArc->left;
+      }
+    }
+  }
 };
 
 void drawHorizontalLine(IDrawer* drawer, Vec2 point, Color color)
@@ -97,11 +158,18 @@ void drawHorizontalLine(IDrawer* drawer, Vec2 point, Color color)
   drawer->line(topPoint, bottomPoint, color);
 }
 
-void drawArcs(IDrawer* drawer, const ArcList& arcList, float lineY, Color color)
+void drawBeachLine(IDrawer* drawer, const Arc* rootArc, float lineY, Color color)
 {
-  for(const Arc& arc : arcList)
+  if(rootArc)
   {
+    const Arc* arc = rootArc;
     drawArc(drawer, arc, lineY, color);
+    while(arc->right)
+    {
+      drawLine(drawer, arc, arc->right, color);
+      drawArc(drawer, arc->right, lineY, color);
+      arc = arc->right;
+    }
   }
 }
 
@@ -120,7 +188,7 @@ struct FortuneVoronoiAlgoritm
   static VoronoiDiagram execute(std::vector<Vec2> input)
   {
     EventQueue eventQueue;
-    ArcList arcList;
+    Arc* rootArc = nullptr;
     for(Vec2 point : input)
     {
       eventQueue.push(new siteEvent(point));
@@ -131,11 +199,18 @@ struct FortuneVoronoiAlgoritm
       Event* event = eventQueue.top();
       eventQueue.pop();
       const Vec2 eventPos = event->pos();
-      drawArcs(gVisualizer, arcList, eventPos.y, Yellow);
+      drawBeachLine(gVisualizer, rootArc, eventPos.y, Yellow);
       drawHorizontalLine(gVisualizer, eventPos, Red);
+      event->happen(eventQueue, rootArc);
       gVisualizer->step();
-      event->happen(eventQueue, arcList);
       delete event;
+    }
+
+    while(rootArc)
+    {
+      Arc* arc = rootArc;
+      rootArc = rootArc->right;
+      delete arc;
     }
 
     // TODO
