@@ -31,6 +31,8 @@ struct VoronoiDiagram
 
 const BoundingBox box {{-20, -10}, {20, 10}};
 
+float clamp(float value, float min, float max) { return std::min(max, std::max(min, value)); }
+
 struct Arc
 {
   Vec2 site;
@@ -41,19 +43,73 @@ struct Arc
   {
     return 1 / (2 * (site.y - lineY)) * powf(x - site.x, 2.f) + (site.y + lineY) / 2.f;
   };
+
+  // Return arc as equation y = ax^2 + bx + c
+  void asEquation(float lineY, float& a, float& b, float& c) const
+  {
+    const float d = (2.f * (site.y - lineY));
+    a = 1.f / d;
+    b = -2.f * site.x / d;
+    c = lineY + d / 4.f + site.x * site.x / d;
+  }
 };
+
+float arcIntersection(const Arc* leftArc, const Arc* rightArc, float lineY)
+{
+  if(leftArc->site.y == lineY)
+    return leftArc->site.x;
+  if(rightArc->site.y == lineY)
+    return rightArc->site.x;
+
+  float leftA, leftB, leftC;
+  leftArc->asEquation(lineY, leftA, leftB, leftC);
+  float rightA, rightB, rightC;
+  rightArc->asEquation(lineY, rightA, rightB, rightC);
+
+  const float a = leftA - rightA;
+  const float b = leftB - rightB;
+  const float c = leftC - rightC;
+  const float det = b * b - 4.f * a * c;
+  const float x1 = (-b + sqrt(det)) / (2 * a);
+  const float x2 = (-b - sqrt(det)) / (2 * a);
+
+  return x1;
+}
+
+std::pair<float, float> getArcExtremities(const Arc* arc, float lineY)
+{
+  std::pair<float, float> result = {box.min.x, box.max.x};
+
+  if(arc->left)
+  {
+    result.first = arcIntersection(arc->left, arc, lineY);
+    result.first = clamp(result.first, box.min.x, box.max.x);
+  }
+  if(arc->right)
+  {
+    result.second = arcIntersection(arc, arc->right, lineY);
+    result.second = clamp(result.second, box.min.x, box.max.x);
+  }
+
+  return result;
+}
 
 void drawArc(IDrawer* drawer, const Arc* arc, float lineY, Color color)
 {
-  const Vec2 site = arc->site;
-  const float stepSize = 1.f;
+  const std::pair<float, float> extremities = getArcExtremities(arc, lineY);
   const int stepCount = 20;
-  const float startX = site.x - stepCount / 2 * stepSize;
-  const float endX = site.x + stepCount / 2 * stepSize;
-  for(float x = startX; x < endX; x += stepSize)
+  const float startX = extremities.first;
+  const float endX = extremities.second;
+  if(startX < endX)
   {
-    const float nextX = x + stepSize;
-    drawer->line({x, arc->pointOn(x, lineY)}, {nextX, arc->pointOn(nextX, lineY)}, color);
+    const float stepSize = (endX - startX) / static_cast<float>(stepCount);
+    float x = startX;
+    for(int i = 0; i < stepCount; i++)
+    {
+      const float nextX = x + stepSize;
+      drawer->line({x, arc->pointOn(x, lineY)}, {nextX, arc->pointOn(nextX, lineY)}, color);
+      x = nextX;
+    }
   }
 }
 
