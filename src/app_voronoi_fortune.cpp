@@ -7,8 +7,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Voronoi diagram: Fortune algorithm
 
+#include <algorithm>
 #include <cmath> // powf
-#include <queue> // std::priority_queue
 #include <vector>
 
 #include "algorithm_app.h"
@@ -123,17 +123,12 @@ void drawLine(IDrawer* drawer, const Arc* rightArc, const Arc* leftArc, Color co
 
 class Event;
 struct CompareEvents;
-using EventQueue = std::priority_queue<Event*, std::vector<Event*>, CompareEvents>;
+using EventQueue = std::vector<Event*>;
 struct Event
 {
   virtual ~Event() = default;
   virtual Vec2 pos() const = 0;
   virtual void happen(EventQueue& eventQueue, Arc*& rootArc) = 0;
-};
-
-struct CompareEvents
-{
-  bool operator()(Event* eventA, Event* eventB) { return eventA->pos().y < eventB->pos().y; }
 };
 
 Arc* findAboveArc(Arc* rootArc, Vec2 pos)
@@ -241,13 +236,16 @@ struct FortuneVoronoiAlgoritm
     Arc* rootArc = nullptr;
     for(Vec2 point : input)
     {
-      eventQueue.push(new siteEvent(point));
+      eventQueue.push_back(new siteEvent(point));
     }
 
     while(!eventQueue.empty())
     {
-      Event* event = eventQueue.top();
-      eventQueue.pop();
+      auto compareEvents = [](Event* eventA, Event* eventB) { return eventA->pos().y < eventB->pos().y; };
+
+      std::sort(eventQueue.begin(), eventQueue.end(), compareEvents);
+      Event* event = eventQueue.back();
+      eventQueue.pop_back();
       const Vec2 eventPos = event->pos();
       drawBeachLine(gVisualizer, rootArc, eventPos.y, Yellow);
       drawHorizontalLine(gVisualizer, eventPos, Red);
