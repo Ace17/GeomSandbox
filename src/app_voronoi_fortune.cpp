@@ -140,19 +140,13 @@ Arc* findAboveArc(Arc* rootArc, Vec2 pos)
 {
   // TODO arcs are sorted, we could implement a binary search.
   Arc* arc = rootArc;
-  Arc* lowestArc = arc;
-  float lowestArcPositionY = arc->pointOn(pos.x, pos.y);
-  while(arc->right)
+  std::pair<float, float> arcExtremities = getArcExtremities(arc, pos.y);
+  while(pos.x < arcExtremities.first || pos.x > arcExtremities.second)
   {
     arc = arc->right;
-    const float arcPositionY = arc->pointOn(pos.x, pos.y);
-    if(arcPositionY < lowestArcPositionY)
-    {
-      lowestArcPositionY = arcPositionY;
-      lowestArc = arc;
-    }
+    arcExtremities = getArcExtremities(arc, pos.y);
   }
-  return lowestArc;
+  return arc;
 }
 
 struct siteEvent final : public Event
