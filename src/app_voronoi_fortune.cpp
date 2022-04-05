@@ -97,17 +97,18 @@ std::pair<float, float> getArcExtremities(const Arc* arc, float lineY)
 void drawArc(IDrawer* drawer, const Arc* arc, float lineY, Color color)
 {
   const std::pair<float, float> extremities = getArcExtremities(arc, lineY);
-  const int stepCount = 20;
   const float startX = extremities.first;
   const float endX = extremities.second;
   if(startX < endX)
   {
-    const float stepSize = (endX - startX) / static_cast<float>(stepCount);
-    float x = startX;
-    for(int i = 0; i < stepCount; i++)
+    const float stepSize = 0.5f;
+    float x = startX - std::abs(std::fmod(startX, stepSize));
+    while(x < endX)
     {
       const float nextX = x + stepSize;
-      drawer->line({x, arc->pointOn(x, lineY)}, {nextX, arc->pointOn(nextX, lineY)}, color);
+      const float lineStartX = std::max(x, startX);
+      const float lineEndX = std::min(nextX, endX);
+      drawer->line({lineStartX, arc->pointOn(lineStartX, lineY)}, {lineEndX, arc->pointOn(lineEndX, lineY)}, color);
       x = nextX;
     }
   }
