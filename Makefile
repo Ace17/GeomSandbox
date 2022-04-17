@@ -28,6 +28,7 @@ SRCS+=\
 			src/app_example.cpp\
 			src/app_collide2d.cpp\
 			src/app_random_polygon.cpp\
+			src/app_dijkstra.cpp\
 			src/app_douglas_peucker.cpp\
 			src/app_ear_clipping.cpp\
 			src/app_sat.cpp\
