@@ -332,7 +332,8 @@ Polygon2f createRandomPolygon2f(IVisualizer* visualizer)
   const auto N = randomInt(3, 8);
   Polygon2f r = createRegularPolygon2f(N, radius1, radius2);
 
-  auto drawAndStep = [&]() {
+  auto drawAndStep = [&]()
+  {
     for(auto face : r.faces)
       visualizer->line(r.vertices[face.a], r.vertices[face.b]);
     visualizer->step();

@@ -56,7 +56,8 @@ Ear polygonEarFromIndex(const Polygon2f& polygon, int index)
 
 bool isInsideTriangle(Vec2 a, Vec2 b, Vec2 c, Vec2 point)
 {
-  auto isOnTheRightOfSegment = [](Vec2 segmentStart, Vec2 segmentEnd, Vec2 point) {
+  auto isOnTheRightOfSegment = [](Vec2 segmentStart, Vec2 segmentEnd, Vec2 point)
+  {
     const Vec2 a = point - segmentStart;
     const Vec2 b = segmentEnd - point;
     const float epsilon = 0.0001;

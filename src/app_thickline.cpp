@@ -75,7 +75,8 @@ struct ThickLineAlgorithm
   static std::vector<Segment> execute(Input input)
   {
     auto& polyline = input.polyline;
-    auto clamp = [](int val, int min, int max) {
+    auto clamp = [](int val, int min, int max)
+    {
       if(val < min)
         return min;
       if(val > max)
@@ -83,7 +84,8 @@ struct ThickLineAlgorithm
       return val;
     };
 
-    auto tangent = [&](int segmentIndex) {
+    auto tangent = [&](int segmentIndex)
+    {
       int i = clamp(segmentIndex, 0, polyline.size() - 2);
       return normalize(polyline[i + 1] - polyline[i]);
     };

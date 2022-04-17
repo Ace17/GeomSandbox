@@ -60,7 +60,8 @@ int nextEdgeOnHull(span<const HalfEdge> he, int edge)
   return edge;
 }
 
-const int unittests_run = []() {
+const int unittests_run = []()
+{
   // simple
   {
     std::vector<HalfEdge> he = {
@@ -104,7 +105,8 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
   if(points.len < 3)
     return {};
 
-  auto addHalfEdge = [&](int p0, int nextEdge) -> int {
+  auto addHalfEdge = [&](int p0, int nextEdge) -> int
+  {
     const int edge = (int)he.size();
     pointToEdge[p0] = edge;
     he.push_back({p0, -1, -1});
@@ -131,7 +133,8 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
 
   int hullHead = 0;
 
-  auto printHull = [&]() {
+  auto printHull = [&]()
+  {
     int k = 0;
     int edge = hullHead;
     fprintf(stderr, "[");
@@ -151,7 +154,8 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
     fprintf(stderr, "]\n");
   };
 
-  auto drawHull = [&]() {
+  auto drawHull = [&]()
+  {
     int k = 0;
     int edge = hullHead;
 
@@ -259,7 +263,8 @@ struct TriangulateAlgorithm
 
     // sort points from left to right
     {
-      auto byCoordinates = [](Vec2 a, Vec2 b) {
+      auto byCoordinates = [](Vec2 a, Vec2 b)
+      {
         if(a.x != b.x)
           return a.x < b.x;
 

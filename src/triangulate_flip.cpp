@@ -48,7 +48,8 @@ std::vector<int> sortPointsFromLeftToRight(span<const Vec2> points)
   for(int i = 0; i < points.len; ++i)
     order[i] = i;
 
-  auto byCoordinates = [&](int ia, int ib) {
+  auto byCoordinates = [&](int ia, int ib)
+  {
     auto a = points[ia];
     auto b = points[ib];
 
@@ -157,7 +158,8 @@ std::vector<HalfEdge> convertToHalfEdge(span<const Vec2> points, span<const Tria
   std::vector<HalfEdge> he;
   std::map<std::pair<int, int>, int> pointToEdge;
 
-  auto findHalfEdge = [&](int a, int b) {
+  auto findHalfEdge = [&](int a, int b)
+  {
     auto i = pointToEdge.find({a, b});
 
     if(i == pointToEdge.end())
