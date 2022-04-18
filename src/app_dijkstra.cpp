@@ -35,6 +35,12 @@ struct Graph
   int startNode;
 };
 
+struct Output
+{
+  std::vector<int> provenance;
+  std::vector<int> cost;
+};
+
 Graph randomGraph()
 {
   Graph r;
@@ -95,17 +101,21 @@ struct DijkstraAlgorithm
 {
   static Graph generateInput() { return randomGraph(); }
 
-  static std::vector<int> execute(Graph input)
+  static Output execute(Graph input)
   {
+    Output r{};
+
     auto& nodes = input.nodes;
 
     std::vector<bool> isVisited(nodes.size());
-    std::vector<int> cost(nodes.size(), INT_MAX);
+    r.cost.resize(nodes.size(), INT_MAX);
+    r.provenance.resize(nodes.size(), INT_MAX);
 
     std::set<int> todo; // list of nodes bordering the visited area
 
     todo.insert(input.startNode);
-    cost[input.startNode] = 0;
+    r.cost[input.startNode] = 0;
+    r.provenance[input.startNode] = input.startNode;
 
     while(todo.size())
     {
@@ -114,10 +124,10 @@ struct DijkstraAlgorithm
       int bestCost = INT_MAX;
       for(auto id : todo)
       {
-        if(cost[id] < bestCost)
+        if(r.cost[id] < bestCost)
         {
           bestId = id;
-          bestCost = cost[id];
+          bestCost = r.cost[id];
         }
       }
 
@@ -131,11 +141,13 @@ struct DijkstraAlgorithm
         if(isVisited[nb.id])
           continue;
 
-        const int nbCost = cost[current] + nb.cost;
-        if(nbCost >= cost[nb.id])
+        const int nbCost = r.cost[current] + nb.cost;
+        if(nbCost >= r.cost[nb.id])
           continue;
 
-        cost[nb.id] = nbCost;
+        r.cost[nb.id] = nbCost;
+        r.provenance[nb.id] = current;
+
         todo.insert(nb.id);
 
         gVisualizer->circle(nodes[nb.id].pos, 1, Red);
@@ -146,11 +158,11 @@ struct DijkstraAlgorithm
 
       for(int i = 0; i < (int)nodes.size(); ++i)
       {
-        if(cost[i] == INT_MAX)
+        if(r.cost[i] == INT_MAX)
           continue;
 
         char buffer[32];
-        sprintf(buffer, "%d", cost[i]);
+        sprintf(buffer, "%d", r.cost[i]);
 
         const bool highlight = todo.find(i) != todo.end();
         gVisualizer->text(nodes[i].pos, buffer, highlight ? Green : White);
@@ -162,9 +174,7 @@ struct DijkstraAlgorithm
       gVisualizer->step();
     }
 
-    std::vector<int> result;
-
-    return result;
+    return r;
   }
 
   static void drawInput(IDrawer* drawer, const Graph& input)
@@ -183,18 +193,26 @@ struct DijkstraAlgorithm
     drawer->circle(nodes[input.startNode].pos, 1.2, Yellow);
   }
 
-  static void drawOutput(IDrawer* drawer, const Graph& input, const std::vector<int>& output)
+  static void drawOutput(IDrawer* drawer, const Graph& input, const Output& output)
   {
-    auto& nodes = input.nodes;
-
-    if(output.empty())
+    if(output.cost.empty())
       return;
 
-    int prevIdx = output[0];
-    for(auto idx : output)
+    for(int i = 0; i < (int)input.nodes.size(); ++i)
     {
-      drawer->line(nodes[prevIdx].pos, nodes[idx].pos, Green);
-      prevIdx = idx;
+      if(output.cost[i] == INT_MAX)
+        continue;
+
+      char buffer[32];
+      sprintf(buffer, "%d", output.cost[i]);
+
+      drawer->text(input.nodes[i].pos, buffer, Green);
+
+      if(output.provenance[i] != i)
+      {
+        const int prov = output.provenance[i];
+        drawer->line(input.nodes[prov].pos, input.nodes[i].pos, Green);
+      }
     }
   }
 };
