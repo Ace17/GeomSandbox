@@ -63,10 +63,10 @@ Graph randomGraph()
       n.pos = Vec2((x - N / 2) * spacing, (y - N / 2) * spacing);
 
       if(x % 2)
-        n.pos.y += spacing * 0.2;
+        n.pos.y += spacing * 0.5;
 
       if(y % 2)
-        n.pos.x += spacing * 0.2;
+        n.pos.x += spacing * 0.5;
     }
   }
 
@@ -166,6 +166,12 @@ struct DijkstraAlgorithm
 
         const bool highlight = todo.find(i) != todo.end();
         gVisualizer->text(nodes[i].pos, buffer, highlight ? Green : White);
+
+        if(r.provenance[i] != i)
+        {
+          const int prov = r.provenance[i];
+          gVisualizer->line(input.nodes[prov].pos, input.nodes[i].pos, White);
+        }
       }
 
       for(auto id : todo)
