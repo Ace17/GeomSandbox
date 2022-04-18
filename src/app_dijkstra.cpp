@@ -48,6 +48,7 @@ Graph randomGraph()
 
   nodes.resize(N * N);
 
+  // layout nodes for display
   for(int y = 0; y < N; ++y)
   {
     for(int x = 0; x < N; ++x)
@@ -60,15 +61,28 @@ Graph randomGraph()
 
       if(y % 2)
         n.pos.x += spacing * 0.2;
+    }
+  }
 
-      if(x > 0)
-        n.neighboors.push_back({getId(x - 1, y)});
-      if(y > 0)
-        n.neighboors.push_back({getId(x, y - 1)});
-      if(x < N - 1)
-        n.neighboors.push_back({getId(x + 1, y)});
-      if(y < N - 1)
-        n.neighboors.push_back({getId(x, y + 1)});
+  // make connections
+  auto connect = [&](int id1, int id2)
+  {
+    const int cost = 1;
+    r.nodes[id1].neighboors.push_back({id2, cost});
+    r.nodes[id2].neighboors.push_back({id1, cost});
+  };
+
+  for(int y = 0; y < N; ++y)
+  {
+    for(int x = 0; x < N; ++x)
+    {
+      const auto id = getId(x, y);
+
+      if(x > 0 && rand() % 10 < 8)
+        connect(id, getId(x - 1, y));
+
+      if(y > 0 && rand() % 10 < 8)
+        connect(id, getId(x, y - 1));
     }
   }
 
