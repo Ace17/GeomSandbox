@@ -132,11 +132,11 @@ struct DijkstraAlgorithm
 
       for(int i = 0; i < (int)nodes.size(); ++i)
       {
-        char buffer[32];
         if(cost[i] == INT_MAX)
-          sprintf(buffer, "-");
-        else
-          sprintf(buffer, "%d", cost[i]);
+          continue;
+
+        char buffer[32];
+        sprintf(buffer, "%d", cost[i]);
 
         const bool highlight = todo.find(i) != todo.end();
         gVisualizer->text(nodes[i].pos, buffer, highlight ? Green : White);
