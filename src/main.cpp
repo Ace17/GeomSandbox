@@ -228,10 +228,13 @@ int main(int argc, char* argv[])
 {
   try
   {
-    std::string appName = Registry().begin()->first;
+    if(argc != 2)
+    {
+      fprintf(stderr, "Usage: %s <appName>\n", argv[0]);
+      return 1;
+    }
 
-    if(argc == 2)
-      appName = argv[1];
+    std::string appName = argv[1];
 
     auto i_func = Registry().find(appName);
 
