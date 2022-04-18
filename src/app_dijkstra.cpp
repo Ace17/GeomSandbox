@@ -32,49 +32,54 @@ struct Node
 struct Graph
 {
   std::vector<Node> nodes;
+  int startNode;
 };
+
+Graph randomGraph()
+{
+  Graph r;
+
+  auto& nodes = r.nodes;
+
+  static const int N = 7;
+  static const auto spacing = 4.2f;
+
+  auto getId = [](int x, int y) { return x + y * N; };
+
+  nodes.resize(N * N);
+
+  for(int y = 0; y < N; ++y)
+  {
+    for(int x = 0; x < N; ++x)
+    {
+      Node& n = nodes[getId(x, y)];
+      n.pos = Vec2((x - N / 2) * spacing, (y - N / 2) * spacing);
+
+      if(x % 2)
+        n.pos.y += spacing * 0.2;
+
+      if(y % 2)
+        n.pos.x += spacing * 0.2;
+
+      if(x > 0)
+        n.neighboors.push_back({getId(x - 1, y)});
+      if(y > 0)
+        n.neighboors.push_back({getId(x, y - 1)});
+      if(x < N - 1)
+        n.neighboors.push_back({getId(x + 1, y)});
+      if(y < N - 1)
+        n.neighboors.push_back({getId(x, y + 1)});
+    }
+  }
+
+  r.startNode = rand() % r.nodes.size();
+
+  return r;
+}
 
 struct DijkstraAlgorithm
 {
-  static Graph generateInput()
-  {
-    Graph r;
-
-    auto& nodes = r.nodes;
-
-    static const int N = 7;
-    static const auto spacing = 4.2f;
-
-    auto getId = [](int x, int y) { return x + y * N; };
-
-    nodes.resize(N * N);
-
-    for(int y = 0; y < N; ++y)
-    {
-      for(int x = 0; x < N; ++x)
-      {
-        Node& n = nodes[getId(x, y)];
-        n.pos = Vec2((x - N / 2) * spacing, (y - N / 2) * spacing);
-
-        if(x % 2)
-          n.pos.y += spacing * 0.2;
-
-        if(y % 2)
-          n.pos.x += spacing * 0.2;
-
-        if(x > 0)
-          n.neighboors.push_back({getId(x - 1, y)});
-        if(y > 0)
-          n.neighboors.push_back({getId(x, y - 1)});
-        if(x < N - 1)
-          n.neighboors.push_back({getId(x + 1, y)});
-        if(y < N - 1)
-          n.neighboors.push_back({getId(x, y + 1)});
-      }
-    }
-
-    return r;
-  }
+  static Graph generateInput() { return randomGraph(); }
 
   static std::vector<int> execute(Graph input)
   {
@@ -85,10 +90,8 @@ struct DijkstraAlgorithm
 
     std::set<int> todo; // list of nodes bordering the visited area
 
-    const int StartNode = nodes.size() / 2;
-
-    todo.insert(StartNode);
-    cost[StartNode] = 0;
+    todo.insert(input.startNode);
+    cost[input.startNode] = 0;
 
     while(todo.size())
     {
@@ -157,11 +160,13 @@ struct DijkstraAlgorithm
     for(int idx = 0; idx < nodes.size(); ++idx)
     {
       auto& node = nodes[idx];
-      drawer->circle(node.pos, 0.5);
+      drawer->circle(node.pos, 0.5, Gray);
 
       for(auto& nb : node.neighboors)
-        drawer->line(nodes[idx].pos, nodes[nb.id].pos, White);
+        drawer->line(nodes[idx].pos, nodes[nb.id].pos, Gray);
     }
+
+    drawer->circle(nodes[input.startNode].pos, 1.2, Yellow);
   }
 
   static void drawOutput(IDrawer* drawer, const Graph& input, const std::vector<int>& output)

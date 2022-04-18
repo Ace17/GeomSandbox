@@ -8,6 +8,7 @@ struct Color
 };
 
 constexpr Color White{1, 1, 1, 1};
+constexpr Color Gray{0.2, 0.2, 0.2, 1};
 constexpr Color Red{1, 0, 0, 1};
 constexpr Color Green{0, 1, 0, 1};
 constexpr Color Blue{0, 0, 1, 1};
