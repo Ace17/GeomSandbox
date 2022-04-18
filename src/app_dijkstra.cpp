@@ -18,22 +18,29 @@
 
 namespace
 {
+struct Node
+{
+  struct Neighbor
+  {
+    int id;
+    int cost = 1;
+  };
+  Vec2 pos; // for display
+  std::vector<Neighbor> neighboors;
+};
+
+struct Graph
+{
+  std::vector<Node> nodes;
+};
+
 struct DijkstraAlgorithm
 {
-  struct Node
+  static Graph generateInput()
   {
-    struct Neighbor
-    {
-      int id;
-      int cost = 1;
-    };
-    Vec2 pos; // for display
-    std::vector<Neighbor> neighboors;
-  };
+    Graph r;
 
-  static std::vector<Node> generateInput()
-  {
-    std::vector<Node> nodes;
+    auto& nodes = r.nodes;
 
     static const int N = 7;
     static const auto spacing = 4.2f;
@@ -66,17 +73,19 @@ struct DijkstraAlgorithm
       }
     }
 
-    return nodes;
+    return r;
   }
 
-  static std::vector<int> execute(std::vector<Node> input)
+  static std::vector<int> execute(Graph input)
   {
-    std::vector<bool> isVisited(input.size());
-    std::vector<int> cost(input.size(), INT_MAX);
+    auto& nodes = input.nodes;
+
+    std::vector<bool> isVisited(nodes.size());
+    std::vector<int> cost(nodes.size(), INT_MAX);
 
     std::set<int> todo; // list of nodes bordering the visited area
 
-    const int StartNode = input.size() / 2;
+    const int StartNode = nodes.size() / 2;
 
     todo.insert(StartNode);
     cost[StartNode] = 0;
@@ -100,7 +109,7 @@ struct DijkstraAlgorithm
 
       isVisited[current] = true;
 
-      for(auto& nb : input[current].neighboors)
+      for(auto& nb : nodes[current].neighboors)
       {
         if(isVisited[nb.id])
           continue;
@@ -112,13 +121,13 @@ struct DijkstraAlgorithm
         cost[nb.id] = nbCost;
         todo.insert(nb.id);
 
-        gVisualizer->circle(input[nb.id].pos, 1, Red);
-        gVisualizer->line(input[current].pos, input[nb.id].pos, Red);
+        gVisualizer->circle(nodes[nb.id].pos, 1, Red);
+        gVisualizer->line(nodes[current].pos, nodes[nb.id].pos, Red);
       }
 
-      gVisualizer->circle(input[current].pos, 2, Red);
+      gVisualizer->circle(nodes[current].pos, 2, Red);
 
-      for(int i = 0; i < (int)input.size(); ++i)
+      for(int i = 0; i < (int)nodes.size(); ++i)
       {
         char buffer[32];
         if(cost[i] == INT_MAX)
@@ -127,11 +136,11 @@ struct DijkstraAlgorithm
           sprintf(buffer, "%d", cost[i]);
 
         const bool highlight = todo.find(i) != todo.end();
-        gVisualizer->text(input[i].pos, buffer, highlight ? Green : White);
+        gVisualizer->text(nodes[i].pos, buffer, highlight ? Green : White);
       }
 
       for(auto id : todo)
-        gVisualizer->circle(input[id].pos, 1, Green);
+        gVisualizer->circle(nodes[id].pos, 1, Green);
 
       gVisualizer->step();
     }
@@ -141,27 +150,31 @@ struct DijkstraAlgorithm
     return result;
   }
 
-  static void drawInput(IDrawer* drawer, const std::vector<Node>& input)
+  static void drawInput(IDrawer* drawer, const Graph& input)
   {
-    for(int idx = 0; idx < input.size(); ++idx)
+    auto& nodes = input.nodes;
+
+    for(int idx = 0; idx < nodes.size(); ++idx)
     {
-      auto& node = input[idx];
+      auto& node = nodes[idx];
       drawer->circle(node.pos, 0.5);
 
       for(auto& nb : node.neighboors)
-        drawer->line(input[idx].pos, input[nb.id].pos, White);
+        drawer->line(nodes[idx].pos, nodes[nb.id].pos, White);
     }
   }
 
-  static void drawOutput(IDrawer* drawer, const std::vector<Node>& input, const std::vector<int>& output)
+  static void drawOutput(IDrawer* drawer, const Graph& input, const std::vector<int>& output)
   {
+    auto& nodes = input.nodes;
+
     if(output.empty())
       return;
 
     int prevIdx = output[0];
     for(auto idx : output)
     {
-      drawer->line(input[prevIdx].pos, input[idx].pos, Green);
+      drawer->line(nodes[prevIdx].pos, nodes[idx].pos, Green);
       prevIdx = idx;
     }
   }
