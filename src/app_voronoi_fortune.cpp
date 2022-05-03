@@ -76,29 +76,29 @@ struct Arc
 
     return x1;
   }
+
+  std::pair<float, float> getArcExtremities(float lineY) const
+  {
+    std::pair<float, float> result = {box.min.x, box.max.x};
+
+    if(left)
+    {
+      result.first = Arc::intersection(left, this, lineY);
+      result.first = clamp(result.first, box.min.x, box.max.x);
+    }
+    if(right)
+    {
+      result.second = Arc::intersection(this, right, lineY);
+      result.second = clamp(result.second, box.min.x, box.max.x);
+    }
+
+    return result;
+  }
 };
-
-std::pair<float, float> getArcExtremities(const Arc* arc, float lineY)
-{
-  std::pair<float, float> result = {box.min.x, box.max.x};
-
-  if(arc->left)
-  {
-    result.first = Arc::intersection(arc->left, arc, lineY);
-    result.first = clamp(result.first, box.min.x, box.max.x);
-  }
-  if(arc->right)
-  {
-    result.second = Arc::intersection(arc, arc->right, lineY);
-    result.second = clamp(result.second, box.min.x, box.max.x);
-  }
-
-  return result;
-}
 
 void drawArc(IDrawer* drawer, const Arc* arc, float lineY, Color color)
 {
-  const std::pair<float, float> extremities = getArcExtremities(arc, lineY);
+  const std::pair<float, float> extremities = arc->getArcExtremities(lineY);
   const float startX = extremities.first;
   const float endX = extremities.second;
   if(startX < endX)
@@ -204,11 +204,11 @@ Arc* findAboveArc(Arc* rootArc, Vec2 pos)
 {
   // TODO arcs are sorted, we could implement a binary search.
   Arc* arc = rootArc;
-  std::pair<float, float> arcExtremities = getArcExtremities(arc, pos.y);
+  std::pair<float, float> arcExtremities = arc->getArcExtremities(pos.y);
   while(pos.x < arcExtremities.first || pos.x > arcExtremities.second)
   {
     arc = arc->right;
-    arcExtremities = getArcExtremities(arc, pos.y);
+    arcExtremities = arc->getArcExtremities(pos.y);
   }
   return arc;
 }
