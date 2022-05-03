@@ -54,29 +54,29 @@ struct Arc
     b = -2.f * site.x / d;
     c = lineY + d / 4.f + site.x * site.x / d;
   }
+
+  static float intersection(const Arc* leftArc, const Arc* rightArc, float lineY)
+  {
+    if(leftArc->site.y == lineY)
+      return leftArc->site.x;
+    if(rightArc->site.y == lineY)
+      return rightArc->site.x;
+
+    float leftA, leftB, leftC;
+    leftArc->asEquation(lineY, leftA, leftB, leftC);
+    float rightA, rightB, rightC;
+    rightArc->asEquation(lineY, rightA, rightB, rightC);
+
+    const float a = leftA - rightA;
+    const float b = leftB - rightB;
+    const float c = leftC - rightC;
+    const float det = b * b - 4.f * a * c;
+    const float x1 = (-b + sqrt(det)) / (2 * a);
+    const float x2 = (-b - sqrt(det)) / (2 * a);
+
+    return x1;
+  }
 };
-
-float arcIntersection(const Arc* leftArc, const Arc* rightArc, float lineY)
-{
-  if(leftArc->site.y == lineY)
-    return leftArc->site.x;
-  if(rightArc->site.y == lineY)
-    return rightArc->site.x;
-
-  float leftA, leftB, leftC;
-  leftArc->asEquation(lineY, leftA, leftB, leftC);
-  float rightA, rightB, rightC;
-  rightArc->asEquation(lineY, rightA, rightB, rightC);
-
-  const float a = leftA - rightA;
-  const float b = leftB - rightB;
-  const float c = leftC - rightC;
-  const float det = b * b - 4.f * a * c;
-  const float x1 = (-b + sqrt(det)) / (2 * a);
-  const float x2 = (-b - sqrt(det)) / (2 * a);
-
-  return x1;
-}
 
 std::pair<float, float> getArcExtremities(const Arc* arc, float lineY)
 {
@@ -84,12 +84,12 @@ std::pair<float, float> getArcExtremities(const Arc* arc, float lineY)
 
   if(arc->left)
   {
-    result.first = arcIntersection(arc->left, arc, lineY);
+    result.first = Arc::intersection(arc->left, arc, lineY);
     result.first = clamp(result.first, box.min.x, box.max.x);
   }
   if(arc->right)
   {
-    result.second = arcIntersection(arc, arc->right, lineY);
+    result.second = Arc::intersection(arc, arc->right, lineY);
     result.second = clamp(result.second, box.min.x, box.max.x);
   }
 
@@ -127,7 +127,7 @@ void edgeEquation(const Vec2& edgePosition, const Vec2& edgeDirection, float& a,
 
 void edgeAsPositionAndDirection(const Arc* leftArc, const Arc* rightArc, Vec2& position, Vec2& direction, float lineY)
 {
-  const float intersectionX = arcIntersection(leftArc, rightArc, lineY);
+  const float intersectionX = Arc::intersection(leftArc, rightArc, lineY);
   const float intersectionY =
         leftArc->site.y == lineY ? rightArc->pointOn(intersectionX, lineY) : leftArc->pointOn(intersectionX, lineY);
   position = Vec2(intersectionX, intersectionY);
