@@ -96,6 +96,35 @@ struct Arc
   }
 };
 
+struct Edge
+{
+  const Arc* leftArc;
+  const Arc* rightArc;
+
+  Vec2 origin(float lineY) const
+  {
+    const float intersectionX = Arc::intersection(leftArc, rightArc, lineY);
+    const float intersectionY =
+          leftArc->site.y == lineY ? rightArc->pointOn(intersectionX, lineY) : leftArc->pointOn(intersectionX, lineY);
+    return Vec2(intersectionX, intersectionY);
+  }
+
+  Vec2 direction() const
+  {
+    const Vec2 linePerpendicular = leftArc->site - rightArc->site;
+    return Vec2(-linePerpendicular.y, linePerpendicular.x);
+  }
+
+  // Return line as equation y = ax + b
+  void asEquation(float& a, float& b, float lineY) const
+  {
+    const Vec2 edgeA = origin(lineY);
+    const Vec2 edgeB = edgeA + direction();
+    a = (edgeB.y - edgeA.y) / (edgeB.x - edgeA.x);
+    b = edgeA.y - a * edgeA.x;
+  }
+};
+
 void drawArc(IDrawer* drawer, const Arc* arc, float lineY, Color color)
 {
   const std::pair<float, float> extremities = arc->getArcExtremities(lineY);
@@ -116,25 +145,6 @@ void drawArc(IDrawer* drawer, const Arc* arc, float lineY, Color color)
   }
 }
 
-// Return line as equation y = ax + b
-void edgeEquation(const Vec2& edgePosition, const Vec2& edgeDirection, float& a, float& b)
-{
-  const Vec2 edgeA = edgePosition;
-  const Vec2 edgeB = edgePosition + edgeDirection;
-  a = (edgeB.y - edgeA.y) / (edgeB.x - edgeA.x);
-  b = edgeA.y - a * edgeA.x;
-}
-
-void edgeAsPositionAndDirection(const Arc* leftArc, const Arc* rightArc, Vec2& position, Vec2& direction, float lineY)
-{
-  const float intersectionX = Arc::intersection(leftArc, rightArc, lineY);
-  const float intersectionY =
-        leftArc->site.y == lineY ? rightArc->pointOn(intersectionX, lineY) : leftArc->pointOn(intersectionX, lineY);
-  position = Vec2(intersectionX, intersectionY);
-  const Vec2 linePerpendicular = leftArc->site - rightArc->site;
-  direction = Vec2(-linePerpendicular.y, linePerpendicular.x);
-}
-
 void drawLine(IDrawer* drawer, const Arc* rightArc, const Arc* leftArc, Color color)
 {
   const Vec2 linePerpendicular = leftArc->site - rightArc->site;
@@ -142,6 +152,8 @@ void drawLine(IDrawer* drawer, const Arc* rightArc, const Arc* leftArc, Color co
   const Vec2 origin = ((leftArc->site + rightArc->site) / 2.f);
   drawer->line(origin, origin + direction * 1000.f, color);
 }
+
+void drawEdge(IDrawer* drawer, const Edge& edge, Color color) { drawLine(drawer, edge.rightArc, edge.leftArc, color); }
 
 void drawHorizontalLine(IDrawer* drawer, Vec2 point, Color color)
 {
@@ -213,13 +225,7 @@ Arc* findAboveArc(Arc* rootArc, Vec2 pos)
   return arc;
 }
 
-void createCircleEventIfAny(EventQueue& eventQueue,
-      Arc* arc,
-      Vec2 leftPosition,
-      Vec2 leftDirection,
-      Vec2 rightPosition,
-      Vec2 rightDirection,
-      float lineY);
+void createCircleEventIfAny(EventQueue& eventQueue, Arc* arc, const Edge& leftEdge, const Edge& rightEdge, float lineY);
 
 struct CircleEvent final : public Event
 {
@@ -250,21 +256,16 @@ struct CircleEvent final : public Event
     drawEvents(gVisualizer, eventQueue);
 
     const float lineY = intersection.y;
-    Vec2 newEdgePosition, newEdgeDirection;
-    edgeAsPositionAndDirection(arc->left, arc->right, newEdgePosition, newEdgeDirection, lineY);
+    Edge newEdge = {arc->left, arc->right};
     if(arc->left->left)
     {
-      Vec2 leftPosition, leftDirection;
-      edgeAsPositionAndDirection(arc->left->left, arc->left, leftPosition, leftDirection, lineY);
-      createCircleEventIfAny(
-            eventQueue, arc->left, leftPosition, leftDirection, newEdgePosition, newEdgeDirection, lineY);
+      Edge leftEdge = {arc->left->left, arc->left};
+      createCircleEventIfAny(eventQueue, arc->left, leftEdge, newEdge, lineY);
     }
     if(arc->right->right)
     {
-      Vec2 rightPosition, rightDirection;
-      edgeAsPositionAndDirection(arc->right, arc->right->right, rightPosition, rightDirection, lineY);
-      createCircleEventIfAny(
-            eventQueue, arc->right, newEdgePosition, newEdgeDirection, rightPosition, rightDirection, lineY);
+      Edge rightEdge = {arc->right, arc->right->right};
+      createCircleEventIfAny(eventQueue, arc->right, newEdge, rightEdge, lineY);
     }
 
     delete arc;
@@ -273,34 +274,28 @@ struct CircleEvent final : public Event
   void draw(IDrawer* drawer) const override { drawer->rect(intersection - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue); }
 };
 
-void createCircleEventIfAny(EventQueue& eventQueue,
-      Arc* arc,
-      Vec2 leftPosition,
-      Vec2 leftDirection,
-      Vec2 rightPosition,
-      Vec2 rightDirection,
-      float lineY)
+void createCircleEventIfAny(EventQueue& eventQueue, Arc* arc, const Edge& leftEdge, const Edge& rightEdge, float lineY)
 {
   float edge1A, edge1B;
   float edge2A, edge2B;
-  edgeEquation(leftPosition, leftDirection, edge1A, edge1B);
-  edgeEquation(rightPosition, rightDirection, edge2A, edge2B);
+  leftEdge.asEquation(edge1A, edge1B, lineY);
+  rightEdge.asEquation(edge2A, edge2B, lineY);
   if(std::abs(edge1A) == std::abs(edge2A)) // Case of parallel directions.
     return;
 
   const float intersectionX = (edge2B - edge1B) / (edge1A - edge2A);
   const float intersectionY = edge1A * intersectionX + edge1B;
 
-  const bool isInLeftEdgeDirection = (leftDirection.x < 0 == intersectionX < leftPosition.x);
-  const bool isInRightEdgeDirection = (rightDirection.x < 0 == intersectionX < rightPosition.x);
+  const bool isInLeftEdgeDirection = (leftEdge.direction().x < 0 == intersectionX < leftEdge.origin(lineY).x);
+  const bool isInRightEdgeDirection = (rightEdge.direction().x < 0 == intersectionX < rightEdge.origin(lineY).x);
 
   if(isInLeftEdgeDirection && isInRightEdgeDirection)
   {
     const Vec2 intersection = {intersectionX, intersectionY};
     const float circleRadius = magnitude(intersection - arc->site);
     const Vec2 eventPosition = {intersection.x, intersection.y - circleRadius};
-    gVisualizer->line(leftPosition, leftPosition + leftDirection, LightBlue);
-    gVisualizer->line(rightPosition, rightPosition + rightDirection, LightBlue);
+    drawEdge(gVisualizer, leftEdge, LightBlue);
+    drawEdge(gVisualizer, rightEdge, LightBlue);
     drawArc(gVisualizer, arc, lineY, LightBlue);
     gVisualizer->rect(intersection - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue);
     gVisualizer->rect(eventPosition - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue);
@@ -313,11 +308,9 @@ void createCircleEventIfAny(EventQueue& eventQueue,
 
 void createCircleEventIfAny(EventQueue& eventQueue, Arc* arc, float lineY)
 {
-  Vec2 leftPosition, leftDirection;
-  Vec2 rightPosition, rightDirection;
-  edgeAsPositionAndDirection(arc->left, arc, leftPosition, leftDirection, lineY);
-  edgeAsPositionAndDirection(arc, arc->right, rightPosition, rightDirection, lineY);
-  createCircleEventIfAny(eventQueue, arc, leftPosition, leftDirection, rightPosition, rightDirection, lineY);
+  Edge leftEdge = {arc->left, arc};
+  Edge rightEdge = {arc, arc->right};
+  createCircleEventIfAny(eventQueue, arc, leftEdge, rightEdge, lineY);
 }
 
 void createCircleEvents(EventQueue& eventQueue, Arc* leftArc, Arc* middleArc, Arc* rightArc)
