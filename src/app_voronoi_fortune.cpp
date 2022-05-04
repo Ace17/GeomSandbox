@@ -232,6 +232,15 @@ void drawBeachLine(IDrawer* drawer, const Arc* rootArc, float lineY, Color color
   }
 }
 
+void drawDiagram(IDrawer* drawer, const VoronoiDiagram& diagram, Color color)
+{
+  for(auto edge : diagram.edges)
+  {
+    if(edge.vertexA.set && edge.vertexB.set)
+      drawer->line(edge.vertexA.value, edge.vertexB.value, color);
+  }
+}
+
 class Event;
 struct CompareEvents;
 using EventQueue = std::vector<Event*>;
@@ -310,6 +319,7 @@ struct CircleEvent final : public Event
     drawBeachLine(gVisualizer, rootArc, intersection.y, Yellow);
     drawHorizontalLine(gVisualizer, intersection, Red);
     drawEvents(gVisualizer, eventQueue);
+    drawDiagram(gVisualizer, diagram, Yellow);
 
     const float lineY = intersection.y;
     Edge newEdge = {arc->left, arc->right};
@@ -439,6 +449,7 @@ struct siteEvent final : public Event
       drawBeachLine(gVisualizer, rootArc, Pos.y, Yellow);
       drawHorizontalLine(gVisualizer, Pos, Red);
       drawEvents(gVisualizer, eventQueue);
+      drawDiagram(gVisualizer, diagram, Yellow);
       createCircleEvents(eventQueue, newLeftArc, newArc, newRightArc);
 
       if(aboveArc->left)
@@ -497,6 +508,7 @@ struct FortuneVoronoiAlgoritm
       drawBeachLine(gVisualizer, rootArc, eventPos.y, Yellow);
       drawHorizontalLine(gVisualizer, eventPos, Red);
       drawEvents(gVisualizer, eventQueue);
+      drawDiagram(gVisualizer, diagram, Yellow);
       event->happen(eventQueue, rootArc, diagram);
       gVisualizer->step();
 
@@ -525,8 +537,7 @@ struct FortuneVoronoiAlgoritm
 
   static void drawOutput(IDrawer* drawer, const std::vector<Vec2>& input, const VoronoiDiagram& output)
   {
-    for(auto& edge : output.edges)
-      drawer->line(edge.vertexA.value, edge.vertexB.value, Yellow);
+    drawDiagram(drawer, output, Yellow);
   }
 };
 
