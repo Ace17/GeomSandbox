@@ -18,6 +18,9 @@
 namespace
 {
 
+const float screenMinX = -35.f;
+const float screenMaxX = 35.f;
+
 static float magnitude(Vec2 v) { return sqrt(v * v); }
 
 template<typename T>
@@ -33,8 +36,6 @@ struct optional
     return *this;
   }
 };
-
-const BoundingBox box{{-20, -15}, {20, 15}};
 
 float clamp(float value, float min, float max) { return std::min(max, std::max(min, value)); }
 
@@ -82,17 +83,17 @@ struct Arc
 
   std::pair<float, float> getArcExtremities(float lineY) const
   {
-    std::pair<float, float> result = {box.min.x, box.max.x};
+    std::pair<float, float> result = {screenMinX, screenMaxX};
 
     if(left)
     {
       result.first = Arc::intersection(left, this, lineY);
-      result.first = clamp(result.first, box.min.x, box.max.x);
+      result.first = clamp(result.first, screenMinX, screenMaxX);
     }
     if(right)
     {
       result.second = Arc::intersection(this, right, lineY);
-      result.second = clamp(result.second, box.min.x, box.max.x);
+      result.second = clamp(result.second, screenMinX, screenMaxX);
     }
 
     return result;
@@ -211,8 +212,8 @@ void drawEdge(IDrawer* drawer, const Edge& edge, Color color) { drawLine(drawer,
 
 void drawHorizontalLine(IDrawer* drawer, Vec2 point, Color color)
 {
-  const Vec2 topPoint = {box.min.x, point.y};
-  const Vec2 bottomPoint = {box.max.x, point.y};
+  const Vec2 topPoint = {screenMinX, point.y};
+  const Vec2 bottomPoint = {screenMaxX, point.y};
   drawer->line(topPoint, bottomPoint, color);
 }
 
@@ -465,6 +466,8 @@ struct FortuneVoronoiAlgoritm
 {
   static std::vector<Vec2> generateInput()
   {
+    const BoundingBox box{{-20, -15}, {20, 15}};
+
     std::vector<Vec2> r(15);
 
     for(auto& p : r)
@@ -514,7 +517,6 @@ struct FortuneVoronoiAlgoritm
 
   static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input)
   {
-    drawer->rect(box.min, box.max - box.min);
     for(auto& p : input)
     {
       drawer->rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
