@@ -29,6 +29,8 @@ struct Vec2
   Vec2 operator*(float f) const { return Vec2{x * f, y * f}; }
   Vec2 operator/(float f) const { return Vec2{x / f, y / f}; }
 
+  bool operator==(const Vec2& other) const { return x == other.x && y == other.y; }
+
   static Vec2 zero() { return Vec2(0, 0); }
 };
 

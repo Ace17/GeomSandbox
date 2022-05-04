@@ -20,15 +20,18 @@ namespace
 
 static float magnitude(Vec2 v) { return sqrt(v * v); }
 
-struct VoronoiDiagram
+template<typename T>
+struct optional
 {
-  struct Edge
-  {
-    int a, b;
-  };
+  bool set = false;
+  T value;
 
-  std::vector<Vec2> vertices;
-  std::vector<Edge> edges;
+  optional<T>& operator=(const T& newValue)
+  {
+    set = true;
+    value = newValue;
+    return *this;
+  }
 };
 
 const BoundingBox box{{-20, -15}, {20, 15}};
@@ -125,6 +128,57 @@ struct Edge
   }
 };
 
+struct VoronoiDiagram
+{
+  struct CellEdge
+  {
+    Vec2 siteA;
+    Vec2 siteB;
+
+    optional<Vec2> vertexA;
+    optional<Vec2> vertexB;
+
+    void setVertex(const Vec2& vertex)
+    {
+      if(!vertexA.set)
+        vertexA = vertex;
+      else
+        vertexB = vertex;
+    }
+  };
+
+  CellEdge& createEdge(const Vec2& siteA, const Vec2& siteB)
+  {
+    edges.push_back({siteA, siteB});
+    return edges.back();
+  }
+
+  CellEdge& findEdge(const Vec2& siteA, const Vec2& siteB)
+  {
+    auto isSearchedEdge = [siteA, siteB](const CellEdge& edge) {
+      return (edge.siteA == siteA && edge.siteB == siteB) || (edge.siteA == siteB && edge.siteB == siteA);
+    };
+    return *std::find_if(edges.begin(), edges.end(), isSearchedEdge);
+  }
+
+  void fillRemainingVertices(const Arc* rootArc)
+  {
+    const Arc* arc = rootArc;
+    while(arc->right)
+    {
+      Edge edge = {arc, arc->right};
+      CellEdge& cellEdge = findEdge(arc->site, arc->right->site);
+      const Vec2 origin = (arc->site + arc->right->site) / 2.f;
+      const Vec2 direction = edge.direction();
+      cellEdge.setVertex(origin + direction * 1000.f);
+
+      arc = arc->right;
+    }
+  }
+
+  std::vector<CellEdge> edges;
+};
+
 void drawArc(IDrawer* drawer, const Arc* arc, float lineY, Color color)
 {
   const std::pair<float, float> extremities = arc->getArcExtremities(lineY);
@@ -184,7 +238,7 @@ struct Event
 {
   virtual ~Event() = default;
   virtual Vec2 pos() const = 0;
-  virtual void happen(EventQueue& eventQueue, Arc*& rootArc) = 0;
+  virtual void happen(EventQueue& eventQueue, Arc*& rootArc, VoronoiDiagram& diagram) = 0;
   virtual void draw(IDrawer* drawer) const = 0;
 };
 
@@ -233,9 +287,10 @@ struct CircleEvent final : public Event
   Vec2 intersection;
 
   Vec2 pos() const override { return intersection; }
-  void happen(EventQueue& eventQueue, Arc*& rootArc) override
+  void happen(EventQueue& eventQueue, Arc*& rootArc, VoronoiDiagram& diagram) override
   {
     printf("circleEvent at %f;%f\n", intersection.x, intersection.y);
+
     gVisualizer->rect(intersection - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue);
     arc->right->left = arc->left;
     arc->left->right = arc->right;
@@ -267,6 +322,15 @@ struct CircleEvent final : public Event
       Edge rightEdge = {arc->right, arc->right->right};
       createCircleEventIfAny(eventQueue, arc->right, newEdge, rightEdge, lineY);
     }
+
+    const Vec2 voronoiVertex = newEdge.origin(lineY);
+    VoronoiDiagram::CellEdge& voronoiEdge = diagram.createEdge(arc->left->site, arc->right->site);
+
+    voronoiEdge.setVertex(voronoiVertex);
+    auto& leftEdge = diagram.findEdge(arc->site, arc->left->site);
+    leftEdge.setVertex(voronoiVertex);
+    auto& rightEdge = diagram.findEdge(arc->site, arc->right->site);
+    rightEdge.setVertex(voronoiVertex);
 
     delete arc;
   }
@@ -336,7 +400,7 @@ struct siteEvent final : public Event
   }
 
   Vec2 pos() const override { return Pos; }
-  void happen(EventQueue& eventQueue, Arc*& rootArc) override
+  void happen(EventQueue& eventQueue, Arc*& rootArc, VoronoiDiagram& diagram) override
   {
     printf("siteEvent at %f;%f\n", Pos.x, Pos.y);
     Arc* newArc = new Arc({Pos});
@@ -344,9 +408,12 @@ struct siteEvent final : public Event
       rootArc = newArc;
     else
     {
+
       Arc* aboveArc = findAboveArc(rootArc, Pos);
       Arc* newLeftArc = new Arc({aboveArc->site});
       Arc* newRightArc = new Arc({aboveArc->site});
+
+      diagram.createEdge(Pos, aboveArc->site);
 
       auto IsCircleEventOnAboveArc = [aboveArc](const Event* event) {
         const CircleEvent* circleEvent = dynamic_cast<const CircleEvent*>(event);
@@ -409,6 +476,7 @@ struct FortuneVoronoiAlgoritm
   static VoronoiDiagram execute(std::vector<Vec2> input)
   {
     EventQueue eventQueue;
+    VoronoiDiagram diagram;
     Arc* rootArc = nullptr;
     for(Vec2 point : input)
     {
@@ -426,11 +494,13 @@ struct FortuneVoronoiAlgoritm
       drawBeachLine(gVisualizer, rootArc, eventPos.y, Yellow);
       drawHorizontalLine(gVisualizer, eventPos, Red);
       drawEvents(gVisualizer, eventQueue);
-      event->happen(eventQueue, rootArc);
+      event->happen(eventQueue, rootArc, diagram);
       gVisualizer->step();
 
       delete event;
     }
+
+    diagram.fillRemainingVertices(rootArc);
 
     while(rootArc)
     {
@@ -439,8 +509,7 @@ struct FortuneVoronoiAlgoritm
       delete arc;
     }
 
-    // TODO
-    return {};
+    return diagram;
   }
 
   static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input)
@@ -455,7 +524,7 @@ struct FortuneVoronoiAlgoritm
   static void drawOutput(IDrawer* drawer, const std::vector<Vec2>& input, const VoronoiDiagram& output)
   {
     for(auto& edge : output.edges)
-      drawer->line(output.vertices[edge.a], output.vertices[edge.b], Green);
+      drawer->line(edge.vertexA.value, edge.vertexB.value, Yellow);
   }
 };
 
