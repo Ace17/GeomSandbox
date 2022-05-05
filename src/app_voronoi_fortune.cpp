@@ -478,12 +478,13 @@ struct FortuneVoronoiAlgoritm
 {
   static std::vector<Vec2> generateInput()
   {
-    const BoundingBox box{{-20, -15}, {20, 15}};
+    const Vec2 min = {-20, -15};
+    const Vec2 max = {20, 15};
 
     std::vector<Vec2> r(15);
 
     for(auto& p : r)
-      p = randomPos(box.min, box.max);
+      p = randomPos(min, max);
 
     return r;
   }
