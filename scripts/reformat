@@ -6,7 +6,7 @@ import sys
 import subprocess
 
 def reformat_one_file(filename):
-  result = subprocess.run(["clang-format", filename], check=True, stdout=subprocess.PIPE)
+  result = subprocess.run(["clang-format-13", filename], check=True, stdout=subprocess.PIPE)
 
   with open(filename, "rb") as f1:
       original = f1.read()

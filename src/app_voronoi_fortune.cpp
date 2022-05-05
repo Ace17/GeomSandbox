@@ -156,9 +156,8 @@ struct VoronoiDiagram
 
   CellEdge& findEdge(const Vec2& siteA, const Vec2& siteB)
   {
-    auto isSearchedEdge = [siteA, siteB](const CellEdge& edge) {
-      return (edge.siteA == siteA && edge.siteB == siteB) || (edge.siteA == siteB && edge.siteB == siteA);
-    };
+    auto isSearchedEdge = [siteA, siteB](const CellEdge& edge)
+    { return (edge.siteA == siteA && edge.siteB == siteB) || (edge.siteA == siteB && edge.siteB == siteA); };
     return *std::find_if(edges.begin(), edges.end(), isSearchedEdge);
   }
 
@@ -305,7 +304,8 @@ struct CircleEvent final : public Event
     arc->right->left = arc->left;
     arc->left->right = arc->right;
 
-    auto IsConcernedArc = [&](Event* event) {
+    auto IsConcernedArc = [&](Event* event)
+    {
       const CircleEvent* circleEvent = dynamic_cast<const CircleEvent*>(event);
       if(!circleEvent)
         return false;
@@ -426,7 +426,8 @@ struct siteEvent final : public Event
 
       diagram.createEdge(Pos, aboveArc->site);
 
-      auto IsCircleEventOnAboveArc = [aboveArc](const Event* event) {
+      auto IsCircleEventOnAboveArc = [aboveArc](const Event* event)
+      {
         const CircleEvent* circleEvent = dynamic_cast<const CircleEvent*>(event);
         return circleEvent && circleEvent->arc == aboveArc;
       };
