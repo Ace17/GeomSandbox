@@ -26,6 +26,7 @@ SRCS:=\
 
 SRCS+=\
 			src/app_example.cpp\
+			src/app_a_star.cpp\
 			src/app_collide2d.cpp\
 			src/app_random_polygon.cpp\
 			src/app_dijkstra.cpp\
