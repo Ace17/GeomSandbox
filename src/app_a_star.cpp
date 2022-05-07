@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // A* (pronounced "A-Star") algorithm for shortest path
 
+#include <algorithm> // std::find_if
 #include <climits>
 #include <cstdio> // snprintf
 #include <set>
@@ -155,17 +156,28 @@ struct AStarAlgorithm
         if(visited.cost[i] == INT_MAX)
           continue;
 
-        const Color color = White;
+        auto isNode = [i](int index) { return i == index; };
+        const bool highlighted = std::find_if(nodesToVisit.begin(), nodesToVisit.end(), isNode) != nodesToVisit.end();
+        const Color color = highlighted ? Green : White;
         const int distanceFromEnd = manhattanDistance(nodes[i].pos, endPos);
+        const int nodeValue = getNodeValue(i);
         char buffer[32];
-        sprintf(buffer, "%d", distanceFromEnd + visited.cost[i]);
+        if(highlighted)
+        {
+          gVisualizer->circle(nodes[i].renderPos, 1.2, color);
+          sprintf(buffer, "%d", nodeValue);
+        }
+        else
+        {
+          sprintf(buffer, "%d", nodeValue);
+        }
 
         gVisualizer->text(nodes[i].renderPos, buffer, color);
 
         if(visited.provenance[i] != i)
         {
           const int prov = visited.provenance[i];
-          gVisualizer->line(input.nodes[prov].renderPos, input.nodes[i].renderPos, color);
+          gVisualizer->line(input.nodes[prov].renderPos, input.nodes[i].renderPos, White);
         }
       }
 
