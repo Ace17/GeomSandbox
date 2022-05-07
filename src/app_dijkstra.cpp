@@ -8,7 +8,6 @@
 // Dijkstra's algorithm for shortest path
 
 #include <climits>
-#include <cmath>
 #include <cstdio> // snprintf
 #include <set>
 #include <vector>
