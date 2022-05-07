@@ -135,16 +135,15 @@ void drawVisitedGraph(IDrawer* drawer, const Graph& graph, const VisitedGraph& v
     auto isNode = [i](int index) { return i == index; };
     const bool highlighted = std::find_if(nodesToVisit.begin(), nodesToVisit.end(), isNode) != nodesToVisit.end();
     const Color color = highlighted ? Green : White;
-    const int nodeValue = getNodeValue(graph, visited, i);
     char buffer[32];
     if(highlighted)
     {
       drawer->circle(nodes[i].renderPos, 1.2, color);
-      sprintf(buffer, "%d", nodeValue);
+      sprintf(buffer, "%d", getNodeValue(graph, visited, i));
     }
     else
     {
-      sprintf(buffer, "%d", nodeValue);
+      sprintf(buffer, "%d", visited.cost[i]);
     }
 
     drawer->text(nodes[i].renderPos, buffer, color);
@@ -189,18 +188,30 @@ struct AStarAlgorithm
       const int nodeCost = visited.cost[nodeIndex];
       nodesToVisit.erase(nodesToVisit.begin());
 
+      drawVisitedGraph(gVisualizer, input, visited, nodesToVisit);
+      gVisualizer->circle(node.renderPos, 1.2, Red);
+      gVisualizer->step();
+
       for(int neighbor : node.neighbours)
       {
         if(!visited.isVisited[neighbor])
         {
+          const Vec2& neighborRenderPos = nodes[neighbor].renderPos;
+          const int neighborCost = nodeCost + 1;
+          const int neighborDistanceFromEnd = input.distanceFromEnd(neighbor);
+          drawVisitedGraph(gVisualizer, input, visited, nodesToVisit);
+          gVisualizer->circle(node.renderPos, 1.2, Red);
+          gVisualizer->circle(neighborRenderPos, 1.2, Green);
+          gVisualizer->line(node.renderPos, neighborRenderPos, Green);
+          char buffer[32];
+          sprintf(buffer, "%d+%d=%d", neighborDistanceFromEnd, neighborCost, neighborDistanceFromEnd + neighborCost);
+          gVisualizer->text(neighborRenderPos, buffer, Green);
+          gVisualizer->step();
+
           visited.visitNode(neighbor, nodeIndex, nodeCost + 1);
           nodesToVisit.insert(neighbor);
         }
       }
-
-      gVisualizer->circle(node.renderPos, 1.2, Red);
-      drawVisitedGraph(gVisualizer, input, visited, nodesToVisit);
-      gVisualizer->step();
     }
 
     if(!nodesToVisit.empty())
