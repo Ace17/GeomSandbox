@@ -18,6 +18,11 @@
 
 namespace
 {
+int manhattanDistance(const Vec2& position1, const Vec2& position2)
+{
+  return std::abs(position1.x - position2.x) + std::abs(position1.y - position2.y);
+}
+
 struct Node
 {
   Vec2 pos;
@@ -30,6 +35,13 @@ struct Graph
   std::vector<Node> nodes;
   int startNode;
   int endNode;
+
+  int distanceFromEnd(int node) const
+  {
+    const Vec2& pos = nodes[node].pos;
+    const Vec2& endPos = nodes[endNode].pos;
+    return manhattanDistance(pos, endPos);
+  }
 };
 
 struct VisitedGraph
@@ -46,6 +58,27 @@ struct VisitedGraph
   }
 };
 
+int getNodeValue(const Graph& graph, const VisitedGraph visited, int node)
+{
+  return visited.cost[node] + graph.distanceFromEnd(node);
+}
+
+struct NodeValueSorter
+{
+  const Graph& graph;
+  const VisitedGraph& visited;
+
+  bool operator()(int nodeA, int nodeB) const
+  {
+    const int nodeAValue = getNodeValue(graph, visited, nodeA);
+    const int nodeBValue = getNodeValue(graph, visited, nodeB);
+    if(nodeAValue != nodeBValue)
+      return nodeAValue < nodeBValue;
+    return graph.distanceFromEnd(nodeA) < graph.distanceFromEnd(nodeB);
+  };
+};
+
+using NodeSet = std::multiset<int, NodeValueSorter>;
 using Output = std::vector<int>;
 
 Graph randomGraph(int width, int height)
@@ -91,9 +124,37 @@ Graph randomGraph(int width, int height)
   return graph;
 }
 
-int manhattanDistance(const Vec2& position1, const Vec2& position2)
+void drawVisitedGraph(IDrawer* drawer, const Graph& graph, const VisitedGraph& visited, const NodeSet& nodesToVisit)
 {
-  return std::abs(position1.x - position2.x) + std::abs(position1.y - position2.y);
+  auto& nodes = graph.nodes;
+  for(int i = 0; i < (int)nodes.size(); ++i)
+  {
+    if(visited.cost[i] == INT_MAX)
+      continue;
+
+    auto isNode = [i](int index) { return i == index; };
+    const bool highlighted = std::find_if(nodesToVisit.begin(), nodesToVisit.end(), isNode) != nodesToVisit.end();
+    const Color color = highlighted ? Green : White;
+    const int nodeValue = getNodeValue(graph, visited, i);
+    char buffer[32];
+    if(highlighted)
+    {
+      drawer->circle(nodes[i].renderPos, 1.2, color);
+      sprintf(buffer, "%d", nodeValue);
+    }
+    else
+    {
+      sprintf(buffer, "%d", nodeValue);
+    }
+
+    drawer->text(nodes[i].renderPos, buffer, color);
+
+    if(visited.provenance[i] != i)
+    {
+      const int prov = visited.provenance[i];
+      drawer->line(nodes[prov].renderPos, nodes[i].renderPos, White);
+    }
+  }
 }
 
 struct AStarAlgorithm
@@ -116,21 +177,8 @@ struct AStarAlgorithm
     visited.provenance.resize(nodesCount, INT_MAX);
     visited.cost.resize(nodesCount, INT_MAX);
 
-    auto getNodeValue = [&](int node)
-    {
-      const Vec2& pos = nodes[node].pos;
-      return visited.cost[node] + manhattanDistance(pos, endPos);
-    };
-
-    auto compareByDistanceFromExit = [&](int nodeA, int nodeB)
-    {
-      const int nodeAValue = getNodeValue(nodeA);
-      const int nodeBValue = getNodeValue(nodeB);
-      if(nodeAValue != nodeBValue)
-        return nodeAValue < nodeBValue;
-      return manhattanDistance(nodes[nodeA].pos, endPos) < manhattanDistance(nodes[nodeB].pos, endPos);
-    };
-    std::multiset<int, decltype(compareByDistanceFromExit)> nodesToVisit(compareByDistanceFromExit);
+    const NodeValueSorter sorter = {input, visited};
+    NodeSet nodesToVisit(sorter);
 
     nodesToVisit.insert(input.startNode);
     visited.visitNode(input.startNode, input.startNode, 0);
@@ -151,36 +199,7 @@ struct AStarAlgorithm
       }
 
       gVisualizer->circle(node.renderPos, 1.2, Red);
-      for(int i = 0; i < (int)nodes.size(); ++i)
-      {
-        if(visited.cost[i] == INT_MAX)
-          continue;
-
-        auto isNode = [i](int index) { return i == index; };
-        const bool highlighted = std::find_if(nodesToVisit.begin(), nodesToVisit.end(), isNode) != nodesToVisit.end();
-        const Color color = highlighted ? Green : White;
-        const int distanceFromEnd = manhattanDistance(nodes[i].pos, endPos);
-        const int nodeValue = getNodeValue(i);
-        char buffer[32];
-        if(highlighted)
-        {
-          gVisualizer->circle(nodes[i].renderPos, 1.2, color);
-          sprintf(buffer, "%d", nodeValue);
-        }
-        else
-        {
-          sprintf(buffer, "%d", nodeValue);
-        }
-
-        gVisualizer->text(nodes[i].renderPos, buffer, color);
-
-        if(visited.provenance[i] != i)
-        {
-          const int prov = visited.provenance[i];
-          gVisualizer->line(input.nodes[prov].renderPos, input.nodes[i].renderPos, White);
-        }
-      }
-
+      drawVisitedGraph(gVisualizer, input, visited, nodesToVisit);
       gVisualizer->step();
     }
 
