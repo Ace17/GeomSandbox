@@ -7,7 +7,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 // A* (pronounced "A-Star") algorithm for shortest path
 
+#include <climits>
 #include <cstdio> // snprintf
+#include <set>
 #include <vector>
 
 #include "algorithm_app.h"
@@ -27,6 +29,20 @@ struct Graph
   std::vector<Node> nodes;
   int startNode;
   int endNode;
+};
+
+struct VisitedGraph
+{
+  std::vector<bool> isVisited;
+  std::vector<int> provenance;
+  std::vector<int> cost;
+
+  void visitNode(int index, int visitedProvenance, int visitedCost)
+  {
+    isVisited[index] = true;
+    provenance[index] = visitedProvenance;
+    cost[index] = visitedCost;
+  }
 };
 
 using Output = std::vector<int>;
@@ -52,8 +68,8 @@ Graph randomGraph(int width, int height)
     for(int x = 0; x < width; ++x)
     {
       const int currentIndex = y * width + x;
-      nodes[currentIndex].pos = Vec2((x - (width - 1) / 2.f), (y - (height - 1) / 2.f));
-      nodes[currentIndex].renderPos = nodes[currentIndex].pos * spacing;
+      nodes[currentIndex].pos = Vec2(x, y);
+      nodes[currentIndex].renderPos = Vec2((x - (width - 1) / 2.f), (y - (height - 1) / 2.f)) * spacing;
 
       if(x > 0 && randomFloat(0.f, 1.f) < connectionProbability)
       {
@@ -88,7 +104,90 @@ struct AStarAlgorithm
     return randomGraph(width, height);
   }
 
-  static Output execute(Graph input) { return {}; }
+  static Output execute(Graph input)
+  {
+    auto& nodes = input.nodes;
+    const Vec2& endPos = nodes[input.endNode].pos;
+    const int nodesCount = (int)nodes.size();
+
+    VisitedGraph visited;
+    visited.isVisited.resize(nodesCount, false);
+    visited.provenance.resize(nodesCount, INT_MAX);
+    visited.cost.resize(nodesCount, INT_MAX);
+
+    auto getNodeValue = [&](int node)
+    {
+      const Vec2& pos = nodes[node].pos;
+      return visited.cost[node] + manhattanDistance(pos, endPos);
+    };
+
+    auto compareByDistanceFromExit = [&](int nodeA, int nodeB)
+    {
+      const int nodeAValue = getNodeValue(nodeA);
+      const int nodeBValue = getNodeValue(nodeB);
+      if(nodeAValue != nodeBValue)
+        return nodeAValue < nodeBValue;
+      return manhattanDistance(nodes[nodeA].pos, endPos) < manhattanDistance(nodes[nodeB].pos, endPos);
+    };
+    std::multiset<int, decltype(compareByDistanceFromExit)> nodesToVisit(compareByDistanceFromExit);
+
+    nodesToVisit.insert(input.startNode);
+    visited.visitNode(input.startNode, input.startNode, 0);
+    while(!nodesToVisit.empty() && *nodesToVisit.begin() != input.endNode)
+    {
+      const int nodeIndex = *nodesToVisit.begin();
+      const Node& node = nodes[nodeIndex];
+      const int nodeCost = visited.cost[nodeIndex];
+      nodesToVisit.erase(nodesToVisit.begin());
+
+      for(int neighbor : node.neighbours)
+      {
+        if(!visited.isVisited[neighbor])
+        {
+          visited.visitNode(neighbor, nodeIndex, nodeCost + 1);
+          nodesToVisit.insert(neighbor);
+        }
+      }
+
+      gVisualizer->circle(node.renderPos, 1.2, Red);
+      for(int i = 0; i < (int)nodes.size(); ++i)
+      {
+        if(visited.cost[i] == INT_MAX)
+          continue;
+
+        const Color color = White;
+        const int distanceFromEnd = manhattanDistance(nodes[i].pos, endPos);
+        char buffer[32];
+        sprintf(buffer, "%d", distanceFromEnd + visited.cost[i]);
+
+        gVisualizer->text(nodes[i].renderPos, buffer, color);
+
+        if(visited.provenance[i] != i)
+        {
+          const int prov = visited.provenance[i];
+          gVisualizer->line(input.nodes[prov].renderPos, input.nodes[i].renderPos, color);
+        }
+      }
+
+      gVisualizer->step();
+    }
+
+    if(!nodesToVisit.empty())
+    {
+      std::vector<int> result;
+      int node = input.endNode;
+      result.push_back(node);
+      while(node != input.startNode)
+      {
+        node = visited.provenance[node];
+        result.push_back(node);
+      }
+      return result;
+    }
+
+    // No path found.
+    return {};
+  }
 
   static void drawInput(IDrawer* drawer, const Graph& input)
   {
@@ -113,7 +212,21 @@ struct AStarAlgorithm
     drawer->circle(nodes[input.endNode].renderPos, 1.2, LightBlue);
   }
 
-  static void drawOutput(IDrawer* drawer, const Graph& input, const Output& output) {}
+  static void drawOutput(IDrawer* drawer, const Graph& input, const Output& output)
+  {
+    auto& nodes = input.nodes;
+    for(int i = 0; i < (int)output.size(); ++i)
+    {
+      const int node = output[i];
+      if(node != input.startNode && node != input.endNode)
+        drawer->circle(nodes[node].renderPos, 1.2, Green);
+      if(i > 0)
+      {
+        const int previousNode = output[i - 1];
+        drawer->line(input.nodes[node].renderPos, input.nodes[previousNode].renderPos, Green);
+      }
+    }
+  }
 };
 
 const int reg = registerApp("AStar", []() -> IApp* { return new AlgorithmApp<AStarAlgorithm>; });
