@@ -129,26 +129,28 @@ void drawVisitedGraph(IDrawer* drawer, const Graph& graph, const VisitedGraph& v
   auto& nodes = graph.nodes;
   for(int i = 0; i < (int)nodes.size(); ++i)
   {
-    if(visited.cost[i] == INT_MAX)
-      continue;
-
     auto isNode = [i](int index) { return i == index; };
-    const bool highlighted = std::find_if(nodesToVisit.begin(), nodesToVisit.end(), isNode) != nodesToVisit.end();
-    const Color color = highlighted ? Green : White;
+    const bool isToVisit = std::find_if(nodesToVisit.begin(), nodesToVisit.end(), isNode) != nodesToVisit.end();
+    const bool isVisited = visited.isVisited[i];
     char buffer[32];
-    if(highlighted)
+    if(isToVisit)
     {
-      drawer->circle(nodes[i].renderPos, 1.2, color);
+      drawer->circle(nodes[i].renderPos, 1.2, Green);
       sprintf(buffer, "%d", getNodeValue(graph, visited, i));
+      drawer->text(nodes[i].renderPos, buffer, Green);
+    }
+    else if(isVisited)
+    {
+      sprintf(buffer, "%d", visited.cost[i]);
+      drawer->text(nodes[i].renderPos, buffer, White);
     }
     else
     {
-      sprintf(buffer, "%d", visited.cost[i]);
+      sprintf(buffer, "%d", graph.distanceFromEnd(i));
+      drawer->text(nodes[i].renderPos, buffer, Gray);
     }
 
-    drawer->text(nodes[i].renderPos, buffer, color);
-
-    if(visited.provenance[i] != i)
+    if(visited.provenance[i] != INT_MAX && visited.provenance[i] != i)
     {
       const int prov = visited.provenance[i];
       drawer->line(nodes[prov].renderPos, nodes[i].renderPos, White);
@@ -243,11 +245,6 @@ struct AStarAlgorithm
 
       for(int neighbor : node.neighbours)
         drawer->line(nodes[idx].renderPos, nodes[neighbor].renderPos, Gray);
-
-      char buffer[32];
-      sprintf(buffer, "%d", manhattanDistance(node.pos, endpos));
-
-      drawer->text(node.renderPos, buffer, Gray);
     }
 
     drawer->circle(nodes[input.startNode].renderPos, 1.2, Yellow);
