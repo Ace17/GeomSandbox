@@ -118,7 +118,7 @@ struct ThickLineAlgorithm
       R = R1;
       N = N1;
 
-      for(int i=i0;i < (int)segments.size();++i)
+      for(int i = i0; i < (int)segments.size(); ++i)
         gVisualizer->line(segments[i].a, segments[i].b, Red);
       gVisualizer->step();
     }
