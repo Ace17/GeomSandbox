@@ -46,13 +46,13 @@ struct Graph
 
 struct VisitedGraph
 {
-  std::vector<bool> isVisited;
   std::vector<int> provenance;
   std::vector<int> cost;
 
+  bool isVisited(int node) const { return provenance[node] != INT_MAX; }
+
   void visitNode(int index, int visitedProvenance, int visitedCost)
   {
-    isVisited[index] = true;
     provenance[index] = visitedProvenance;
     cost[index] = visitedCost;
   }
@@ -131,7 +131,7 @@ void drawVisitedGraph(IDrawer* drawer, const Graph& graph, const VisitedGraph& v
   {
     auto isNode = [i](int index) { return i == index; };
     const bool isToVisit = std::find_if(nodesToVisit.begin(), nodesToVisit.end(), isNode) != nodesToVisit.end();
-    const bool isVisited = visited.isVisited[i];
+    const bool isVisited = visited.isVisited(i);
     char buffer[32];
     if(isToVisit)
     {
@@ -174,7 +174,6 @@ struct AStarAlgorithm
     const int nodesCount = (int)nodes.size();
 
     VisitedGraph visited;
-    visited.isVisited.resize(nodesCount, false);
     visited.provenance.resize(nodesCount, INT_MAX);
     visited.cost.resize(nodesCount, INT_MAX);
 
@@ -196,7 +195,7 @@ struct AStarAlgorithm
 
       for(int neighbor : node.neighbours)
       {
-        if(!visited.isVisited[neighbor])
+        if(!visited.isVisited(neighbor))
         {
           const Vec2& neighborRenderPos = nodes[neighbor].renderPos;
           const int neighborCost = nodeCost + 1;
