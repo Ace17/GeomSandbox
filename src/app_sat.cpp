@@ -36,16 +36,23 @@ struct IShape
   virtual std::vector<Vec2> axesToTest() const = 0;
 };
 
+struct RaycastResult
+{
+  float fraction = 1.0;
+  Vec2 normal{};
+};
+
 // Cast a ray from 'pos' to 'pos+delta', stops when colliding with 'obstacle'.
 // The return value represents the allowed move, as a fraction of the desired move (delta).
 // (The final position is then 'pos + return_value * delta')
-float raycast(Vec2 pos, Vec2 delta, IShape* obstacle)
+RaycastResult raycast(Vec2 pos, Vec2 delta, IShape* obstacle)
 {
   auto axes = obstacle->axesToTest();
 
   axes.push_back(rotateLeft(normalize(delta)));
 
-  float fraction = 0;
+  RaycastResult r;
+  r.fraction = 0;
 
   for(auto axis : axes)
   {
@@ -61,20 +68,23 @@ float raycast(Vec2 pos, Vec2 delta, IShape* obstacle)
     assert(startPos <= targetPos || fabs(startPos - targetPos) < 0.0001);
 
     if(targetPos < projectedObstacle.min)
-      return 1; // all the axis-projected move is before the obstacle
+      return {}; // all the axis-projected move is before the obstacle
 
     if(startPos >= projectedObstacle.max)
-      return 1; //  all the axis-projected move is after the obstacle
+      return {}; //  all the axis-projected move is after the obstacle
 
     if(fabs(startPos - targetPos) > 0.00001)
     {
       float f = (projectedObstacle.min - startPos) / (targetPos - startPos);
-      if(f > fraction)
-        fraction = f;
+      if(f > r.fraction)
+      {
+        r.fraction = f;
+        r.normal = -axis;
+      }
     }
   }
 
-  return fraction;
+  return r;
 }
 
 struct BoxShape : IShape
@@ -228,6 +238,8 @@ struct SeparatingAxisTestApp : IApp
     drawBox(drawer, boxStart, boxHalfSize, Green, "start");
     drawBox(drawer, boxTarget, boxHalfSize, Red, "target");
     drawBox(drawer, boxFinish, boxHalfSize, LightBlue, "finish");
+
+    drawer->line(boxFinish, boxFinish + collisionNormal * 5.0, LightBlue);
   }
 
   void drawBox(IDrawer* drawer, Vec2 pos, Vec2 halfSize, Color color, const char* name)
@@ -278,7 +290,8 @@ struct SeparatingAxisTestApp : IApp
 
     IShape* obstacleShapes[] = {&obstaclePolygon, &obstacleBox};
 
-    float minFraction = 1;
+    RaycastResult minRaycast;
+    minRaycast.fraction = 1;
 
     for(auto obstacleShape : obstacleShapes)
     {
@@ -288,19 +301,21 @@ struct SeparatingAxisTestApp : IApp
       combinedShape.shapeA = obstacleShape;
       combinedShape.shapeB = &moverShape;
 
-      const auto fraction = raycast(boxStart, delta, &combinedShape);
-      if(fraction < minFraction)
-        minFraction = fraction;
+      const auto result = raycast(boxStart, delta, &combinedShape);
+      if(result.fraction < minRaycast.fraction)
+        minRaycast = result;
     }
 
-    boxFinish = boxStart + delta * minFraction;
+    boxFinish = boxStart + delta * minRaycast.fraction;
+    collisionNormal = minRaycast.normal;
   }
 
   Vec2 boxHalfSize;
 
   Vec2 boxStart; // the starting position
   Vec2 boxTarget; // the target position
-  Vec2 boxFinish; // the position we actually reach (=target if we don't hit the obstacle)
+  Vec2 boxFinish; // the position we actually reach (=target if we don't hit the obstacle
+  Vec2 collisionNormal{};
 
   BoxShape obstacleBox{};
   PolygonShape obstaclePolygon{};
