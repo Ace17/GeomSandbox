@@ -10,6 +10,7 @@
 #include <cmath>
 #include <vector>
 
+#include "bounding_box.h"
 #include "random.h"
 #include "visualizer.h"
 
@@ -307,6 +308,21 @@ bool isValid(const Polygon2f& poly)
   return true;
 }
 
+void recenterPolygon(Polygon2f& polygon)
+{
+  BoundingBox bbox;
+
+  Vec2 polygonBoxMax = polygon.vertices.front();
+  for(const Vec2 vertex : polygon.vertices)
+    bbox.add(vertex);
+
+  const Vec2 polygonCenter = (bbox.min + bbox.max) / 2.0f;
+  for(Vec2& vertex : polygon.vertices)
+  {
+    vertex -= polygonCenter;
+  }
+}
+
 } // namespace
 
 Vec2 Polygon2f::normal(int faceIdx) const
@@ -352,6 +368,8 @@ Polygon2f createRandomPolygon2f(IVisualizer* visualizer)
     else
       drawAndStep();
   }
+
+  recenterPolygon(r);
 
   return r;
 }
