@@ -117,10 +117,7 @@ Segment clipEar(Polygon2f& polygon)
 
 struct EarClippingAlgorithm
 {
-  static Polygon2f generateInput()
-  {
-    return createRandomPolygon2f(gNullVisualizer);
-  }
+  static Polygon2f generateInput() { return createRandomPolygon2f(gNullVisualizer); }
 
   static std::vector<Segment> execute(Polygon2f input)
   {
