@@ -41,6 +41,7 @@ SRCS+=\
 			src/app_triangulate_flip.cpp\
 			src/app_voronoi_fortune.cpp\
 			src/random_polygon.cpp\
+			src/split_polygon.cpp\
 			src/triangulate_bowyerwatson.cpp\
 			src/triangulate_flip.cpp\
 
