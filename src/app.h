@@ -12,6 +12,8 @@ enum class Key
   Up,
   Down,
   Home,
+  PageUp,
+  PageDown,
 };
 
 struct IDrawer;

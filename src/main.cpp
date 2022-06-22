@@ -144,6 +144,10 @@ Key fromSdlKey(int key)
 {
   switch(key)
   {
+  case SDLK_PAGEUP:
+    return Key::PageUp;
+  case SDLK_PAGEDOWN:
+    return Key::PageDown;
   case SDLK_LEFT:
     return Key::Left;
   case SDLK_RIGHT:
