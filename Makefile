@@ -33,6 +33,7 @@ SRCS+=\
 			src/app_douglas_peucker.cpp\
 			src/app_ear_clipping.cpp\
 			src/app_fastconvexsplit.cpp\
+			src/app_polycut.cpp\
 			src/app_sat.cpp\
 			src/app_subtract.cpp\
 			src/app_thickline.cpp\
