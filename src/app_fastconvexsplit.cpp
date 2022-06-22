@@ -157,6 +157,20 @@ struct FastConvexSplit
   {
     const auto T = rotateLeft(plane.normal);
 
+    for(auto v : poly.vertices)
+    {
+      const auto dist = dot_product(v, plane.normal) - plane.dist;
+      Color c;
+      if(dist > epsilon)
+        c = LightBlue;
+      else if(dist < -epsilon)
+        c = Green;
+      else
+        c = Yellow;
+
+      gVisualizer->circle(v, 0.2, c);
+    }
+
     for(auto face : poly.faces)
     {
       const auto a = poly.vertices[face.a];
