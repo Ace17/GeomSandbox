@@ -19,11 +19,9 @@
 
 #undef main
 
-const int WIDTH = 1280;
-const int HEIGHT = 720;
-
 float g_Scale = 20.0f;
 float g_TargetScale = 20.0f;
+Vec2 g_ScreenSize{};
 Vec2 g_Pos{};
 Vec2 g_TargetPos{};
 
@@ -32,8 +30,8 @@ Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
 SDL_Point transform(Vec2 v)
 {
   SDL_Point r;
-  r.x = WIDTH / 2 + (v.x - g_Pos.x) * g_Scale;
-  r.y = HEIGHT / 2 - (v.y - g_Pos.y) * g_Scale;
+  r.x = g_ScreenSize.x / 2 + (v.x - g_Pos.x) * g_Scale;
+  r.y = g_ScreenSize.y / 2 - (v.y - g_Pos.y) * g_Scale;
   return r;
 };
 
@@ -211,6 +209,11 @@ bool readInput(IApp* app, bool& reset)
     {
       app->keyup(fromSdlKey(event.key.keysym.sym));
     }
+    else if(event.type == SDL_WINDOWEVENT)
+    {
+      if(event.window.event == SDL_WINDOWEVENT_RESIZED)
+        g_ScreenSize = {(float)event.window.data1, (float)event.window.data2};
+    }
   }
 
   return true;
@@ -259,7 +262,11 @@ int main(int argc, char* argv[])
     SDL_Window* window;
     SDL_Renderer* renderer;
 
-    if(SDL_CreateWindowAndRenderer(WIDTH, HEIGHT, 0, &window, &renderer) != 0)
+    const int WIDTH = 1280;
+    const int HEIGHT = 720;
+
+    g_ScreenSize = {(float)WIDTH, (float)HEIGHT};
+    if(SDL_CreateWindowAndRenderer(WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer) != 0)
     {
       SDL_Quit();
       throw std::runtime_error("Can't create window");
