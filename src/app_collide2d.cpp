@@ -13,7 +13,7 @@
 #include "app.h"
 #include "collide2d.h"
 #include "drawer.h"
-using namespace std;
+
 namespace
 {
 struct Input
@@ -29,13 +29,13 @@ struct World
   float angle;
   Shape shape = Circle;
 
-  vector<Segment> segments;
+  std::vector<Segment> segments;
 };
 
 Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
 
 template<size_t N>
-void pushPolygon(vector<Segment>& out, Vec2 const (&data)[N])
+void pushPolygon(std::vector<Segment>& out, Vec2 const (&data)[N])
 {
   for(size_t i = 0; i < N; ++i)
   {

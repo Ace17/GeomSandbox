@@ -19,12 +19,6 @@
 namespace
 {
 
-float abs(float a) { return a >= 0 ? a : -a; }
-float magnitude(Vec2 v) { return sqrt(v * v); }
-Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
-float dot_product(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
-Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
-
 struct Hyperplane
 {
   Vec2 normal;

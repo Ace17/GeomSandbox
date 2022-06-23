@@ -34,6 +34,13 @@ struct Vec2
   static Vec2 zero() { return Vec2(0, 0); }
 };
 
+float magnitude(Vec2 v);
+inline float dot_product(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
+inline Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
+inline Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
+inline float min(float a, float b) { return a < b ? a : b; }
+inline float max(float a, float b) { return a > b ? a : b; }
+
 template<typename T>
 struct span
 {

@@ -16,7 +16,6 @@
 
 namespace
 {
-static Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
 
 struct Triangle
 {

@@ -21,8 +21,6 @@ namespace
 const float screenMinX = -35.f;
 const float screenMaxX = 35.f;
 
-static float magnitude(Vec2 v) { return sqrt(v * v); }
-
 template<typename T>
 struct optional
 {

@@ -17,12 +17,6 @@
 namespace
 {
 
-float magnitude(Vec2 v) { return sqrt(v * v); }
-float dot_product(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
-static Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
-static Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
-static float max(float a, float b) { return a > b ? a : b; }
-
 template<typename T>
 T lerp(T a, T b, float factor)
 {

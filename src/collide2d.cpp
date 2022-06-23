@@ -7,13 +7,6 @@
 
 #include <cmath>
 
-static float magnitude(Vec2 v) { return sqrt(v * v); }
-static float max(float a, float b) { return a > b ? a : b; }
-static float min(float a, float b) { return a < b ? a : b; }
-static float abs(float a) { return a >= 0 ? a : -a; }
-static Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
-static Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
-
 struct Collision
 {
   float depth = 0; // penetration depth.
@@ -56,7 +49,7 @@ struct Range
 
 static Range projectBoxOnAxis(Vec2 boxCenter, Vec2 boxHalfSize, Vec2 N)
 {
-  auto boxEffectiveRadius = abs(boxHalfSize.x * N.x) + abs(boxHalfSize.y * N.y);
+  auto boxEffectiveRadius = std::abs(boxHalfSize.x * N.x) + std::abs(boxHalfSize.y * N.y);
 
   auto boxPos = boxCenter * N;
   auto boxMin = boxPos - boxEffectiveRadius;

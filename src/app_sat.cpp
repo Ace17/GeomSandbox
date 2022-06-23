@@ -19,11 +19,6 @@
 namespace
 {
 
-float abs(float a) { return a >= 0 ? a : -a; }
-float magnitude(Vec2 v) { return sqrt(v * v); }
-Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
-Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
-
 struct ProjectionOnAxis
 {
   float center;

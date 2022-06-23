@@ -24,12 +24,6 @@ namespace
 
 static constexpr auto epsilon = 0.01f;
 
-float abs(float a) { return a >= 0 ? a : -a; }
-float magnitude(Vec2 v) { return sqrt(v * v); }
-float dot_product(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
-Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
-Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
-
 static const Color colors[] = {
       {0, 0, 1, 1},
       {0, 1, 0, 1},

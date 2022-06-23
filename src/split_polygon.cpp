@@ -8,14 +8,7 @@
 
 #include "visualizer.h"
 
-namespace
-{
 static constexpr auto epsilon = 0.01f;
-
-float magnitude(Vec2 v) { return sqrt(v * v); }
-float dot_product(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
-Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
-}
 
 void addFace(Polygon2f& poly, Vec2 a, Vec2 b)
 {

@@ -21,17 +21,16 @@ struct Segment
   int a, b;
 };
 
-static float magnitude(Vec2 v) { return sqrt(v * v); }
-static Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
-static float dot(Vec2 v, Vec2 w) { return v.x * w.x + v.y * w.y; }
-
-static constexpr float clamp(float value, float min, float max) { return std::min(max, std::max(min, value)); }
+static float clamp(float value, float min, float max)
+{
+  return std::min(max, std::max(min, value));
+}
 
 static float distanceBetweenLineAndPoint(Vec2 lineA, Vec2 lineB, Vec2 point)
 {
   const Vec2 segment = (lineB - lineA);
   const float lengthSq = segment * segment;
-  const float t = clamp(dot(point - lineA, segment) / lengthSq, 0, 1);
+  const float t = clamp(dot_product(point - lineA, segment) / lengthSq, 0, 1);
   const Vec2 projection = lineA + segment * t;
   return magnitude(projection - point);
 }

@@ -22,9 +22,7 @@
 
 namespace
 {
-static float magnitude(Vec2 v) { return sqrt(v * v); }
-static Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
-static Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
+
 template<typename T>
 T lerp(T a, T b, float alpha)
 {
