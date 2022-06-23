@@ -1,7 +1,7 @@
 #pragma once
 
 #include "geom.h"
-#include "random_polygon.h" // Polygon2f
+#include "polygon.h"
 
 struct Plane
 {
