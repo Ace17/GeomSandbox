@@ -93,8 +93,7 @@ void splitPolygonAgainstPlane(const Polygon2f& poly, Plane plane, Polygon2f& fro
 
     if(std::abs(dist_a) < epsilon && std::abs(dist_b) < epsilon)
     {
-      //  addFace(front, a, b);
-      addFace(back, a, b);
+      // drop the face. It will be added back by 'closePolygon'
     }
     else if(dist_a >= 0 && dist_b >= 0)
     {
