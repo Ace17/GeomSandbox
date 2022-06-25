@@ -35,24 +35,24 @@ struct FlipTriangulationAlgorithm
     return result;
   }
 
-  static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input)
+  static void drawInput(const std::vector<Vec2>& input)
   {
     int idx = 0;
 
     for(auto& p : input)
     {
-      drawer->rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
+      sandbox_rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
       char buffer[16];
       sprintf(buffer, "%d", idx);
-      drawer->text(p + Vec2(0.3, 0), buffer, Red);
+      sandbox_text(p + Vec2(0.3, 0), buffer, Red);
       idx++;
     }
   }
 
-  static void drawOutput(IDrawer* drawer, const std::vector<Vec2>& input, const std::vector<Edge>& output)
+  static void drawOutput(const std::vector<Vec2>& input, const std::vector<Edge>& output)
   {
     for(auto& edge : output)
-      drawer->line(input[edge.a], input[edge.b], Green);
+      sandbox_line(input[edge.a], input[edge.b], Green);
   }
 };
 

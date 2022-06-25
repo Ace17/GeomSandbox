@@ -6,7 +6,7 @@
 #include <cmath>
 #include <map>
 
-#include "visualizer.h"
+#include "sandbox.h"
 
 static constexpr auto epsilon = 0.01f;
 
@@ -73,7 +73,7 @@ void splitPolygonAgainstPlane(const Polygon2f& poly, Plane plane, Polygon2f& fro
     else
       c = Yellow;
 
-    gVisualizer->circle(v, 0.2, c);
+    sandbox_circle(v, 0.2, c);
   }
 
   for(auto face : poly.faces)

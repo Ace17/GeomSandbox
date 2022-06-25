@@ -43,7 +43,7 @@ struct FastConvexSplit
 {
   static Polygon2f generateInput()
   {
-    auto input = createRandomPolygon2f(gNullVisualizer);
+    auto input = createRandomPolygon2f();
     BoundingBox bbox;
 
     for(const Vec2 vertex : input.vertices)
@@ -76,7 +76,7 @@ struct FastConvexSplit
       auto poly = fifo.front();
       fifo.pop_front();
 
-      drawPolygon(gVisualizer, poly, Red);
+      drawPolygon(poly, Red);
 
       if(isConvex(poly))
       {
@@ -101,23 +101,23 @@ struct FastConvexSplit
           auto shift = plane.normal * 0.1;
           auto tmin = p + T * +1000;
           auto tmax = p + T * -1000;
-          gVisualizer->line(tmin + shift, tmax + shift, LightBlue);
-          gVisualizer->line(tmin - shift, tmax - shift, LightBlue);
+          sandbox_line(tmin + shift, tmax + shift, LightBlue);
+          sandbox_line(tmin - shift, tmax - shift, LightBlue);
         }
       }
 
-      gVisualizer->step();
+      sandbox_breakpoint();
 
       {
         int i = 0;
         for(auto& p : fifo)
         {
-          drawPolygon(gVisualizer, p, colors[i]);
+          drawPolygon(p, colors[i]);
           i++;
           i %= (sizeof colors) / (sizeof *colors);
         }
 
-        gVisualizer->step();
+        sandbox_breakpoint();
       }
     }
 
@@ -174,32 +174,32 @@ struct FastConvexSplit
     return bestPlane;
   }
 
-  static void drawInput(IDrawer* drawer, const Polygon2f& input) { drawPolygon(drawer, input, Gray); }
+  static void drawInput(const Polygon2f& input) { drawPolygon(input, Gray); }
 
-  static void drawOutput(IDrawer* drawer, const Polygon2f& input, const std::vector<Polygon2f>& output)
+  static void drawOutput(const Polygon2f& input, const std::vector<Polygon2f>& output)
   {
     int i = 0;
     for(auto poly : output)
     {
-      drawPolygon(drawer, poly, colors[i]);
+      drawPolygon(poly, colors[i]);
       ++i;
       i %= (sizeof colors) / (sizeof *colors);
     }
   }
 
-  static void drawPolygon(IDrawer* drawer, const Polygon2f& poly, Color color)
+  static void drawPolygon(const Polygon2f& poly, Color color)
   {
     for(auto& face : poly.faces)
     {
       auto v0 = poly.vertices[face.a];
       auto v1 = poly.vertices[face.b];
-      drawer->line(v0, v1, color);
-      drawer->circle(v0, 0.1, color);
+      sandbox_line(v0, v1, color);
+      sandbox_circle(v0, 0.1, color);
 
       // draw normal, pointing to the exterior
       const auto T = normalize(v1 - v0);
       const auto N = -rotateLeft(T);
-      drawer->line((v0 + v1) * 0.5, (v0 + v1) * 0.5 + N * 0.15, color);
+      sandbox_line((v0 + v1) * 0.5, (v0 + v1) * 0.5 + N * 0.15, color);
 
       // draw hatches, on the interior
       const auto hatchAttenuation = 0.4f;
@@ -209,7 +209,7 @@ struct FastConvexSplit
       for(float f = 0; f < dist; f += 0.15)
       {
         const auto p = v0 + T * f;
-        drawer->line(p, p - N * 0.15 + T * 0.05, hatchColor);
+        sandbox_line(p, p - N * 0.15 + T * 0.05, hatchColor);
       }
     }
   }

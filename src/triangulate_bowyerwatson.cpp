@@ -11,8 +11,8 @@
 #include <vector>
 
 #include "geom.h"
+#include "sandbox.h"
 #include "triangulate.h"
-#include "visualizer.h"
 
 namespace
 {
@@ -120,9 +120,9 @@ void print2d(span<const Triangle> triangulation, span<const Vec2> points)
 {
   for(auto t : triangulation)
     for(auto e : t.edges)
-      gVisualizer->line(points[e.a], points[e.b]);
+      sandbox_line(points[e.a], points[e.b]);
 
-  gVisualizer->step();
+  sandbox_breakpoint();
 }
 }
 

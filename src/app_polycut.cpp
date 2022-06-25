@@ -16,8 +16,8 @@
 #include "geom.h"
 #include "random.h"
 #include "random_polygon.h"
+#include "sandbox.h"
 #include "split_polygon.h"
-#include "visualizer.h"
 
 namespace
 {
@@ -55,7 +55,7 @@ struct PolycutApp : IApp
   {
     if(1)
     {
-      m_poly = createRandomPolygon2f(gNullVisualizer);
+      m_poly = createRandomPolygon2f();
 
       const auto i0 = (int)m_poly.vertices.size();
       m_poly.vertices.push_back({-15, -15});

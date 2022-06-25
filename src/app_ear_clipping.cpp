@@ -31,10 +31,10 @@ struct Ear
   int a, b;
 };
 
-void drawPolygon(IDrawer* drawer, const Polygon2f& input, Color color)
+void drawPolygon(const Polygon2f& input, Color color)
 {
   for(Face face : input.faces)
-    drawer->line(input.vertices[face.a], input.vertices[face.b], color);
+    sandbox_line(input.vertices[face.a], input.vertices[face.b], color);
 }
 
 Ear polygonEarFromIndex(const Polygon2f& polygon, int index)
@@ -117,29 +117,29 @@ Segment clipEar(Polygon2f& polygon)
 
 struct EarClippingAlgorithm
 {
-  static Polygon2f generateInput() { return createRandomPolygon2f(gNullVisualizer); }
+  static Polygon2f generateInput() { return createRandomPolygon2f(); }
 
   static std::vector<Segment> execute(Polygon2f input)
   {
     std::vector<Segment> result;
     while(input.faces.size() > 3)
     {
-      drawPolygon(gVisualizer, input, Yellow);
-      gVisualizer->step();
+      drawPolygon(input, Yellow);
+      sandbox_breakpoint();
       Segment segment = clipEar(input);
       result.push_back(segment);
     }
-    drawPolygon(gVisualizer, input, Yellow);
-    gVisualizer->step();
+    drawPolygon(input, Yellow);
+    sandbox_breakpoint();
     return result;
   }
 
-  static void drawInput(IDrawer* drawer, const Polygon2f& input) { drawPolygon(drawer, input, White); }
+  static void drawInput(const Polygon2f& input) { drawPolygon(input, White); }
 
-  static void drawOutput(IDrawer* drawer, const Polygon2f& input, const std::vector<Segment>& output)
+  static void drawOutput(const Polygon2f& input, const std::vector<Segment>& output)
   {
     for(auto& segment : output)
-      drawer->line(input.vertices[segment.a], input.vertices[segment.b], Green);
+      sandbox_line(input.vertices[segment.a], input.vertices[segment.b], Green);
   }
 };
 

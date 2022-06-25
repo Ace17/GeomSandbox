@@ -124,7 +124,7 @@ Graph randomGraph(int width, int height)
   return graph;
 }
 
-void drawVisitedGraph(IDrawer* drawer, const Graph& graph, const VisitedGraph& visited, const NodeSet& nodesToVisit)
+void drawVisitedGraph(const Graph& graph, const VisitedGraph& visited, const NodeSet& nodesToVisit)
 {
   auto& nodes = graph.nodes;
   for(int i = 0; i < (int)nodes.size(); ++i)
@@ -135,25 +135,25 @@ void drawVisitedGraph(IDrawer* drawer, const Graph& graph, const VisitedGraph& v
     char buffer[32];
     if(isToVisit)
     {
-      drawer->circle(nodes[i].renderPos, 1.2, Green);
+      sandbox_circle(nodes[i].renderPos, 1.2, Green);
       sprintf(buffer, "%d", getNodeValue(graph, visited, i));
-      drawer->text(nodes[i].renderPos, buffer, Green);
+      sandbox_text(nodes[i].renderPos, buffer, Green);
     }
     else if(isVisited)
     {
       sprintf(buffer, "%d", visited.cost[i]);
-      drawer->text(nodes[i].renderPos, buffer, White);
+      sandbox_text(nodes[i].renderPos, buffer, White);
     }
     else
     {
       sprintf(buffer, "%d", graph.distanceFromEnd(i));
-      drawer->text(nodes[i].renderPos, buffer, Gray);
+      sandbox_text(nodes[i].renderPos, buffer, Gray);
     }
 
     if(visited.provenance[i] != INT_MAX && visited.provenance[i] != i)
     {
       const int prov = visited.provenance[i];
-      drawer->line(nodes[prov].renderPos, nodes[i].renderPos, White);
+      sandbox_line(nodes[prov].renderPos, nodes[i].renderPos, White);
     }
   }
 }
@@ -189,9 +189,9 @@ struct AStarAlgorithm
       const int nodeCost = visited.cost[nodeIndex];
       nodesToVisit.erase(nodesToVisit.begin());
 
-      drawVisitedGraph(gVisualizer, input, visited, nodesToVisit);
-      gVisualizer->circle(node.renderPos, 1.2, Red);
-      gVisualizer->step();
+      drawVisitedGraph(input, visited, nodesToVisit);
+      sandbox_circle(node.renderPos, 1.2, Red);
+      sandbox_breakpoint();
 
       for(int neighbor : node.neighbours)
       {
@@ -200,14 +200,14 @@ struct AStarAlgorithm
           const Vec2& neighborRenderPos = nodes[neighbor].renderPos;
           const int neighborCost = nodeCost + 1;
           const int neighborDistanceFromEnd = input.distanceFromEnd(neighbor);
-          drawVisitedGraph(gVisualizer, input, visited, nodesToVisit);
-          gVisualizer->circle(node.renderPos, 1.2, Red);
-          gVisualizer->circle(neighborRenderPos, 1.2, Green);
-          gVisualizer->line(node.renderPos, neighborRenderPos, Green);
+          drawVisitedGraph(input, visited, nodesToVisit);
+          sandbox_circle(node.renderPos, 1.2, Red);
+          sandbox_circle(neighborRenderPos, 1.2, Green);
+          sandbox_line(node.renderPos, neighborRenderPos, Green);
           char buffer[32];
           sprintf(buffer, "%d+%d=%d", neighborDistanceFromEnd, neighborCost, neighborDistanceFromEnd + neighborCost);
-          gVisualizer->text(neighborRenderPos, buffer, Green);
-          gVisualizer->step();
+          sandbox_text(neighborRenderPos, buffer, Green);
+          sandbox_breakpoint();
 
           visited.visitNode(neighbor, nodeIndex, nodeCost + 1);
           nodesToVisit.insert(neighbor);
@@ -232,7 +232,7 @@ struct AStarAlgorithm
     return {};
   }
 
-  static void drawInput(IDrawer* drawer, const Graph& input)
+  static void drawInput(const Graph& input)
   {
     auto& nodes = input.nodes;
     const Vec2& endpos = nodes[input.endNode].pos;
@@ -240,28 +240,28 @@ struct AStarAlgorithm
     for(int idx = 0; idx < nodes.size(); ++idx)
     {
       auto& node = nodes[idx];
-      drawer->circle(node.renderPos, 0.5, Gray);
+      sandbox_circle(node.renderPos, 0.5, Gray);
 
       for(int neighbor : node.neighbours)
-        drawer->line(nodes[idx].renderPos, nodes[neighbor].renderPos, Gray);
+        sandbox_line(nodes[idx].renderPos, nodes[neighbor].renderPos, Gray);
     }
 
-    drawer->circle(nodes[input.startNode].renderPos, 1.2, Yellow);
-    drawer->circle(nodes[input.endNode].renderPos, 1.2, LightBlue);
+    sandbox_circle(nodes[input.startNode].renderPos, 1.2, Yellow);
+    sandbox_circle(nodes[input.endNode].renderPos, 1.2, LightBlue);
   }
 
-  static void drawOutput(IDrawer* drawer, const Graph& input, const Output& output)
+  static void drawOutput(const Graph& input, const Output& output)
   {
     auto& nodes = input.nodes;
     for(int i = 0; i < (int)output.size(); ++i)
     {
       const int node = output[i];
       if(node != input.startNode && node != input.endNode)
-        drawer->circle(nodes[node].renderPos, 1.2, Green);
+        sandbox_circle(nodes[node].renderPos, 1.2, Green);
       if(i > 0)
       {
         const int previousNode = output[i - 1];
-        drawer->line(input.nodes[node].renderPos, input.nodes[previousNode].renderPos, Green);
+        sandbox_line(input.nodes[node].renderPos, input.nodes[previousNode].renderPos, Green);
       }
     }
   }

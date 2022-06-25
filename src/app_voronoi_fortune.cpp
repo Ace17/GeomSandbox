@@ -177,7 +177,7 @@ struct VoronoiDiagram
   std::vector<CellEdge> edges;
 };
 
-void drawArc(IDrawer* drawer, const Arc* arc, float lineY, Color color)
+void drawArc(const Arc* arc, float lineY, Color color)
 {
   const std::pair<float, float> extremities = arc->getArcExtremities(lineY);
   const float startX = extremities.first;
@@ -191,50 +191,50 @@ void drawArc(IDrawer* drawer, const Arc* arc, float lineY, Color color)
       const float nextX = x + stepSize;
       const float lineStartX = std::max(x, startX);
       const float lineEndX = std::min(nextX, endX);
-      drawer->line({lineStartX, arc->pointOn(lineStartX, lineY)}, {lineEndX, arc->pointOn(lineEndX, lineY)}, color);
+      sandbox_line({lineStartX, arc->pointOn(lineStartX, lineY)}, {lineEndX, arc->pointOn(lineEndX, lineY)}, color);
       x = nextX;
     }
   }
 }
 
-void drawLine(IDrawer* drawer, const Arc* rightArc, const Arc* leftArc, Color color)
+void drawLine(const Arc* rightArc, const Arc* leftArc, Color color)
 {
   const Vec2 linePerpendicular = leftArc->site - rightArc->site;
   const Vec2 direction = Vec2(-linePerpendicular.y, linePerpendicular.x);
   const Vec2 origin = ((leftArc->site + rightArc->site) / 2.f);
-  drawer->line(origin, origin + direction * 1000.f, color);
+  sandbox_line(origin, origin + direction * 1000.f, color);
 }
 
-void drawEdge(IDrawer* drawer, const Edge& edge, Color color) { drawLine(drawer, edge.rightArc, edge.leftArc, color); }
+void drawEdge(const Edge& edge, Color color) { drawLine(edge.rightArc, edge.leftArc, color); }
 
-void drawHorizontalLine(IDrawer* drawer, Vec2 point, Color color)
+void drawHorizontalLine(Vec2 point, Color color)
 {
   const Vec2 topPoint = {screenMinX, point.y};
   const Vec2 bottomPoint = {screenMaxX, point.y};
-  drawer->line(topPoint, bottomPoint, color);
+  sandbox_line(topPoint, bottomPoint, color);
 }
 
-void drawBeachLine(IDrawer* drawer, const Arc* rootArc, float lineY, Color color)
+void drawBeachLine(const Arc* rootArc, float lineY, Color color)
 {
   if(rootArc)
   {
     const Arc* arc = rootArc;
-    drawArc(drawer, arc, lineY, color);
+    drawArc(arc, lineY, color);
     while(arc->right)
     {
-      drawLine(drawer, arc->right, arc, color);
-      drawArc(drawer, arc->right, lineY, color);
+      drawLine(arc->right, arc, color);
+      drawArc(arc->right, lineY, color);
       arc = arc->right;
     }
   }
 }
 
-void drawDiagram(IDrawer* drawer, const VoronoiDiagram& diagram, Color color)
+void drawDiagram(const VoronoiDiagram& diagram, Color color)
 {
   for(auto edge : diagram.edges)
   {
     if(edge.vertexA.set && edge.vertexB.set)
-      drawer->line(edge.vertexA.value, edge.vertexB.value, color);
+      sandbox_line(edge.vertexA.value, edge.vertexB.value, color);
   }
 }
 
@@ -246,14 +246,14 @@ struct Event
   virtual ~Event() = default;
   virtual Vec2 pos() const = 0;
   virtual void happen(EventQueue& eventQueue, Arc*& rootArc, VoronoiDiagram& diagram) = 0;
-  virtual void draw(IDrawer* drawer) const = 0;
+  virtual void draw() const = 0;
 };
 
-void drawEvents(IDrawer* drawer, const EventQueue& eventQueue)
+void drawEvents(const EventQueue& eventQueue)
 {
   for(const Event* event : eventQueue)
   {
-    event->draw(drawer);
+    event->draw();
   }
 }
 
@@ -298,7 +298,7 @@ struct CircleEvent final : public Event
   {
     printf("circleEvent at %f;%f\n", intersection.x, intersection.y);
 
-    gVisualizer->rect(intersection - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue);
+    sandbox_rect(intersection - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue);
     arc->right->left = arc->left;
     arc->left->right = arc->right;
 
@@ -313,11 +313,11 @@ struct CircleEvent final : public Event
 
     DeleteEventsWithPredicate(eventQueue, IsConcernedArc);
 
-    gVisualizer->step();
-    drawBeachLine(gVisualizer, rootArc, intersection.y, Yellow);
-    drawHorizontalLine(gVisualizer, intersection, Red);
-    drawEvents(gVisualizer, eventQueue);
-    drawDiagram(gVisualizer, diagram, Yellow);
+    sandbox_breakpoint();
+    drawBeachLine(rootArc, intersection.y, Yellow);
+    drawHorizontalLine(intersection, Red);
+    drawEvents(eventQueue);
+    drawDiagram(diagram, Yellow);
 
     const float lineY = intersection.y;
     Edge newEdge = {arc->left, arc->right};
@@ -344,7 +344,7 @@ struct CircleEvent final : public Event
     delete arc;
   }
 
-  void draw(IDrawer* drawer) const override { drawer->rect(intersection - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue); }
+  void draw() const override { sandbox_rect(intersection - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue); }
 };
 
 void createCircleEventIfAny(EventQueue& eventQueue, Arc* arc, const Edge& leftEdge, const Edge& rightEdge, float lineY)
@@ -367,11 +367,11 @@ void createCircleEventIfAny(EventQueue& eventQueue, Arc* arc, const Edge& leftEd
     const Vec2 intersection = {intersectionX, intersectionY};
     const float circleRadius = magnitude(intersection - arc->site);
     const Vec2 eventPosition = {intersection.x, intersection.y - circleRadius};
-    drawEdge(gVisualizer, leftEdge, LightBlue);
-    drawEdge(gVisualizer, rightEdge, LightBlue);
-    drawArc(gVisualizer, arc, lineY, LightBlue);
-    gVisualizer->rect(intersection - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue);
-    gVisualizer->rect(eventPosition - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue);
+    drawEdge(leftEdge, LightBlue);
+    drawEdge(rightEdge, LightBlue);
+    drawArc(arc, lineY, LightBlue);
+    sandbox_rect(intersection - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue);
+    sandbox_rect(eventPosition - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue);
     CircleEvent* circleEvent = new CircleEvent();
     circleEvent->arc = arc;
     circleEvent->intersection = eventPosition;
@@ -432,10 +432,10 @@ struct siteEvent final : public Event
 
       DeleteEventsWithPredicate(eventQueue, IsCircleEventOnAboveArc);
 
-      gVisualizer->line(Pos, {Pos.x, aboveArc->pointOn(Pos.x, Pos.y)}, Green);
-      drawArc(gVisualizer, aboveArc, Pos.y, Green);
-      drawLine(gVisualizer, newLeftArc, newArc, Green);
-      drawLine(gVisualizer, newArc, newRightArc, Green);
+      sandbox_line(Pos, {Pos.x, aboveArc->pointOn(Pos.x, Pos.y)}, Green);
+      drawArc(aboveArc, Pos.y, Green);
+      drawLine(newLeftArc, newArc, Green);
+      drawLine(newArc, newRightArc, Green);
 
       newArc->left = newLeftArc;
       newArc->right = newRightArc;
@@ -444,11 +444,11 @@ struct siteEvent final : public Event
       newRightArc->left = newArc;
       newRightArc->right = aboveArc->right;
 
-      gVisualizer->step();
-      drawBeachLine(gVisualizer, rootArc, Pos.y, Yellow);
-      drawHorizontalLine(gVisualizer, Pos, Red);
-      drawEvents(gVisualizer, eventQueue);
-      drawDiagram(gVisualizer, diagram, Yellow);
+      sandbox_breakpoint();
+      drawBeachLine(rootArc, Pos.y, Yellow);
+      drawHorizontalLine(Pos, Red);
+      drawEvents(eventQueue);
+      drawDiagram(diagram, Yellow);
       createCircleEvents(eventQueue, newLeftArc, newArc, newRightArc);
 
       if(aboveArc->left)
@@ -469,7 +469,7 @@ struct siteEvent final : public Event
     }
   }
 
-  void draw(IDrawer* drawer) const override { drawer->rect(Pos - Vec2(0.2, 0.2), Vec2(0.4, 0.4), Green); }
+  void draw() const override { sandbox_rect(Pos - Vec2(0.2, 0.2), Vec2(0.4, 0.4), Green); }
 };
 
 struct FortuneVoronoiAlgoritm
@@ -505,12 +505,12 @@ struct FortuneVoronoiAlgoritm
       Event* event = eventQueue.back();
       eventQueue.pop_back();
       const Vec2 eventPos = event->pos();
-      drawBeachLine(gVisualizer, rootArc, eventPos.y, Yellow);
-      drawHorizontalLine(gVisualizer, eventPos, Red);
-      drawEvents(gVisualizer, eventQueue);
-      drawDiagram(gVisualizer, diagram, Yellow);
+      drawBeachLine(rootArc, eventPos.y, Yellow);
+      drawHorizontalLine(eventPos, Red);
+      drawEvents(eventQueue);
+      drawDiagram(diagram, Yellow);
       event->happen(eventQueue, rootArc, diagram);
-      gVisualizer->step();
+      sandbox_breakpoint();
 
       delete event;
     }
@@ -527,18 +527,15 @@ struct FortuneVoronoiAlgoritm
     return diagram;
   }
 
-  static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input)
+  static void drawInput(const std::vector<Vec2>& input)
   {
     for(auto& p : input)
     {
-      drawer->rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
+      sandbox_rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
     }
   }
 
-  static void drawOutput(IDrawer* drawer, const std::vector<Vec2>& input, const VoronoiDiagram& output)
-  {
-    drawDiagram(drawer, output, Yellow);
-  }
+  static void drawOutput(const std::vector<Vec2>& input, const VoronoiDiagram& output) { drawDiagram(output, Yellow); }
 };
 
 const int reg = registerApp("FortuneVoronoi", []() -> IApp* { return new AlgorithmApp<FortuneVoronoiAlgoritm>; });

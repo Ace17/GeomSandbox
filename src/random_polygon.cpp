@@ -12,7 +12,7 @@
 
 #include "bounding_box.h"
 #include "random.h"
-#include "visualizer.h"
+#include "sandbox.h"
 
 namespace
 {
@@ -335,7 +335,7 @@ float Polygon2f::faceLength(int faceIdx) const
   return magnitude(B - A);
 }
 
-Polygon2f createRandomPolygon2f(IVisualizer* visualizer)
+Polygon2f createRandomPolygon2f()
 {
   const auto radius1 = randomFloat(5, 10) * OneMeter;
   const auto radius2 = randomFloat(5, 10) * OneMeter;
@@ -345,8 +345,8 @@ Polygon2f createRandomPolygon2f(IVisualizer* visualizer)
   auto drawAndStep = [&]()
   {
     for(auto face : r.faces)
-      visualizer->line(r.vertices[face.a], r.vertices[face.b]);
-    visualizer->step();
+      sandbox_line(r.vertices[face.a], r.vertices[face.b]);
+    sandbox_breakpoint();
   };
 
   drawAndStep();

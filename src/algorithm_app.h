@@ -1,18 +1,20 @@
 #pragma once
 
+#include <cassert>
 #include <memory>
 #include <string>
 
 #include "app.h"
+#include "drawer.h"
 #include "fiber.h"
-#include "visualizer.h"
+#include "sandbox.h"
 // Example algorithm :
 // struct MyAlgorithm
 // {
 // static std::vector<Vec2> generateInput();
 // static std::vector<Edge> execute(std::vector<Vec2> input);
-// static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input);
-// static void drawOutput(IDrawer* drawer, const std::vector<Edge>& output);
+// static void drawInput(const std::vector<Vec2>& input);
+// static void drawOutput(const std::vector<Edge>& output);
 // };
 
 template<typename>
@@ -39,11 +41,17 @@ struct AlgorithmApp : IApp
 
   void draw(IDrawer* drawer) override
   {
-    Algorithm::drawInput(drawer, m_input);
+    m_visuForFrame = {};
 
-    m_visu.draw(drawer);
+    gVisualizer = &m_visuForFrame;
+    Algorithm::drawInput(m_input);
+    Algorithm::drawOutput(m_input, m_output);
+    gVisualizer = gNullVisualizer;
 
-    Algorithm::drawOutput(drawer, m_input, m_output);
+    m_visuForFrame.m_frontScreen = std::move(m_visuForFrame.m_screen);
+
+    m_visuForFrame.flush(drawer);
+    m_visuForAlgo.flush(drawer);
   }
 
   static void staticExecute(void* userParam) { ((AlgorithmApp<Algorithm>*)userParam)->executeFromFiber(); }
@@ -51,19 +59,21 @@ struct AlgorithmApp : IApp
   void executeFromFiber()
   {
     // clear visualization
-    m_visu.m_screen = {};
+    m_visuForAlgo.m_screen = {};
+    m_visuForAlgo.m_insideAlgorithmExecute = true;
 
     m_output = Algorithm::execute(m_input);
 
     // clear last step's visualisation
-    m_visu.m_frontScreen = {};
+    m_visuForAlgo.m_insideAlgorithmExecute = false;
+    m_visuForAlgo.m_frontScreen = {};
   }
 
   void keydown(Key key) override
   {
     if(key == Key::Space || key == Key::Return)
     {
-      gVisualizer = &m_visu;
+      gVisualizer = &m_visuForAlgo;
 
       if(!m_fiber)
         m_fiber = std::make_unique<Fiber>(staticExecute, this);
@@ -118,26 +128,24 @@ struct AlgorithmApp : IApp
       std::vector<VisualText> texts;
     };
 
+    bool m_insideAlgorithmExecute = false;
     ScreenState m_screen; // the frame we're building
     ScreenState m_frontScreen; // the frame we're currently showing
 
     void rect(Vec2 a, Vec2 b, Color color) { m_screen.rects.push_back({a, b, color}); }
-
     void circle(Vec2 center, float radius, Color color) { m_screen.circles.push_back({center, radius, color}); }
-
     void text(Vec2 pos, const char* text, Color color) { m_screen.texts.push_back({pos, text, color}); }
-
     void line(Vec2 a, Vec2 b, Color c) override { m_screen.lines.push_back({a, b, c}); }
 
     void step() override
     {
+      assert(m_insideAlgorithmExecute);
       m_frontScreen = std::move(m_screen);
       Fiber::yield();
     }
 
-    void draw(IDrawer* drawer)
+    void flush(IDrawer* drawer)
     {
-
       for(auto& line : m_frontScreen.lines)
         drawer->line(line.a, line.b, line.color);
 
@@ -152,5 +160,6 @@ struct AlgorithmApp : IApp
     }
   };
 
-  Visualizer m_visu;
+  Visualizer m_visuForAlgo;
+  Visualizer m_visuForFrame;
 };

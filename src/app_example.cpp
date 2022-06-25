@@ -50,31 +50,31 @@ struct ExampleAlgorithm
     {
       result.push_back({0, i});
 
-      gVisualizer->line(input[0], input[i]);
-      gVisualizer->step();
+      sandbox_line(input[0], input[i]);
+      sandbox_breakpoint();
     }
 
     return result;
   }
 
-  static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input)
+  static void drawInput(const std::vector<Vec2>& input)
   {
     for(int idx = 0; idx < input.size(); ++idx)
     {
       char buffer[16];
       snprintf(buffer, sizeof buffer, "%d", idx);
-      drawer->rect(input[idx] - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
-      drawer->text(input[idx] + Vec2(0.3, 0), buffer, Red);
+      sandbox_rect(input[idx] - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
+      sandbox_text(input[idx] + Vec2(0.3, 0), buffer, Red);
 
       const int next_idx = (idx + 1) % input.size();
-      drawer->line(input[idx], input[next_idx]);
+      sandbox_line(input[idx], input[next_idx]);
     }
   }
 
-  static void drawOutput(IDrawer* drawer, const std::vector<Vec2>& input, const std::vector<Segment>& output)
+  static void drawOutput(const std::vector<Vec2>& input, const std::vector<Segment>& output)
   {
     for(auto& segment : output)
-      drawer->line(input[segment.a], input[segment.b], Green);
+      sandbox_line(input[segment.a], input[segment.b], Green);
   }
 };
 

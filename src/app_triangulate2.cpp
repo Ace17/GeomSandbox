@@ -18,7 +18,7 @@
 #include "app.h"
 #include "fiber.h"
 #include "random.h"
-#include "visualizer.h"
+#include "sandbox.h"
 
 namespace
 {
@@ -95,7 +95,7 @@ const int unittests_run = []()
   return 0;
 }();
 
-std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
+std::vector<Edge> triangulate(span<const Vec2> points)
 {
   std::vector<HalfEdge> he;
   std::vector<int> pointToEdge(points.len, -1);
@@ -162,7 +162,7 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
       const int prev = edge;
       edge = nextEdgeOnHull(he, edge);
 
-      vis->line(points[he[edge].point], points[he[prev].point]);
+      sandbox_line(points[he[edge].point], points[he[prev].point]);
 
       if(++k > 10)
       {
@@ -172,7 +172,7 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
   };
 
   drawHull();
-  vis->step();
+  sandbox_breakpoint();
 
   for(int idx = 3; idx < (int)points.len; ++idx)
   {
@@ -235,7 +235,7 @@ std::vector<Edge> triangulate(span<const Vec2> points, IVisualizer* vis)
         printHull();
 
         drawHull();
-        vis->step();
+        sandbox_breakpoint();
       }
 
       hullCurr = hullNext;
@@ -278,26 +278,23 @@ struct TriangulateAlgorithm
     return r;
   }
 
-  static std::vector<Edge> execute(std::vector<Vec2> input)
-  {
-    return triangulate({input.size(), input.data()}, gVisualizer);
-  }
+  static std::vector<Edge> execute(std::vector<Vec2> input) { return triangulate({input.size(), input.data()}); }
 
-  static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input)
+  static void drawInput(const std::vector<Vec2>& input)
   {
     int idx = 0;
 
     for(auto& p : input)
     {
-      drawer->rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
+      sandbox_rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
       char buffer[16];
       sprintf(buffer, "P%d", idx);
-      drawer->text(p + Vec2(0.3, 0), buffer, Red);
+      sandbox_text(p + Vec2(0.3, 0), buffer, Red);
       idx++;
     }
   }
 
-  static void drawOutput(IDrawer* drawer, const std::vector<Vec2>& input, const std::vector<Edge>& output)
+  static void drawOutput(const std::vector<Vec2>& input, const std::vector<Edge>& output)
   {
     int idx = 0;
 
@@ -307,17 +304,17 @@ struct TriangulateAlgorithm
       auto N = normalize(input[edge.b] - input[edge.a]);
       auto T = rotateLeft(N);
 
-      drawer->line(input[edge.a], input[edge.b], Green);
+      sandbox_line(input[edge.a], input[edge.b], Green);
 
       for(int i = 0; i < 10; ++i)
       {
         auto pos = lerp(input[edge.a], input[edge.b], i / 10.0f);
-        drawer->line(pos, pos - N * 0.25 + T * 0.25, Green);
+        sandbox_line(pos, pos - N * 0.25 + T * 0.25, Green);
       }
 
       char buffer[16];
       sprintf(buffer, "E%d", idx);
-      drawer->text(center + T * 1.0, buffer, Green);
+      sandbox_text(center + T * 1.0, buffer, Green);
       idx++;
     }
   }

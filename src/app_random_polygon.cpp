@@ -17,19 +17,19 @@ struct RandomPolygon
 {
   static int generateInput() { return 0; }
 
-  static Polygon2f execute(int input) { return createRandomPolygon2f(gVisualizer); }
+  static Polygon2f execute(int input) { return createRandomPolygon2f(); }
 
-  static void drawInput(IDrawer* drawer, const int& input)
+  static void drawInput(const int& input)
   {
     // no input to draw
-    drawer->line({-1, 0}, {1, 0});
-    drawer->line({0, -1}, {0, 1});
+    sandbox_line({-1, 0}, {1, 0});
+    sandbox_line({0, -1}, {0, 1});
   }
 
-  static void drawOutput(IDrawer* drawer, const int& input, const Polygon2f& output)
+  static void drawOutput(const int& input, const Polygon2f& output)
   {
     for(auto face : output.faces)
-      drawer->line(output.vertices[face.a], output.vertices[face.b], Green);
+      sandbox_line(output.vertices[face.a], output.vertices[face.b], Green);
   }
 };
 

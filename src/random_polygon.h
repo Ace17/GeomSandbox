@@ -4,4 +4,4 @@
 
 class IVisualizer;
 
-Polygon2f createRandomPolygon2f(IVisualizer* visualizer);
+Polygon2f createRandomPolygon2f();

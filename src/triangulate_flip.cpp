@@ -12,8 +12,8 @@
 #include <vector>
 
 #include "geom.h"
+#include "sandbox.h"
 #include "triangulate.h"
-#include "visualizer.h"
 
 namespace
 {
@@ -26,14 +26,14 @@ void printHull(std::map<int, int> hull, span<const Vec2> points, int head)
   do
   {
     int next = hull[curr];
-    gVisualizer->line(points[curr], points[next]);
+    sandbox_line(points[curr], points[next]);
     curr = next;
   } while(curr != head);
 
-  gVisualizer->line(points[head] + Vec2(-1, -1), points[head] + Vec2(+1, +1));
-  gVisualizer->line(points[head] + Vec2(-1, +1), points[head] + Vec2(+1, -1));
+  sandbox_line(points[head] + Vec2(-1, -1), points[head] + Vec2(+1, +1));
+  sandbox_line(points[head] + Vec2(-1, +1), points[head] + Vec2(+1, -1));
 
-  gVisualizer->step();
+  sandbox_breakpoint();
 }
 
 struct Triangle
@@ -221,9 +221,9 @@ std::vector<Edge> flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
     const auto R2 = he[L1].next;
 
     for(auto edge : he)
-      gVisualizer->line(points[edge.point], points[he[edge.next].point]);
+      sandbox_line(points[edge.point], points[he[edge.next].point]);
 
-    gVisualizer->step();
+    sandbox_breakpoint();
   }
 
   std::vector<Edge> r;

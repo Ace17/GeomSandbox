@@ -149,11 +149,11 @@ struct DijkstraAlgorithm
 
         todo.insert(nb.id);
 
-        gVisualizer->circle(nodes[nb.id].pos, 1, Red);
-        gVisualizer->line(nodes[current].pos, nodes[nb.id].pos, Red);
+        sandbox_circle(nodes[nb.id].pos, 1, Red);
+        sandbox_line(nodes[current].pos, nodes[nb.id].pos, Red);
       }
 
-      gVisualizer->circle(nodes[current].pos, 2, Red);
+      sandbox_circle(nodes[current].pos, 2, Red);
 
       for(int i = 0; i < (int)nodes.size(); ++i)
       {
@@ -164,41 +164,41 @@ struct DijkstraAlgorithm
         sprintf(buffer, "%d", r.cost[i]);
 
         const bool highlight = todo.find(i) != todo.end();
-        gVisualizer->text(nodes[i].pos, buffer, highlight ? Green : White);
+        sandbox_text(nodes[i].pos, buffer, highlight ? Green : White);
 
         if(r.provenance[i] != i)
         {
           const int prov = r.provenance[i];
-          gVisualizer->line(input.nodes[prov].pos, input.nodes[i].pos, White);
+          sandbox_line(input.nodes[prov].pos, input.nodes[i].pos, White);
         }
       }
 
       for(auto id : todo)
-        gVisualizer->circle(nodes[id].pos, 1, Green);
+        sandbox_circle(nodes[id].pos, 1, Green);
 
-      gVisualizer->step();
+      sandbox_breakpoint();
     }
 
     return r;
   }
 
-  static void drawInput(IDrawer* drawer, const Graph& input)
+  static void drawInput(const Graph& input)
   {
     auto& nodes = input.nodes;
 
     for(int idx = 0; idx < nodes.size(); ++idx)
     {
       auto& node = nodes[idx];
-      drawer->circle(node.pos, 0.5, Gray);
+      sandbox_circle(node.pos, 0.5, Gray);
 
       for(auto& nb : node.neighboors)
-        drawer->line(nodes[idx].pos, nodes[nb.id].pos, Gray);
+        sandbox_line(nodes[idx].pos, nodes[nb.id].pos, Gray);
     }
 
-    drawer->circle(nodes[input.startNode].pos, 1.2, Yellow);
+    sandbox_circle(nodes[input.startNode].pos, 1.2, Yellow);
   }
 
-  static void drawOutput(IDrawer* drawer, const Graph& input, const Output& output)
+  static void drawOutput(const Graph& input, const Output& output)
   {
     if(output.cost.empty())
       return;
@@ -211,12 +211,12 @@ struct DijkstraAlgorithm
       char buffer[32];
       sprintf(buffer, "%d", output.cost[i]);
 
-      drawer->text(input.nodes[i].pos, buffer, Green);
+      sandbox_text(input.nodes[i].pos, buffer, Green);
 
       if(output.provenance[i] != i)
       {
         const int prov = output.provenance[i];
-        drawer->line(input.nodes[prov].pos, input.nodes[i].pos, Green);
+        sandbox_line(input.nodes[prov].pos, input.nodes[i].pos, Green);
       }
     }
   }

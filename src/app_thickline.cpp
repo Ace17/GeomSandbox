@@ -114,27 +114,27 @@ struct ThickLineAlgorithm
       N = N1;
 
       for(int i = i0; i < (int)segments.size(); ++i)
-        gVisualizer->line(segments[i].a, segments[i].b, Red);
-      gVisualizer->step();
+        sandbox_line(segments[i].a, segments[i].b, Red);
+      sandbox_breakpoint();
     }
 
     return segments;
   }
 
-  static void drawInput(IDrawer* drawer, const Input& input)
+  static void drawInput(const Input& input)
   {
     for(int i = 1; i < (int)input.polyline.size(); ++i)
     {
       auto v0 = input.polyline[i - 1];
       auto v1 = input.polyline[i];
-      drawer->line(v0, v1, Yellow);
+      sandbox_line(v0, v1, Yellow);
     }
   }
 
-  static void drawOutput(IDrawer* drawer, const Input& input, const std::vector<Segment>& output)
+  static void drawOutput(const Input& input, const std::vector<Segment>& output)
   {
     for(auto& s : output)
-      drawer->line(s.a, s.b, Green);
+      sandbox_line(s.a, s.b, Green);
   }
 };
 

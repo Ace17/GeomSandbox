@@ -49,7 +49,7 @@ void drawHalfCircle(Vec2 center, Vec2 direction, float radius, Color color)
 
   for(int i = 0; i < N - 1; i++)
   {
-    gVisualizer->line(halfCirclePoints[i], halfCirclePoints[i + 1], color);
+    sandbox_line(halfCirclePoints[i], halfCirclePoints[i + 1], color);
   }
 }
 
@@ -64,27 +64,27 @@ void drawDistanceShapeAroundSegment(Vec2 start, Vec2 end, float width, Color col
         start - perpendicular * width,
   };
 
-  gVisualizer->line(start, end, color);
-  gVisualizer->line(corners[0], corners[1], color);
-  gVisualizer->line(corners[2], corners[3], color);
+  sandbox_line(start, end, color);
+  sandbox_line(corners[0], corners[1], color);
+  sandbox_line(corners[2], corners[3], color);
 
   drawHalfCircle(start, direction, width, color);
   drawHalfCircle(end, -direction, width, color);
 }
 
-void drawPointWithIdentifier(IDrawer* drawer, Vec2 position, int index, Color pointColor, Color textColor)
+void drawPointWithIdentifier(Vec2 position, int index, Color pointColor, Color textColor)
 {
   char buffer[16];
   snprintf(buffer, sizeof buffer, "%d", index);
-  drawer->rect(position - Vec2(0.2, 0.2), Vec2(0.4, 0.4), pointColor);
-  drawer->text(position + Vec2(0.3, 0), buffer, textColor);
+  sandbox_rect(position - Vec2(0.2, 0.2), Vec2(0.4, 0.4), pointColor);
+  sandbox_text(position + Vec2(0.3, 0), buffer, textColor);
 }
 
 void drawContainedPointsIdentifiers(const std::vector<Vec2>& input, Segment range, Color color)
 {
   for(int idx = range.a + 1; idx < range.b; idx++)
   {
-    drawPointWithIdentifier(gVisualizer, input[idx], idx, color, color);
+    drawPointWithIdentifier(input[idx], idx, color, color);
   }
 }
 
@@ -98,8 +98,8 @@ void drawCross(Vec2 position, Color color)
         position + Vec2(-crossBoxSize, crossBoxSize),
   };
 
-  gVisualizer->line(corners[0], corners[2], color);
-  gVisualizer->line(corners[1], corners[3], color);
+  sandbox_line(corners[0], corners[2], color);
+  sandbox_line(corners[1], corners[3], color);
 }
 
 std::vector<Segment> simplify_DouglasPeucker(const std::vector<Vec2>& input, float maxDistanceToSimplify, Segment range)
@@ -109,7 +109,7 @@ std::vector<Segment> simplify_DouglasPeucker(const std::vector<Vec2>& input, flo
 
   drawDistanceShapeAroundSegment(start, end, maxDistanceToSimplify, Yellow);
   drawContainedPointsIdentifiers(input, range, Yellow);
-  gVisualizer->step();
+  sandbox_breakpoint();
 
   if(range.b == range.a + 1)
   {
@@ -136,14 +136,14 @@ std::vector<Segment> simplify_DouglasPeucker(const std::vector<Vec2>& input, flo
   {
     for(int idx = range.a + 1; idx <= range.b - 1; idx++)
       drawCross(input[idx], Red);
-    gVisualizer->step();
+    sandbox_breakpoint();
 
     result.push_back(range);
   }
   else
   {
-    drawPointWithIdentifier(gVisualizer, input[fartherIdx], fartherIdx, Green, Green);
-    gVisualizer->step();
+    drawPointWithIdentifier(input[fartherIdx], fartherIdx, Green, Green);
+    sandbox_breakpoint();
 
     std::vector<Segment> beforeFartherPoint =
           simplify_DouglasPeucker(input, maxDistanceToSimplify, {range.a, fartherIdx});
@@ -184,22 +184,22 @@ struct DouglasPeuckerAlgorithm
     return result;
   }
 
-  static void drawInput(IDrawer* drawer, const std::vector<Vec2>& input)
+  static void drawInput(const std::vector<Vec2>& input)
   {
     for(int idx = 0; idx < input.size(); ++idx)
     {
-      drawPointWithIdentifier(drawer, input[idx], idx, White, Red);
+      drawPointWithIdentifier(input[idx], idx, White, Red);
 
       const int next_idx = (idx + 1);
       if(next_idx < input.size())
-        drawer->line(input[idx], input[next_idx]);
+        sandbox_line(input[idx], input[next_idx]);
     }
   }
 
-  static void drawOutput(IDrawer* drawer, const std::vector<Vec2>& input, const std::vector<Segment>& output)
+  static void drawOutput(const std::vector<Vec2>& input, const std::vector<Segment>& output)
   {
     for(auto& segment : output)
-      drawer->line(input[segment.a], input[segment.b], Green);
+      sandbox_line(input[segment.a], input[segment.b], Green);
   }
 };
 
