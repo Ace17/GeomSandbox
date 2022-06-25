@@ -30,7 +30,10 @@ Voronoi diagram using the Fortune algorithm:
 
 Polyline simplification using the Douglas-Peucker algorithm:
 
-<p align="center"><img src="doc/douglaspeucker.gif"></p>
+<p align="center">
+   <img src="doc/douglaspeucker.png">
+   <img src="doc/douglaspeucker.gif">
+</p>
 
 Continuous collision detection using the separating-axis-theorem:
 
