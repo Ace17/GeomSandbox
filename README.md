@@ -11,9 +11,28 @@ while keeping intrusivity minimal.
 
 It uses SDL2.
 
-<p align="center"><img src="doc/app_bowyerwatsontriangulation.png" width="50%"></p>
+Gallery
+-------
 
-<p align="center"><img src="doc/app_douglaspeucker.png" width="50%"></p>
+Triangulation using the Bowyer-Watson algorithm:
+
+<p align="center">
+   <img src="doc/bowyerwatson.png">
+   <img src="doc/bowyerwatson.gif">
+</p>
+
+Voronoi diagram using the Fortune algorithm:
+
+<p align="center">
+   <img src="doc/fortune.png">
+   <img src="doc/fortune.gif">
+</p>
+
+Polyline simplification using the Douglas-Peucker algorithm:
+
+<p align="center"><img src="doc/douglaspeucker.gif"></p>
+
+Continuous collision detection using the separating-axis-theorem:
 
 <p align="center"><img src="doc/app_sat.png" width="50%"></p>
 
