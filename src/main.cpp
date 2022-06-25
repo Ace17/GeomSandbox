@@ -24,6 +24,7 @@ float g_TargetScale = 20.0f;
 Vec2 g_ScreenSize{};
 Vec2 g_Pos{};
 Vec2 g_TargetPos{};
+bool gMustScreenShot = false;
 
 Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
 
@@ -126,6 +127,21 @@ struct SdlDrawer : IDrawer
   }
 };
 
+void takeScreenshot(SDL_Renderer* renderer)
+{
+  static int counter;
+  int w, h;
+  SDL_GetRendererOutputSize(renderer, &w, &h);
+  SDL_Surface* sshot = SDL_CreateRGBSurface(0, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+  SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_ARGB8888, sshot->pixels, sshot->pitch);
+  char filename[256];
+  snprintf(filename, sizeof filename, "screenshot-%03d.bmp", counter++);
+  SDL_SaveBMP(sshot, filename);
+  SDL_FreeSurface(sshot);
+
+  fprintf(stderr, "Saved screenshot to: %s\n", filename);
+}
+
 void drawScreen(SDL_Renderer* renderer, IApp* app)
 {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -134,6 +150,12 @@ void drawScreen(SDL_Renderer* renderer, IApp* app)
   SdlDrawer drawer;
   drawer.renderer = renderer;
   app->draw(&drawer);
+
+  if(gMustScreenShot)
+  {
+    takeScreenshot(renderer);
+    gMustScreenShot = false;
+  }
 
   SDL_RenderPresent(renderer);
 }
@@ -202,6 +224,9 @@ bool readInput(IApp* app, bool& reset)
         break;
       case SDLK_F2:
         reset = true;
+        break;
+      case SDLK_F12:
+        gMustScreenShot = true;
         break;
       }
     }
@@ -289,6 +314,7 @@ int main(int argc, char* argv[])
 
       app->tick();
       drawScreen(renderer, app.get());
+
       SDL_Delay(10);
     }
 
