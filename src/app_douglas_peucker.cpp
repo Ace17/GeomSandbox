@@ -184,7 +184,7 @@ struct DouglasPeuckerAlgorithm
     return result;
   }
 
-  static void drawInput(const std::vector<Vec2>& input)
+  static void drawStatic(const std::vector<Vec2>& input, const std::vector<Segment>& output)
   {
     for(int idx = 0; idx < input.size(); ++idx)
     {
@@ -194,10 +194,7 @@ struct DouglasPeuckerAlgorithm
       if(next_idx < input.size())
         sandbox_line(input[idx], input[next_idx]);
     }
-  }
 
-  static void drawOutput(const std::vector<Vec2>& input, const std::vector<Segment>& output)
-  {
     for(auto& segment : output)
       sandbox_line(input[segment.a], input[segment.b], Green);
   }

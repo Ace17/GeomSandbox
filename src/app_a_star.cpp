@@ -232,7 +232,7 @@ struct AStarAlgorithm
     return {};
   }
 
-  static void drawInput(const Graph& input)
+  static void drawStatic(const Graph& input, const Output& output)
   {
     auto& nodes = input.nodes;
     const Vec2& endpos = nodes[input.endNode].pos;
@@ -248,11 +248,7 @@ struct AStarAlgorithm
 
     sandbox_circle(nodes[input.startNode].renderPos, 1.2, Yellow);
     sandbox_circle(nodes[input.endNode].renderPos, 1.2, LightBlue);
-  }
 
-  static void drawOutput(const Graph& input, const Output& output)
-  {
-    auto& nodes = input.nodes;
     for(int i = 0; i < (int)output.size(); ++i)
     {
       const int node = output[i];

@@ -280,7 +280,7 @@ struct TriangulateAlgorithm
 
   static std::vector<Edge> execute(std::vector<Vec2> input) { return triangulate({input.size(), input.data()}); }
 
-  static void drawInput(const std::vector<Vec2>& input)
+  static void drawStatic(const std::vector<Vec2>& input, const std::vector<Edge>& output)
   {
     int idx = 0;
 
@@ -292,11 +292,8 @@ struct TriangulateAlgorithm
       sandbox_text(p + Vec2(0.3, 0), buffer, Red);
       idx++;
     }
-  }
 
-  static void drawOutput(const std::vector<Vec2>& input, const std::vector<Edge>& output)
-  {
-    int idx = 0;
+    idx = 0;
 
     for(auto& edge : output)
     {

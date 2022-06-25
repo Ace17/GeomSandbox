@@ -36,7 +36,7 @@ struct BowyerWatsonTriangulationAlgorithm
     return result;
   }
 
-  static void drawInput(const std::vector<Vec2>& input)
+  static void drawStatic(const std::vector<Vec2>& input, const std::vector<Edge>& output)
   {
     int idx = 0;
 
@@ -48,10 +48,7 @@ struct BowyerWatsonTriangulationAlgorithm
       sandbox_text(p + Vec2(0.3, 0), buffer, Red);
       idx++;
     }
-  }
 
-  static void drawOutput(const std::vector<Vec2>& input, const std::vector<Edge>& output)
-  {
     for(auto& edge : output)
       sandbox_line(input[edge.a], input[edge.b], Green);
   }

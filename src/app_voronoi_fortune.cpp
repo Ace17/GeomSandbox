@@ -528,15 +528,14 @@ struct FortuneVoronoiAlgoritm
     return diagram;
   }
 
-  static void drawInput(const std::vector<Vec2>& input)
+  static void drawStatic(const std::vector<Vec2>& input, const VoronoiDiagram& output)
   {
     for(auto& p : input)
     {
       sandbox_rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
     }
+    drawDiagram(output, Yellow);
   }
-
-  static void drawOutput(const std::vector<Vec2>& input, const VoronoiDiagram& output) { drawDiagram(output, Yellow); }
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<FortuneVoronoiAlgoritm>>()); }

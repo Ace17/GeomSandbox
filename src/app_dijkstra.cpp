@@ -183,7 +183,7 @@ struct DijkstraAlgorithm
     return r;
   }
 
-  static void drawInput(const Graph& input)
+  static void drawStatic(const Graph& input, const Output& output)
   {
     auto& nodes = input.nodes;
 
@@ -197,10 +197,7 @@ struct DijkstraAlgorithm
     }
 
     sandbox_circle(nodes[input.startNode].pos, 1.2, Yellow);
-  }
 
-  static void drawOutput(const Graph& input, const Output& output)
-  {
     if(output.cost.empty())
       return;
 

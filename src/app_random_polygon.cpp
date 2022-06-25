@@ -19,15 +19,12 @@ struct RandomPolygon
 
   static Polygon2f execute(int input) { return createRandomPolygon2f(); }
 
-  static void drawInput(const int& input)
+  static void drawStatic(const int& input, const Polygon2f& output)
   {
     // no input to draw
     sandbox_line({-1, 0}, {1, 0});
     sandbox_line({0, -1}, {0, 1});
-  }
 
-  static void drawOutput(const int& input, const Polygon2f& output)
-  {
     for(auto face : output.faces)
       sandbox_line(output.vertices[face.a], output.vertices[face.b], Green);
   }

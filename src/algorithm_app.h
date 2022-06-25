@@ -41,13 +41,7 @@ struct ConcreteAlgorithm : public AbstractAlgorithm
   OutputType m_output;
 
   ConcreteAlgorithm() { m_input = AlgoDef::generateInput(); }
-
-  void drawStatic() override
-  {
-    AlgoDef::drawInput(m_input);
-    AlgoDef::drawOutput(m_input, m_output);
-  }
-
+  void drawStatic() override { AlgoDef::drawStatic(m_input, m_output); }
   void execute() override { m_output = AlgoDef::execute(m_input); }
 };
 

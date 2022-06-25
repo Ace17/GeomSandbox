@@ -121,7 +121,7 @@ struct ThickLineAlgorithm
     return segments;
   }
 
-  static void drawInput(const Input& input)
+  static void drawStatic(const Input& input, const std::vector<Segment>& output)
   {
     for(int i = 1; i < (int)input.polyline.size(); ++i)
     {
@@ -129,10 +129,7 @@ struct ThickLineAlgorithm
       auto v1 = input.polyline[i];
       sandbox_line(v0, v1, Yellow);
     }
-  }
 
-  static void drawOutput(const Input& input, const std::vector<Segment>& output)
-  {
     for(auto& s : output)
       sandbox_line(s.a, s.b, Green);
   }

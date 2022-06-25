@@ -174,10 +174,10 @@ struct FastConvexSplit
     return bestPlane;
   }
 
-  static void drawInput(const Polygon2f& input) { drawPolygon(input, Gray); }
-
-  static void drawOutput(const Polygon2f& input, const std::vector<Polygon2f>& output)
+  static void drawStatic(const Polygon2f& input, const std::vector<Polygon2f>& output)
   {
+    drawPolygon(input, Gray);
+
     int i = 0;
     for(auto poly : output)
     {

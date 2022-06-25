@@ -134,10 +134,9 @@ struct EarClippingAlgorithm
     return result;
   }
 
-  static void drawInput(const Polygon2f& input) { drawPolygon(input, White); }
-
-  static void drawOutput(const Polygon2f& input, const std::vector<Segment>& output)
+  static void drawStatic(const Polygon2f& input, const std::vector<Segment>& output)
   {
+    drawPolygon(input, White);
     for(auto& segment : output)
       sandbox_line(input.vertices[segment.a], input.vertices[segment.b], Green);
   }
