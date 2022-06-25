@@ -23,7 +23,7 @@ SRCS:=\
 			src/collide2d.cpp\
 			src/geom.cpp\
 			src/random.cpp\
-			src/visualizer.cpp\
+			src/sandbox.cpp\
 			src/fiber_$(HOST).cpp\
 			src/app_example.cpp\
 			src/app_main.cpp\
