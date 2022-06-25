@@ -176,12 +176,10 @@ std::vector<Polygon2f> decomposePolygonToConvexParts(const Polygon2f& input)
 
     sandbox_breakpoint();
 
-    {
-      for(auto& p : fifo)
-        drawPolygon(p, choosePolygonColor(p));
+    for(auto& p : fifo)
+      drawPolygon(p, choosePolygonColor(p));
 
-      sandbox_breakpoint();
-    }
+    sandbox_breakpoint();
   }
 
   return result;
