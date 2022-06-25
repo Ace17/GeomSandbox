@@ -22,9 +22,9 @@
 namespace
 {
 
-static constexpr auto epsilon = 0.01f;
+constexpr auto epsilon = 0.01f;
 
-static const Color colors[] = {
+const Color colors[] = {
       {0, 0, 1, 1},
       {0, 1, 0, 1},
       {0, 1, 1, 1},
@@ -38,6 +38,143 @@ static const Color colors[] = {
       {1, 0.5, 0.5, 1},
       {1, 0.5, 1, 1},
 };
+
+void drawPolygon(const Polygon2f& poly, Color color)
+{
+  for(auto& face : poly.faces)
+  {
+    auto v0 = poly.vertices[face.a];
+    auto v1 = poly.vertices[face.b];
+    sandbox_line(v0, v1, color);
+    sandbox_circle(v0, 0.1, color);
+
+    // draw normal, pointing to the exterior
+    const auto T = normalize(v1 - v0);
+    const auto N = -rotateLeft(T);
+    sandbox_line((v0 + v1) * 0.5, (v0 + v1) * 0.5 + N * 0.15, color);
+
+    // draw hatches, on the interior
+    const auto hatchAttenuation = 0.4f;
+    const Color hatchColor = {color.r * hatchAttenuation, color.g * hatchAttenuation, color.b * hatchAttenuation,
+          color.a * hatchAttenuation};
+    const auto dist = magnitude(v1 - v0);
+    for(float f = 0; f < dist; f += 0.15)
+    {
+      const auto p = v0 + T * f;
+      sandbox_line(p, p - N * 0.15 + T * 0.05, hatchColor);
+    }
+  }
+}
+
+bool isConvex(const Polygon2f& poly)
+{
+  for(auto face : poly.faces)
+  {
+    const auto T = poly.vertices[face.b] - poly.vertices[face.a];
+    const auto N = -rotateLeft(T); // normals point to the outside
+    for(auto vertex : poly.vertices)
+    {
+      auto dv = vertex - poly.vertices[face.a];
+      if(dot_product(dv, N) > epsilon)
+        return false;
+    }
+  }
+
+  return true;
+}
+
+Plane chooseCuttingPlane(const Polygon2f& poly)
+{
+  Plane bestPlane;
+  int bestScore = 0;
+
+  for(auto face : poly.faces)
+  {
+    const auto T = poly.vertices[face.b] - poly.vertices[face.a];
+    const auto N = normalize(-rotateLeft(T));
+    const auto plane = Plane{N, dot_product(N, poly.vertices[face.a])};
+
+    int frontCount = 0;
+    int backCount = 0;
+
+    for(auto v : poly.vertices)
+    {
+      if(dot_product(v, plane.normal) > plane.dist + epsilon)
+        frontCount++;
+      else
+        backCount++;
+    }
+
+    const int score = std::min(frontCount, backCount);
+    if(score > bestScore)
+    {
+      bestScore = score;
+      bestPlane = plane;
+    }
+  }
+
+  return bestPlane;
+}
+
+std::vector<Polygon2f> decomposePolygonToConvexParts(const Polygon2f& input)
+{
+  std::deque<Polygon2f> fifo;
+  fifo.push_back(input);
+
+  std::vector<Polygon2f> result;
+
+  while(fifo.size())
+  {
+    auto poly = fifo.front();
+    fifo.pop_front();
+
+    drawPolygon(poly, Red);
+
+    if(isConvex(poly))
+    {
+      result.push_back(poly);
+    }
+    else
+    {
+      auto plane = chooseCuttingPlane(poly);
+
+      Polygon2f front, back;
+      splitPolygonAgainstPlane(poly, plane, front, back);
+
+      if(front.faces.size())
+        fifo.push_back(front);
+
+      if(back.faces.size())
+        fifo.push_back(back);
+
+      {
+        const auto T = rotateLeft(plane.normal);
+        auto p = plane.normal * plane.dist;
+        auto shift = plane.normal * 0.1;
+        auto tmin = p + T * +1000;
+        auto tmax = p + T * -1000;
+        sandbox_line(tmin + shift, tmax + shift, LightBlue);
+        sandbox_line(tmin - shift, tmax - shift, LightBlue);
+      }
+    }
+
+    sandbox_breakpoint();
+
+    {
+      int i = 0;
+      for(auto& p : fifo)
+      {
+        drawPolygon(p, colors[i]);
+        i++;
+        i %= (sizeof colors) / (sizeof *colors);
+      }
+
+      sandbox_breakpoint();
+    }
+  }
+
+  return result;
+}
 
 struct FastConvexSplit
 {
@@ -64,115 +201,7 @@ struct FastConvexSplit
     return input;
   }
 
-  static std::vector<Polygon2f> execute(Polygon2f input)
-  {
-    std::deque<Polygon2f> fifo;
-    fifo.push_back(input);
-
-    std::vector<Polygon2f> result;
-
-    while(fifo.size())
-    {
-      auto poly = fifo.front();
-      fifo.pop_front();
-
-      drawPolygon(poly, Red);
-
-      if(isConvex(poly))
-      {
-        result.push_back(poly);
-      }
-      else
-      {
-        auto plane = chooseCuttingPlane(poly);
-
-        Polygon2f front, back;
-        splitPolygonAgainstPlane(poly, plane, front, back);
-
-        if(front.faces.size())
-          fifo.push_back(front);
-
-        if(back.faces.size())
-          fifo.push_back(back);
-
-        {
-          const auto T = rotateLeft(plane.normal);
-          auto p = plane.normal * plane.dist;
-          auto shift = plane.normal * 0.1;
-          auto tmin = p + T * +1000;
-          auto tmax = p + T * -1000;
-          sandbox_line(tmin + shift, tmax + shift, LightBlue);
-          sandbox_line(tmin - shift, tmax - shift, LightBlue);
-        }
-      }
-
-      sandbox_breakpoint();
-
-      {
-        int i = 0;
-        for(auto& p : fifo)
-        {
-          drawPolygon(p, colors[i]);
-          i++;
-          i %= (sizeof colors) / (sizeof *colors);
-        }
-
-        sandbox_breakpoint();
-      }
-    }
-
-    return result;
-  }
-
-  static bool isConvex(const Polygon2f& poly)
-  {
-    for(auto face : poly.faces)
-    {
-      const auto T = poly.vertices[face.b] - poly.vertices[face.a];
-      const auto N = -rotateLeft(T); // normals point to the outside
-      for(auto vertex : poly.vertices)
-      {
-        auto dv = vertex - poly.vertices[face.a];
-        if(dot_product(dv, N) > epsilon)
-          return false;
-      }
-    }
-
-    return true;
-  }
-
-  static Plane chooseCuttingPlane(const Polygon2f& poly)
-  {
-    Plane bestPlane;
-    int bestScore = 0;
-
-    for(auto face : poly.faces)
-    {
-      const auto T = poly.vertices[face.b] - poly.vertices[face.a];
-      const auto N = normalize(-rotateLeft(T));
-      const auto plane = Plane{N, dot_product(N, poly.vertices[face.a])};
-
-      int frontCount = 0;
-      int backCount = 0;
-
-      for(auto v : poly.vertices)
-      {
-        if(dot_product(v, plane.normal) > plane.dist + epsilon)
-          frontCount++;
-        else
-          backCount++;
-      }
-
-      const int score = std::min(frontCount, backCount);
-      if(score > bestScore)
-      {
-        bestScore = score;
-        bestPlane = plane;
-      }
-    }
-
-    return bestPlane;
-  }
+  static std::vector<Polygon2f> execute(Polygon2f input) { return decomposePolygonToConvexParts(input); }
 
   static void drawStatic(const Polygon2f& input, const std::vector<Polygon2f>& output)
   {
@@ -184,33 +213,6 @@ struct FastConvexSplit
       drawPolygon(poly, colors[i]);
       ++i;
       i %= (sizeof colors) / (sizeof *colors);
-    }
-  }
-
-  static void drawPolygon(const Polygon2f& poly, Color color)
-  {
-    for(auto& face : poly.faces)
-    {
-      auto v0 = poly.vertices[face.a];
-      auto v1 = poly.vertices[face.b];
-      sandbox_line(v0, v1, color);
-      sandbox_circle(v0, 0.1, color);
-
-      // draw normal, pointing to the exterior
-      const auto T = normalize(v1 - v0);
-      const auto N = -rotateLeft(T);
-      sandbox_line((v0 + v1) * 0.5, (v0 + v1) * 0.5 + N * 0.15, color);
-
-      // draw hatches, on the interior
-      const auto hatchAttenuation = 0.4f;
-      const Color hatchColor = {color.r * hatchAttenuation, color.g * hatchAttenuation, color.b * hatchAttenuation,
-            color.a * hatchAttenuation};
-      const auto dist = magnitude(v1 - v0);
-      for(float f = 0; f < dist; f += 0.15)
-      {
-        const auto p = v0 + T * f;
-        sandbox_line(p, p - N * 0.15 + T * 0.05, hatchColor);
-      }
     }
   }
 };
