@@ -75,6 +75,8 @@ struct AlgorithmApp : IApp
       }
       else
         m_fiber->resume();
+
+      gVisualizer = gNullVisualizer;
     }
   }
 
