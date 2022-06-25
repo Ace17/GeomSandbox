@@ -42,6 +42,13 @@ Continuous collision detection using the separating-axis-theorem:
    <img src="doc/sat.gif">
 </p>
 
+Convex space partitionning using BSP:
+
+<p align="center">
+   <img src="doc/bsp.png">
+   <img src="doc/bsp.gif">
+</p>
+
 Build
 -----
 
