@@ -216,7 +216,7 @@ struct FastConvexSplit
   {
     drawPolygon(input, Gray);
 
-    for(auto poly : output)
+    for(auto& poly : output)
       drawPolygon(poly, choosePolygonColor(poly));
   }
 };
