@@ -26,7 +26,7 @@ struct ExampleAlgorithm
   static std::vector<Vec2> generateInput()
   {
     std::vector<Vec2> points;
-    const int N = int(randomFloat(3, 15));
+    const int N = int(randomFloat(10, 35));
     const float radiusX = randomFloat(5, 15);
     const float radiusY = randomFloat(5, 15);
 
