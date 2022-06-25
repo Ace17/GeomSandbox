@@ -37,7 +37,10 @@ Polyline simplification using the Douglas-Peucker algorithm:
 
 Continuous collision detection using the separating-axis-theorem:
 
-<p align="center"><img src="doc/app_sat.png" width="50%"></p>
+<p align="center">
+   <img src="doc/sat.png">
+   <img src="doc/sat.gif">
+</p>
 
 Build
 -----
