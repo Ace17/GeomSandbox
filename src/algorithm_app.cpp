@@ -5,6 +5,9 @@
 
 #include "fiber.h"
 
+namespace
+{
+
 struct AlgorithmApp : IApp
 {
   AlgorithmApp(std::unique_ptr<AbstractAlgorithm> algo)
@@ -137,5 +140,7 @@ struct AlgorithmApp : IApp
   Visualizer m_visuForAlgo;
   Visualizer m_visuForFrame;
 };
+
+}
 
 IApp* createAlgorithmApp(std::unique_ptr<AbstractAlgorithm> algo) { return new AlgorithmApp(std::move(algo)); }
