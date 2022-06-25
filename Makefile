@@ -16,6 +16,7 @@ CXXFLAGS+=$(shell pkg-config $(PKGS) --cflags)
 LDFLAGS+=$(shell pkg-config $(PKGS) --libs)
 
 CXXFLAGS+=-g3
+CXXFLAGS+=-O3
 
 SRCS:=\
 			src/main.cpp\

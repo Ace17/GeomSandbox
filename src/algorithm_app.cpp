@@ -2,11 +2,19 @@
 
 #include <cassert>
 #include <string>
+#include <chrono>
 
 #include "fiber.h"
 
 namespace
 {
+int64_t getSteadyClockMs()
+{
+  using namespace std::chrono;
+  auto elapsedTime = steady_clock::now().time_since_epoch();
+  return duration_cast<milliseconds>(elapsedTime).count();
+}
+
 struct Visualizer : IVisualizer
 {
   struct VisualLine
@@ -80,6 +88,7 @@ struct AlgorithmApp : IApp
   AlgorithmApp(std::unique_ptr<AbstractAlgorithm> algo)
       : m_algo(std::move(algo))
   {
+    m_algo->init();
   }
 
   std::unique_ptr<AbstractAlgorithm> m_algo;
@@ -115,7 +124,11 @@ struct AlgorithmApp : IApp
 
   void keydown(Key key) override
   {
-    if(key == Key::Space || key == Key::Return)
+    if(key == Key::Home)
+    {
+      runProfiling();
+    }
+    else if(key == Key::Space || key == Key::Return)
     {
       gVisualizer = &m_visuForAlgo;
 
@@ -132,6 +145,22 @@ struct AlgorithmApp : IApp
 
       gVisualizer = gNullVisualizer;
     }
+  }
+
+  void runProfiling()
+  {
+    fprintf(stderr, "Profiling ...\n");
+    fflush(stderr);
+
+    const int N = 5000;
+    const auto t0 = getSteadyClockMs();
+    for(int k=0;k < N;++k)
+    {
+      m_algo->init();
+      m_algo->execute();
+    }
+    const auto t1 = getSteadyClockMs();
+    fprintf(stderr, "Processed %d instances (%.2f ms/instance)\n", N, (t1-t0)/(N*1.0));
   }
 
   std::unique_ptr<Fiber> m_fiber;
