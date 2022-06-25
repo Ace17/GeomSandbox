@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Split a polygon into convex pieces
 
+#include <cassert>
 #include <cmath>
 #include <deque>
 #include <vector>
@@ -25,7 +26,6 @@ namespace
 constexpr auto epsilon = 0.01f;
 
 const Color colors[] = {
-      {0, 0, 1, 1},
       {0, 1, 0, 1},
       {0, 1, 1, 1},
       {1, 0, 0, 1},
@@ -38,6 +38,22 @@ const Color colors[] = {
       {1, 0.5, 0.5, 1},
       {1, 0.5, 1, 1},
 };
+
+Color choosePolygonColor(const Polygon2f& poly)
+{
+  Vec2 extremePos = poly.vertices[poly.faces[0].a];
+
+  for(auto face : poly.faces)
+  {
+    auto v = poly.vertices[face.a];
+    if(v.x > extremePos.x || (v.x == extremePos.x && v.y > extremePos.y))
+      extremePos = v;
+  }
+
+  const int N = sizeof(colors) / sizeof(*colors);
+  const unsigned idx = unsigned(std::abs(extremePos.x * extremePos.y * 123.456));
+  return colors[idx % N];
+}
 
 void drawPolygon(const Polygon2f& poly, Color color)
 {
@@ -161,13 +177,8 @@ std::vector<Polygon2f> decomposePolygonToConvexParts(const Polygon2f& input)
     sandbox_breakpoint();
 
     {
-      int i = 0;
       for(auto& p : fifo)
-      {
-        drawPolygon(p, colors[i]);
-        i++;
-        i %= (sizeof colors) / (sizeof *colors);
-      }
+        drawPolygon(p, choosePolygonColor(p));
 
       sandbox_breakpoint();
     }
@@ -207,13 +218,8 @@ struct FastConvexSplit
   {
     drawPolygon(input, Gray);
 
-    int i = 0;
     for(auto poly : output)
-    {
-      drawPolygon(poly, colors[i]);
-      ++i;
-      i %= (sizeof colors) / (sizeof *colors);
-    }
+      drawPolygon(poly, choosePolygonColor(poly));
   }
 };
 
