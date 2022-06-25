@@ -21,10 +21,7 @@ struct Segment
   int a, b;
 };
 
-static float clamp(float value, float min, float max)
-{
-  return std::min(max, std::max(min, value));
-}
+static float clamp(float value, float min, float max) { return std::min(max, std::max(min, value)); }
 
 static float distanceBetweenLineAndPoint(Vec2 lineA, Vec2 lineB, Vec2 point)
 {
