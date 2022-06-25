@@ -1,5 +1,6 @@
-#include "geom.h"
 #include "sandbox.h"
+
+#include "geom.h"
 
 struct NullVisualizer : IVisualizer
 {
