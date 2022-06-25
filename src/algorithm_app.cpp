@@ -1,8 +1,8 @@
 #include "algorithm_app.h"
 
 #include <cassert>
-#include <string>
 #include <chrono>
+#include <string>
 
 #include "fiber.h"
 
@@ -154,13 +154,13 @@ struct AlgorithmApp : IApp
 
     const int N = 5000;
     const auto t0 = getSteadyClockMs();
-    for(int k=0;k < N;++k)
+    for(int k = 0; k < N; ++k)
     {
       m_algo->init();
       m_algo->execute();
     }
     const auto t1 = getSteadyClockMs();
-    fprintf(stderr, "Processed %d instances (%.2f ms/instance)\n", N, (t1-t0)/(N*1.0));
+    fprintf(stderr, "Processed %d instances (%.2f ms/instance)\n", N, (t1 - t0) / (N * 1.0));
   }
 
   std::unique_ptr<Fiber> m_fiber;
