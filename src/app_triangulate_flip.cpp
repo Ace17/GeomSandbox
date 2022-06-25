@@ -56,6 +56,6 @@ struct FlipTriangulationAlgorithm
   }
 };
 
-const int reg =
-      registerApp("FlipTriangulation", []() -> IApp* { return new AlgorithmApp<FlipTriangulationAlgorithm>; });
+IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<FlipTriangulationAlgorithm>>()); }
+const int reg = registerApp("FlipTriangulation", &create);
 } // namespace

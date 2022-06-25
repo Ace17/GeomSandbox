@@ -138,5 +138,6 @@ struct ThickLineAlgorithm
   }
 };
 
-const int registered = registerApp("ThickLine", []() -> IApp* { return new AlgorithmApp<ThickLineAlgorithm>; });
+IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<ThickLineAlgorithm>>()); }
+const int registered = registerApp("ThickLine", &create);
 }

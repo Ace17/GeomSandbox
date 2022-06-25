@@ -215,5 +215,6 @@ struct FastConvexSplit
   }
 };
 
-const int registered = registerApp("FastConvexSplit", []() -> IApp* { return new AlgorithmApp<FastConvexSplit>; });
+IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<FastConvexSplit>>()); }
+const int registered = registerApp("FastConvexSplit", &create);
 }

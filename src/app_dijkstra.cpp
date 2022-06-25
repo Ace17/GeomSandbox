@@ -9,6 +9,7 @@
 
 #include <climits>
 #include <cstdio> // snprintf
+#include <cstdlib>
 #include <set>
 #include <vector>
 
@@ -222,5 +223,6 @@ struct DijkstraAlgorithm
   }
 };
 
-const int reg = registerApp("Dijkstra", []() -> IApp* { return new AlgorithmApp<DijkstraAlgorithm>; });
+IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<DijkstraAlgorithm>>()); }
+const int reg = registerApp("Dijkstra", &create);
 }

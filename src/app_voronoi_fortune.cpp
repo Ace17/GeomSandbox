@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath> // powf
+#include <cstdio>
 #include <vector>
 
 #include "algorithm_app.h"
@@ -538,5 +539,6 @@ struct FortuneVoronoiAlgoritm
   static void drawOutput(const std::vector<Vec2>& input, const VoronoiDiagram& output) { drawDiagram(output, Yellow); }
 };
 
-const int reg = registerApp("FortuneVoronoi", []() -> IApp* { return new AlgorithmApp<FortuneVoronoiAlgoritm>; });
+IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<FortuneVoronoiAlgoritm>>()); }
+const int reg = registerApp("FortuneVoronoi", &create);
 }

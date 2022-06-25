@@ -203,5 +203,6 @@ struct DouglasPeuckerAlgorithm
   }
 };
 
-const int reg = registerApp("DouglasPeucker", []() -> IApp* { return new AlgorithmApp<DouglasPeuckerAlgorithm>; });
+IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<DouglasPeuckerAlgorithm>>()); }
+const int reg = registerApp("DouglasPeucker", &create);
 }

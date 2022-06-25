@@ -320,5 +320,6 @@ struct TriangulateAlgorithm
   }
 };
 
-const int registered = registerApp("triangulate2", []() -> IApp* { return new AlgorithmApp<TriangulateAlgorithm>; });
+IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<TriangulateAlgorithm>>()); }
+const int registered = registerApp("triangulate2", &create);
 }

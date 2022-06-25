@@ -78,5 +78,7 @@ struct ExampleAlgorithm
   }
 };
 
-const int reg = registerApp("Example", []() -> IApp* { return new AlgorithmApp<ExampleAlgorithm>; });
+IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<ExampleAlgorithm>>()); }
+
+const int reg = registerApp("Example", &create);
 }

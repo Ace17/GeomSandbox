@@ -267,5 +267,6 @@ struct AStarAlgorithm
   }
 };
 
-const int reg = registerApp("AStar", []() -> IApp* { return new AlgorithmApp<AStarAlgorithm>; });
+IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<AStarAlgorithm>>()); }
+const int reg = registerApp("AStar", &create);
 }
