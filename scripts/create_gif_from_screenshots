@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+
+import subprocess
+
+subprocess.run(["ffmpeg", "-f", "image2", "-framerate", "5", "-i", "screenshot-%03d.bmp", "-s", "384x384", "-y", "animation_raw.gif"], check=True, stdout=subprocess.PIPE)
+subprocess.run(["convert", "animation_raw.gif", "-fuzz", "30%", "-layers", "Optimize", "animation.gif"], check=True, stdout=subprocess.PIPE)
