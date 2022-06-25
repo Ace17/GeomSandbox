@@ -154,6 +154,23 @@ std::vector<Polygon2f> decomposePolygonToConvexParts(const Polygon2f& input)
     {
       auto plane = chooseCuttingPlane(poly);
 
+      {
+        for(auto& p : result)
+          drawPolygon(p, White);
+        for(auto& p : fifo)
+          drawPolygon(p, Gray);
+
+        const auto T = rotateLeft(plane.normal);
+        auto p = plane.normal * plane.dist;
+        auto shift = plane.normal * 0.1;
+        auto tmin = p + T * +1000;
+        auto tmax = p + T * -1000;
+        sandbox_line(tmin + shift, tmax + shift, Yellow);
+        sandbox_line(tmin - shift, tmax - shift, Yellow);
+        drawPolygon(poly, LightBlue);
+        sandbox_breakpoint();
+      }
+
       Polygon2f front, back;
       splitPolygonAgainstPlane(poly, plane, front, back);
 
@@ -164,22 +181,16 @@ std::vector<Polygon2f> decomposePolygonToConvexParts(const Polygon2f& input)
         fifo.push_back(back);
 
       {
-        const auto T = rotateLeft(plane.normal);
-        auto p = plane.normal * plane.dist;
-        auto shift = plane.normal * 0.1;
-        auto tmin = p + T * +1000;
-        auto tmax = p + T * -1000;
-        sandbox_line(tmin + shift, tmax + shift, LightBlue);
-        sandbox_line(tmin - shift, tmax - shift, LightBlue);
+        for(auto& p : result)
+          drawPolygon(p, White);
+        for(auto& p : fifo)
+          drawPolygon(p, Gray);
+
+        drawPolygon(front, Red);
+        drawPolygon(back, Green);
+        sandbox_breakpoint();
       }
     }
-
-    sandbox_breakpoint();
-
-    for(auto& p : fifo)
-      drawPolygon(p, choosePolygonColor(p));
-
-    sandbox_breakpoint();
   }
 
   return result;
