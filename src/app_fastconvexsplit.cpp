@@ -144,8 +144,6 @@ std::vector<Polygon2f> decomposePolygonToConvexParts(const Polygon2f& input)
     auto poly = fifo.front();
     fifo.pop_front();
 
-    drawPolygon(poly, Red);
-
     if(isConvex(poly))
     {
       result.push_back(poly);
