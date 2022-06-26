@@ -145,50 +145,49 @@ std::vector<Polygon2f> decomposePolygonToConvexParts(const Polygon2f& input)
     fifo.pop_front();
 
     if(poly.faces.empty())
-    {
       continue;
-    }
-    else if(isConvex(poly))
+
+    if(isConvex(poly))
     {
       result.push_back(poly);
+      continue;
     }
-    else
+
+    auto plane = chooseCuttingPlane(poly);
+
     {
-      auto plane = chooseCuttingPlane(poly);
+      for(auto& p : result)
+        drawPolygon(p, White);
+      for(auto& p : fifo)
+        drawPolygon(p, Gray);
 
-      {
-        for(auto& p : result)
-          drawPolygon(p, White);
-        for(auto& p : fifo)
-          drawPolygon(p, Gray);
+      drawPolygon(poly, LightBlue);
 
-        const auto T = rotateLeft(plane.normal);
-        auto p = plane.normal * plane.dist;
-        auto shift = plane.normal * 0.1;
-        auto tmin = p + T * +1000;
-        auto tmax = p + T * -1000;
-        sandbox_line(tmin + shift, tmax + shift, Yellow);
-        sandbox_line(tmin - shift, tmax - shift, Yellow);
-        drawPolygon(poly, LightBlue);
-        sandbox_breakpoint();
-      }
+      const auto T = rotateLeft(plane.normal);
+      auto p = plane.normal * plane.dist;
+      auto shift = plane.normal * 0.1;
+      auto tmin = p + T * +1000;
+      auto tmax = p + T * -1000;
+      sandbox_line(tmin + shift, tmax + shift, Yellow);
+      sandbox_line(tmin - shift, tmax - shift, Yellow);
+      sandbox_breakpoint();
+    }
 
-      Polygon2f front, back;
-      splitPolygonAgainstPlane(poly, plane, front, back);
+    Polygon2f front, back;
+    splitPolygonAgainstPlane(poly, plane, front, back);
 
-      fifo.push_back(front);
-      fifo.push_back(back);
+    fifo.push_back(front);
+    fifo.push_back(back);
 
-      {
-        for(auto& p : result)
-          drawPolygon(p, White);
-        for(auto& p : fifo)
-          drawPolygon(p, Gray);
+    {
+      for(auto& p : result)
+        drawPolygon(p, White);
+      for(auto& p : fifo)
+        drawPolygon(p, Gray);
 
-        drawPolygon(front, Red);
-        drawPolygon(back, Green);
-        sandbox_breakpoint();
-      }
+      drawPolygon(front, Red);
+      drawPolygon(back, Green);
+      sandbox_breakpoint();
     }
   }
 
