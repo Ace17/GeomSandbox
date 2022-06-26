@@ -10,15 +10,30 @@
 
 static constexpr auto epsilon = 0.01f;
 
+// dedup vertices
+int addVertex(Polygon2f& poly, Vec2 a)
+{
+  const auto N = (int)poly.vertices.size();
+
+  for(int i = 0; i < N; ++i)
+  {
+    auto delta = poly.vertices[i] - a;
+    if(dot_product(delta, delta) < epsilon * epsilon)
+      return i;
+  }
+
+  poly.vertices.push_back(a);
+  return N;
+}
+
 void addFace(Polygon2f& poly, Vec2 a, Vec2 b)
 {
   if(magnitude(a - b) < epsilon)
     return;
 
-  const auto i0 = (int)poly.vertices.size();
-  poly.vertices.push_back(a);
-  poly.vertices.push_back(b);
-  poly.faces.push_back({i0 + 0, i0 + 1});
+  const auto ia = addVertex(poly, a);
+  const auto ib = addVertex(poly, b);
+  poly.faces.push_back({ia, ib});
 }
 
 void closePolygon(Polygon2f& poly, Vec2 tangentCut)
