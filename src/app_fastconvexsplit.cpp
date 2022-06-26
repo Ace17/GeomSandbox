@@ -144,7 +144,11 @@ std::vector<Polygon2f> decomposePolygonToConvexParts(const Polygon2f& input)
     auto poly = fifo.front();
     fifo.pop_front();
 
-    if(isConvex(poly))
+    if(poly.faces.empty())
+    {
+      continue;
+    }
+    else if(isConvex(poly))
     {
       result.push_back(poly);
     }
@@ -172,11 +176,8 @@ std::vector<Polygon2f> decomposePolygonToConvexParts(const Polygon2f& input)
       Polygon2f front, back;
       splitPolygonAgainstPlane(poly, plane, front, back);
 
-      if(front.faces.size())
-        fifo.push_back(front);
-
-      if(back.faces.size())
-        fifo.push_back(back);
+      fifo.push_back(front);
+      fifo.push_back(back);
 
       {
         for(auto& p : result)
