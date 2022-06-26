@@ -15,6 +15,13 @@ int64_t getSteadyClockMs()
   return duration_cast<milliseconds>(elapsedTime).count();
 }
 
+int64_t getSteadyClockUs()
+{
+  using namespace std::chrono;
+  auto elapsedTime = steady_clock::now().time_since_epoch();
+  return duration_cast<microseconds>(elapsedTime).count();
+}
+
 struct Visualizer : IVisualizer
 {
   struct VisualLine
@@ -149,18 +156,31 @@ struct AlgorithmApp : IApp
 
   void runProfiling()
   {
-    fprintf(stderr, "Profiling ...\n");
-    fflush(stderr);
+    printf("Profiling ...\n");
+    fflush(stdout);
 
-    const int N = 5000;
+    const int N = 8000;
     const auto t0 = getSteadyClockMs();
+    int64_t processingTotalUs = 0;
     for(int k = 0; k < N; ++k)
     {
+      fprintf(stderr, "\r%d/%d", k + 1, N);
+      srand(k);
       m_algo->init();
+
+      const auto us0 = getSteadyClockUs();
       m_algo->execute();
+      const auto us1 = getSteadyClockUs();
+
+      processingTotalUs += (us1 - us0);
     }
+    fprintf(stderr, " - OK\n");
+    fflush(stderr);
+
     const auto t1 = getSteadyClockMs();
-    fprintf(stderr, "Processed %d instances (%.2f ms/instance)\n", N, (t1 - t0) / (N * 1.0));
+    printf("Processed %d instances in %.2fs (%.2f ms/instance)\n", N, (t1 - t0) / 1000.0, (t1 - t0) / (N * 1.0));
+    printf("Input generation: %.3f ms/instance\n", ((t1 - t0) - processingTotalUs / 1000.0) / N);
+    printf("      Processing: %.3f ms/instance\n", processingTotalUs / 1000.0 / N);
   }
 
   std::unique_ptr<Fiber> m_fiber;
