@@ -134,7 +134,7 @@ struct EarClippingAlgorithm
     return result;
   }
 
-  static void drawStatic(const Polygon2f& input, const std::vector<Segment>& output)
+  static void display(const Polygon2f& input, const std::vector<Segment>& output)
   {
     drawPolygon(input, White);
     for(auto& segment : output)

@@ -183,7 +183,7 @@ struct DijkstraAlgorithm
     return r;
   }
 
-  static void drawStatic(const Graph& input, const Output& output)
+  static void display(const Graph& input, const Output& output)
   {
     auto& nodes = input.nodes;
 

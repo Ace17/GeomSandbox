@@ -528,7 +528,7 @@ struct FortuneVoronoiAlgoritm
     return diagram;
   }
 
-  static void drawStatic(const std::vector<Vec2>& input, const VoronoiDiagram& output)
+  static void display(const std::vector<Vec2>& input, const VoronoiDiagram& output)
   {
     for(auto& p : input)
     {

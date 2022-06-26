@@ -232,7 +232,7 @@ struct AStarAlgorithm
     return {};
   }
 
-  static void drawStatic(const Graph& input, const Output& output)
+  static void display(const Graph& input, const Output& output)
   {
     auto& nodes = input.nodes;
     const Vec2& endpos = nodes[input.endNode].pos;

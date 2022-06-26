@@ -98,7 +98,7 @@ struct AlgorithmApp : IApp
     m_visuForFrame = {};
 
     gVisualizer = &m_visuForFrame;
-    m_algo->drawStatic();
+    m_algo->display();
     gVisualizer = gNullVisualizer;
 
     m_visuForFrame.m_frontScreen = std::move(m_visuForFrame.m_screen);

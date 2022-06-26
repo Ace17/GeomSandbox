@@ -57,7 +57,7 @@ struct ExampleAlgorithm
     return result;
   }
 
-  static void drawStatic(const std::vector<Vec2>& input, const std::vector<Segment>& output)
+  static void display(const std::vector<Vec2>& input, const std::vector<Segment>& output)
   {
     for(int idx = 0; idx < input.size(); ++idx)
     {

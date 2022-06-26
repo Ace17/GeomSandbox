@@ -223,7 +223,7 @@ struct FastConvexSplit
 
   static std::vector<Polygon2f> execute(Polygon2f input) { return decomposePolygonToConvexParts(input); }
 
-  static void drawStatic(const Polygon2f& input, const std::vector<Polygon2f>& output)
+  static void display(const Polygon2f& input, const std::vector<Polygon2f>& output)
   {
     drawPolygon(input, Gray);
 

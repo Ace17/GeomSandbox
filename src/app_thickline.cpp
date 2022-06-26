@@ -121,7 +121,7 @@ struct ThickLineAlgorithm
     return segments;
   }
 
-  static void drawStatic(const Input& input, const std::vector<Segment>& output)
+  static void display(const Input& input, const std::vector<Segment>& output)
   {
     for(int i = 1; i < (int)input.polyline.size(); ++i)
     {

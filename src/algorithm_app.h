@@ -26,7 +26,7 @@ struct FuncTraits<ReturnTypeP(ArgTypeP)>
 struct AbstractAlgorithm
 {
   virtual ~AbstractAlgorithm() = default;
-  virtual void drawStatic() = 0;
+  virtual void display() = 0;
   virtual void init() = 0;
   virtual void execute() = 0;
 };
@@ -41,7 +41,7 @@ struct ConcreteAlgorithm : public AbstractAlgorithm
   InputType m_input;
   OutputType m_output;
 
-  void drawStatic() override { AlgoDef::drawStatic(m_input, m_output); }
+  void display() override { AlgoDef::display(m_input, m_output); }
   void init() override { m_input = AlgoDef::generateInput(); }
   void execute() override { m_output = AlgoDef::execute(m_input); }
 };
