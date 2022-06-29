@@ -5,9 +5,30 @@ import sys
 import subprocess
 
 def main():
-    subprocess.run([sys.executable, os.path.join("scripts", "reformat")], check=True);
-    subprocess.run(["make", "-j8"], check=True);
-    print("OK")
+    run([sys.executable, os.path.join("scripts", "reformat")]);
+    run(['make', '-j8'])
+    print("Kloc: % 2.2f kloc" % (compute_kloc("src")/1000.0))
     return 0
+
+def compute_kloc(dir):
+    result = 0
+    for f in list_files(dir):
+        if f.endswith(".cpp") or f.endswith(".h"):
+            result += line_count(f)
+    return result
+
+def list_files(dir):
+    return [os.path.join(dp, f) for dp, dn, fn in os.walk(dir) for f in fn]
+
+def line_count(filename):
+    result = 0
+    with open(filename, "r") as file:
+        for line in file:
+            result += 1
+    return result
+
+def run(cmd):
+    print(f"run: {cmd}")
+    return subprocess.run(cmd, check=True)
 
 sys.exit(main())
