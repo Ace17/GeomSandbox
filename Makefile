@@ -15,7 +15,9 @@ HOST:=$(shell $(CXX) -dumpmachine | sed 's/.*-//')
 CXXFLAGS+=$(shell pkg-config $(PKGS) --cflags)
 LDFLAGS+=$(shell pkg-config $(PKGS) --libs)
 
-CXXFLAGS+=-g3
+#CXXFLAGS+=-g3
+#LDFLAGS+=-g
+
 CXXFLAGS+=-O3
 
 # Core
