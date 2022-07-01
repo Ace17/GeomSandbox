@@ -53,7 +53,7 @@ struct SdlDrawer : IDrawer
 {
   SDL_Renderer* renderer;
 
-  void line(Vec2 a, Vec2 b, Color color = White) override
+  void line(Vec2 a, Vec2 b, Color color) override
   {
     const auto A = transform(a);
     const auto B = transform(b);
@@ -63,7 +63,7 @@ struct SdlDrawer : IDrawer
     SDL_RenderDrawLine(renderer, A.x, A.y, B.x, B.y);
   }
 
-  void rect(Vec2 a, Vec2 b, Color color = White) override
+  void rect(Vec2 a, Vec2 b, Color color) override
   {
     const auto A = transform(a);
     const auto B = transform(a + b);
@@ -76,7 +76,7 @@ struct SdlDrawer : IDrawer
     SDL_RenderDrawLine(renderer, A.x, B.y, B.x, B.y);
   }
 
-  void circle(Vec2 center, float radius, Color color = White)
+  void circle(Vec2 center, float radius, Color color)
   {
     setColor(color);
     auto const N = 20;
@@ -93,7 +93,7 @@ struct SdlDrawer : IDrawer
     }
   }
 
-  void text(Vec2 pos, const char* text, Color color = White) override
+  void text(Vec2 pos, const char* text, Color color) override
   {
     auto POS = transform(pos);
     setColor(color);
