@@ -21,7 +21,7 @@ struct RandomPolygon
 
   static Polygon2f execute(int input) { return createRandomPolygon2f(); }
 
-  static void display(const int& input, const Polygon2f& output)
+  static void display(int input, const Polygon2f& output)
   {
     // no input to draw
     sandbox_line({-1, 0}, {1, 0});

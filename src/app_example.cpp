@@ -59,16 +59,16 @@ struct ExampleAlgorithm
     return result;
   }
 
-  static void display(const std::vector<Vec2>& input, const std::vector<Segment>& output)
+  static void display(span<const Vec2> input, span<const Segment> output)
   {
-    for(int idx = 0; idx < input.size(); ++idx)
+    for(int idx = 0; idx < input.len; ++idx)
     {
       char buffer[16];
       snprintf(buffer, sizeof buffer, "%d", idx);
       sandbox_rect(input[idx] - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
       sandbox_text(input[idx] + Vec2(0.3, 0), buffer, Red);
 
-      const int next_idx = (idx + 1) % input.size();
+      const int next_idx = (idx + 1) % input.len;
       sandbox_line(input[idx], input[next_idx]);
     }
 

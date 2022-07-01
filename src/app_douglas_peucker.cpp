@@ -186,14 +186,14 @@ struct DouglasPeuckerAlgorithm
     return result;
   }
 
-  static void display(const std::vector<Vec2>& input, const std::vector<Segment>& output)
+  static void display(span<const Vec2> input, span<const Segment> output)
   {
-    for(int idx = 0; idx < input.size(); ++idx)
+    for(int idx = 0; idx < input.len; ++idx)
     {
       drawPointWithIdentifier(input[idx], idx, White, Red);
 
       const int next_idx = (idx + 1);
-      if(next_idx < input.size())
+      if(next_idx < input.len)
         sandbox_line(input[idx], input[next_idx]);
     }
 

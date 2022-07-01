@@ -37,7 +37,7 @@ struct FlipTriangulationAlgorithm
     return result;
   }
 
-  static void display(const std::vector<Vec2>& input, const std::vector<Edge>& output)
+  static void display(span<const Vec2> input, span<const Edge> output)
   {
     int idx = 0;
 
