@@ -318,5 +318,5 @@ struct TriangulateAlgorithm
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<TriangulateAlgorithm>>()); }
-const int registered = registerApp("triangulate2", &create);
+const int registered = registerApp("Triangulation.Crap", &create);
 }

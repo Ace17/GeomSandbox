@@ -249,5 +249,5 @@ struct SubtractApp : IApp
   ConvexPolygon m_a, m_b;
 };
 
-const int registered = registerApp("subtract", []() -> IApp* { return new SubtractApp; });
+const int registered = registerApp("App.Subtract", []() -> IApp* { return new SubtractApp; });
 }

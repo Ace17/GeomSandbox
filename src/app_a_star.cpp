@@ -265,5 +265,5 @@ struct AStarAlgorithm
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<AStarAlgorithm>>()); }
-const int reg = registerApp("AStar", &create);
+const int reg = registerApp("PathFind.AStar", &create);
 }

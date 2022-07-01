@@ -319,5 +319,5 @@ struct SeparatingAxisTestApp : IApp
   int currentSelection = 0;
 };
 
-const int registered = registerApp("SAT", []() -> IApp* { return new SeparatingAxisTestApp; });
+const int registered = registerApp("App.SAT", []() -> IApp* { return new SeparatingAxisTestApp; });
 }

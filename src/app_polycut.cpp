@@ -182,5 +182,5 @@ struct PolycutApp : IApp
   Polygon2f m_front, m_back;
 };
 
-const int registered = registerApp("PolyCut", []() -> IApp* { return new PolycutApp; });
+const int registered = registerApp("App.PolyCut", []() -> IApp* { return new PolycutApp; });
 }

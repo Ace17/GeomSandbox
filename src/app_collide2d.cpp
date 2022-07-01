@@ -217,5 +217,5 @@ struct Collide2DApp : IApp
   Input input{};
 };
 
-const int registered = registerApp("collide2d", []() -> IApp* { return new Collide2DApp; });
+const int registered = registerApp("App.collide2d", []() -> IApp* { return new Collide2DApp; });
 }

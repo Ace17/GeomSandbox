@@ -56,5 +56,5 @@ struct BowyerWatsonTriangulationAlgorithm
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<BowyerWatsonTriangulationAlgorithm>>()); }
-const int reg = registerApp("BowyerWatsonTriangulation", &create);
+const int reg = registerApp("Triangulation.BowyerWatson", &create);
 }
