@@ -8,6 +8,7 @@
 // Example algorithm: split a convex polygon into triangles
 
 #include "core/algorithm_app.h"
+#include "core/sandbox.h"
 
 #include <cmath>
 #include <cstdio> // snprintf

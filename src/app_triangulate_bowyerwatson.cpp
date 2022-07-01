@@ -9,6 +9,7 @@
 // This is the testbed glue for the algorithm.
 
 #include "core/algorithm_app.h"
+#include "core/sandbox.h"
 
 #include <cstdio> // fprintf
 #include <vector>

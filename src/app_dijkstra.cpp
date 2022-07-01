@@ -8,6 +8,7 @@
 // Dijkstra's algorithm for shortest path
 
 #include "core/algorithm_app.h"
+#include "core/sandbox.h"
 
 #include <climits>
 #include <cstdio> // snprintf

@@ -10,6 +10,7 @@
 #include "core/algorithm_app.h"
 #include "core/drawer.h"
 #include "core/geom.h"
+#include "core/sandbox.h"
 
 #include <cassert>
 #include <cmath>

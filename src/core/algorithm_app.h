@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "app.h"
-#include "sandbox.h"
 // Example algorithm :
 // struct MyAlgorithm
 // {

@@ -8,6 +8,7 @@
 // A* (pronounced "A-Star") algorithm for shortest path
 
 #include "core/algorithm_app.h"
+#include "core/sandbox.h"
 
 #include <algorithm> // std::find_if
 #include <climits>

@@ -8,6 +8,7 @@
 // Random polygon generation
 
 #include "core/algorithm_app.h"
+#include "core/sandbox.h"
 
 #include "random_polygon.h"
 

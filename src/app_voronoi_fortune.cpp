@@ -8,6 +8,7 @@
 // Voronoi diagram: Fortune algorithm
 
 #include "core/algorithm_app.h"
+#include "core/sandbox.h"
 
 #include <algorithm>
 #include <cmath> // powf

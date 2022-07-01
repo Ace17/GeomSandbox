@@ -8,6 +8,7 @@
 // Douglas-Peucker algorithm : polyline simplification.
 
 #include "core/algorithm_app.h"
+#include "core/sandbox.h"
 
 #include <cmath>
 #include <cstdio> // snprintf

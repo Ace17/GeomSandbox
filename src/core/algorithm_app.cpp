@@ -5,6 +5,7 @@
 #include <string>
 
 #include "fiber.h"
+#include "sandbox.h"
 
 namespace
 {
