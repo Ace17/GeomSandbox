@@ -9,7 +9,20 @@ This is a sandbox for prototyping computational geometry algorithms.
 It uses fibers to allow visual single-stepping through algorithms,
 while keeping intrusivity minimal.
 
-It uses SDL2.
+Design Guidelines
+-----------------
+
+The goal here is to be able to easily copy prototyped algorithm code
+to other projects, where it won't be as easy to experiment with.
+
+So we don't want the algorithm implementations to depend too much on this project.
+
+This is why the core sandbox only provides the absolute minimum data structures:
+Vec2, which is used for communication between the algorithm and the sandbox,
+and span, whose implementation leaves not much room for choice anyway.
+
+More advanced geometric data structures are expected to be provided by the
+specific algorithm implementations.
 
 Gallery
 -------
