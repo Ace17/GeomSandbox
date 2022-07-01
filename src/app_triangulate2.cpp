@@ -7,6 +7,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Triangulation
 
+#include "core/algorithm_app.h"
+#include "core/app.h"
+#include "core/sandbox.h"
+
 #include <algorithm> // sort
 #include <cassert>
 #include <cmath>
@@ -14,11 +18,7 @@
 #include <memory>
 #include <vector>
 
-#include "algorithm_app.h"
-#include "app.h"
-#include "fiber.h"
 #include "random.h"
-#include "sandbox.h"
 
 namespace
 {

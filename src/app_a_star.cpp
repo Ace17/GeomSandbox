@@ -7,13 +7,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 // A* (pronounced "A-Star") algorithm for shortest path
 
+#include "core/algorithm_app.h"
+
 #include <algorithm> // std::find_if
 #include <climits>
 #include <cstdio> // snprintf
 #include <set>
 #include <vector>
 
-#include "algorithm_app.h"
 #include "random.h"
 
 namespace

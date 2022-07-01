@@ -7,12 +7,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Collision detection and response
 
+#include "core/app.h"
+#include "core/drawer.h"
+
 #include <cmath>
 #include <vector>
 
-#include "app.h"
 #include "collide2d.h"
-#include "drawer.h"
 
 namespace
 {

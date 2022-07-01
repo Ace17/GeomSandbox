@@ -7,13 +7,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Dijkstra's algorithm for shortest path
 
+#include "core/algorithm_app.h"
+
 #include <climits>
 #include <cstdio> // snprintf
 #include <cstdlib>
 #include <set>
 #include <vector>
 
-#include "algorithm_app.h"
 #include "random.h"
 
 namespace

@@ -7,7 +7,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Random polygon generation
 
-#include "algorithm_app.h"
+#include "core/algorithm_app.h"
+
 #include "random_polygon.h"
 
 namespace

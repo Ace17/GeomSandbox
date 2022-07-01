@@ -8,10 +8,11 @@
 // Triangulation, Bowyer-Watson algorithm
 // This is the algorithm implementation.
 
+#include "core/geom.h"
+#include "core/sandbox.h"
+
 #include <vector>
 
-#include "geom.h"
-#include "sandbox.h"
 #include "triangulate.h"
 
 namespace

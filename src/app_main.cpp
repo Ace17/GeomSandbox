@@ -7,15 +7,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Main menu
 
+#include "core/app.h"
+#include "core/drawer.h"
+#include "core/geom.h"
+
 #include <cmath>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "app.h"
-#include "drawer.h"
-#include "geom.h"
 
 std::map<std::string, CreationFunc*>& Registry();
 

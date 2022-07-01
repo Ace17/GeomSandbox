@@ -7,12 +7,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Voronoi diagram: Fortune algorithm
 
+#include "core/algorithm_app.h"
+
 #include <algorithm>
 #include <cmath> // powf
 #include <cstdio>
 #include <vector>
 
-#include "algorithm_app.h"
 #include "bounding_box.h"
 #include "random.h"
 

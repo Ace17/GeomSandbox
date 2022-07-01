@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vector>
+#include "core/geom.h"
 
-#include "geom.h"
+#include <vector>
 
 struct Face
 {

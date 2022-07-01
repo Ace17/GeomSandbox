@@ -7,11 +7,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Douglas-Peucker algorithm : polyline simplification.
 
+#include "core/algorithm_app.h"
+
 #include <cmath>
 #include <cstdio> // snprintf
 #include <vector>
 
-#include "algorithm_app.h"
 #include "random.h"
 
 namespace

@@ -7,16 +7,17 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Split a concave polygon along a line
 
+#include "core/app.h"
+#include "core/drawer.h"
+#include "core/geom.h"
+#include "core/sandbox.h"
+
 #include <cassert>
 #include <cmath>
 #include <vector>
 
-#include "app.h"
-#include "drawer.h"
-#include "geom.h"
 #include "random.h"
 #include "random_polygon.h"
-#include "sandbox.h"
 #include "split_polygon.h"
 
 namespace

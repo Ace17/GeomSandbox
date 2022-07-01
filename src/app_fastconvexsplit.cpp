@@ -7,15 +7,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Split a polygon into convex pieces
 
+#include "core/algorithm_app.h"
+#include "core/drawer.h"
+#include "core/geom.h"
+
 #include <cassert>
 #include <cmath>
 #include <deque>
 #include <vector>
 
-#include "algorithm_app.h"
 #include "bounding_box.h"
-#include "drawer.h"
-#include "geom.h"
 #include "random.h"
 #include "random_polygon.h"
 #include "split_polygon.h"

@@ -7,14 +7,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Tesselate a polyline
 
+#include "core/algorithm_app.h"
+#include "core/drawer.h"
+#include "core/geom.h"
+
 #include <cassert>
 #include <cmath>
 #include <vector>
 
-#include "algorithm_app.h"
 #include "bounding_box.h"
-#include "drawer.h"
-#include "geom.h"
 #include "random.h"
 
 namespace

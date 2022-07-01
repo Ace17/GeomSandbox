@@ -15,7 +15,10 @@ def reformat_one_file(filename):
     with open(filename, "wb") as f2:
       f2.write(result.stdout)
 
-for x in os.listdir('src'):
+def list_files(dir):
+    return sorted([os.path.join(dp, f) for dp, dn, fn in os.walk(dir) for f in fn])
+
+for x in list_files('src'):
     if x.endswith('.cpp') or x.endswith('.h'):
-        reformat_one_file(os.path.join('src', x))
+        reformat_one_file(x)
 

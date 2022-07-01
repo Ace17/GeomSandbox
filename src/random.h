@@ -1,6 +1,6 @@
 #pragma once
 
-#include "geom.h"
+#include "core/geom.h"
 
 float randomFloat(float min, float max);
 int randomInt(int min, int max);

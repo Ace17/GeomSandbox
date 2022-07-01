@@ -8,10 +8,11 @@
 // Triangulation: Bowyer-Watson algorithm
 // This is the testbed glue for the algorithm.
 
+#include "core/algorithm_app.h"
+
 #include <cstdio> // fprintf
 #include <vector>
 
-#include "algorithm_app.h"
 #include "random.h"
 #include "triangulate.h"
 

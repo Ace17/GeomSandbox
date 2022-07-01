@@ -7,13 +7,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Continuous collision detection using the separating axis test.
 
+#include "core/app.h"
+#include "core/drawer.h"
+#include "core/geom.h"
+
 #include <cassert>
 #include <cmath>
 #include <vector>
 
-#include "app.h"
-#include "drawer.h"
-#include "geom.h"
 #include "random.h"
 
 namespace

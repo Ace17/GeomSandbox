@@ -1,12 +1,12 @@
 // Split a concave polygon along a line
 #include "split_polygon.h"
 
+#include "core/sandbox.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <map>
-
-#include "sandbox.h"
 
 static constexpr auto epsilon = 0.01f;
 
