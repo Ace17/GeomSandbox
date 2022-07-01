@@ -10,7 +10,7 @@
 #include "core/algorithm_app.h"
 #include "core/sandbox.h"
 
-#include <cstdio> // fprintf
+#include <cstdio> // sprintf
 #include <vector>
 
 #include "random.h"
@@ -33,7 +33,7 @@ struct FlipTriangulationAlgorithm
   static std::vector<Edge> execute(std::vector<Vec2> input)
   {
     auto result = triangulate_Flip({input.size(), input.data()});
-    fprintf(stderr, "Triangulated, %d edges\n", (int)result.size());
+    sandbox_printf("Triangulated, %d edges\n", (int)result.size());
     return result;
   }
 

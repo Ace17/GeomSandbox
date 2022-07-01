@@ -11,7 +11,7 @@
 #include "core/algorithm_app.h"
 #include "core/sandbox.h"
 
-#include <cstdio> // fprintf
+#include <cstdio> // sprintf
 #include <vector>
 
 #include "random.h"
@@ -34,7 +34,7 @@ struct BowyerWatsonTriangulationAlgorithm
   static std::vector<Edge> execute(std::vector<Vec2> input)
   {
     auto result = triangulate_BowyerWatson({input.size(), input.data()});
-    fprintf(stderr, "Triangulated, %d edges\n", (int)result.size());
+    sandbox_printf("Triangulated, %d edges\n", (int)result.size());
     return result;
   }
 

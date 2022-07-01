@@ -12,7 +12,6 @@
 
 #include <algorithm>
 #include <cmath> // powf
-#include <cstdio>
 #include <vector>
 
 #include "bounding_box.h"
@@ -299,7 +298,7 @@ struct CircleEvent final : public Event
   Vec2 pos() const override { return intersection; }
   void happen(EventQueue& eventQueue, Arc*& rootArc, VoronoiDiagram& diagram) override
   {
-    printf("circleEvent at %f;%f\n", intersection.x, intersection.y);
+    sandbox_printf("circleEvent at %f;%f\n", intersection.x, intersection.y);
 
     sandbox_rect(intersection - Vec2(0.2, 0.2), Vec2(0.4, 0.4), LightBlue);
     arc->right->left = arc->left;
@@ -414,7 +413,7 @@ struct siteEvent final : public Event
   Vec2 pos() const override { return Pos; }
   void happen(EventQueue& eventQueue, Arc*& rootArc, VoronoiDiagram& diagram) override
   {
-    printf("siteEvent at %f;%f\n", Pos.x, Pos.y);
+    sandbox_printf("siteEvent at %f;%f\n", Pos.x, Pos.y);
     Arc* newArc = new Arc({Pos});
     if(!rootArc)
       rootArc = newArc;

@@ -135,21 +135,21 @@ std::vector<Edge> triangulate(span<const Vec2> points)
   {
     int k = 0;
     int edge = hullHead;
-    fprintf(stderr, "[");
+    sandbox_printf("[");
 
     do
     {
-      fprintf(stderr, "E%d (P%d) ", edge, he[edge].point);
+      sandbox_printf("E%d (P%d) ", edge, he[edge].point);
       edge = nextEdgeOnHull(he, edge);
 
       if(++k > 10)
       {
-        fprintf(stderr, "... ");
+        sandbox_printf("... ");
         break;
       }
     } while(edge != hullHead);
 
-    fprintf(stderr, "]\n");
+    sandbox_printf("]\n");
   };
 
   auto drawHull = [&]()
@@ -177,7 +177,7 @@ std::vector<Edge> triangulate(span<const Vec2> points)
   for(int idx = 3; idx < (int)points.len; ++idx)
   {
     auto p = points[idx];
-    fprintf(stderr, "--- insertion of point P%d ---\n", idx);
+    sandbox_printf("--- insertion of point P%d ---\n", idx);
 
     int hullCurr = hullHead;
     const int loopPoint = he[hullHead].point;
@@ -191,13 +191,13 @@ std::vector<Edge> triangulate(span<const Vec2> points)
       const auto a = points[currHe.point];
       const auto b = points[nextHe.point];
 
-      fprintf(stderr, "   Considering edge E%d [P%d P%d]\n", hullCurr, currHe.point, nextHe.point);
+      sandbox_printf("   Considering edge E%d [P%d P%d]\n", hullCurr, currHe.point, nextHe.point);
 
       assert(currHe.twin == -1); // make sure we stay on the hull
 
       if(det2d(p - a, b - a) > 0)
       {
-        fprintf(stderr, "   Linking point\n");
+        sandbox_printf("   Linking point\n");
         const int e0 = (int)he.size() + 0;
         const int e1 = (int)he.size() + 1;
         const int e2 = (int)he.size() + 2;

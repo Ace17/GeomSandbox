@@ -67,6 +67,13 @@ struct Visualizer : IVisualizer
   void circle(Vec2 center, float radius, Color color) { m_screen.circles.push_back({center, radius, color}); }
   void text(Vec2 pos, const char* text, Color color) { m_screen.texts.push_back({pos, text, color}); }
   void line(Vec2 a, Vec2 b, Color c) override { m_screen.lines.push_back({a, b, c}); }
+  void printf(const char* fmt, va_list args)
+  {
+    char buffer[4096]{};
+    const int n = vsnprintf(buffer, sizeof(buffer) - 2, fmt, args);
+    fwrite(buffer, 1, n, stdout);
+    fflush(stdout);
+  }
 
   void step() override
   {
