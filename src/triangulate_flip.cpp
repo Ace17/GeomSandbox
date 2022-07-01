@@ -7,14 +7,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Triangulation, Flip algorithm
 
+#include "triangulate_flip.h"
+
 #include "core/geom.h"
 #include "core/sandbox.h"
 
 #include <algorithm>
 #include <map>
 #include <vector>
-
-#include "triangulate.h"
 
 namespace
 {

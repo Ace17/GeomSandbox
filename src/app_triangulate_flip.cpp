@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "random.h"
-#include "triangulate.h"
+#include "triangulate_flip.h"
 
 namespace
 {

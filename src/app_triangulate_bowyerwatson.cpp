@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "random.h"
-#include "triangulate.h"
+#include "triangulate_bowyerwatson.h"
 
 namespace
 {
