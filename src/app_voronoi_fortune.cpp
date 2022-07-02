@@ -501,16 +501,20 @@ struct FortuneVoronoiAlgoritm
 
     while(!eventQueue.empty())
     {
+      // Pop next event
       auto orderByY = [](Event* a, Event* b) { return a->pos().y < b->pos().y; };
-
       std::sort(eventQueue.begin(), eventQueue.end(), orderByY);
       Event* event = eventQueue.back();
       eventQueue.pop_back();
+
+      // Draw context
       const Vec2 eventPos = event->pos();
       drawBeachLine(rootArc, eventPos.y, Yellow);
       drawHorizontalLine(eventPos, Red);
       drawEvents(eventQueue);
       drawDiagram(diagram, Yellow);
+
+      // Process event
       event->happen(eventQueue, rootArc, diagram);
 
       sandbox_breakpoint();
