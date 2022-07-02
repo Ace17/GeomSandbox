@@ -12,8 +12,8 @@ PKGS+=sdl2
 
 HOST:=$(shell $(CXX) -dumpmachine | sed 's/.*-//')
 
-CXXFLAGS+=$(shell pkg-config $(PKGS) --cflags)
 LDFLAGS+=$(shell pkg-config $(PKGS) --libs)
+$(BIN)/src/core/main.cpp.o: CXXFLAGS+=$(shell pkg-config $(PKGS) --cflags)
 
 #CXXFLAGS+=-g3
 #LDFLAGS+=-g
@@ -71,7 +71,7 @@ $(BIN)/%.exe:
 
 $(BIN)/%.cpp.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) -MMD -MT "$@" -MF "$@.dep" -c $(CXXFLAGS) -o "$@" $<
+	$(CXX) -c $(CXXFLAGS) -MMD -MT "$@" -MF "$@.dep" -o "$@" $<
 
 include $(shell test -d $(BIN) && find $(BIN) -name "*.dep")
 
