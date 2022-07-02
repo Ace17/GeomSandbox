@@ -12,7 +12,6 @@
 
 #include <climits>
 #include <cstdio> // snprintf
-#include <cstdlib>
 #include <set>
 #include <vector>
 
@@ -86,15 +85,15 @@ Graph randomGraph()
     {
       const auto id = getId(x, y);
 
-      if(x > 0 && rand() % 10 < 8)
+      if(x > 0 && randomInt(0, 10) < 8)
         connect(id, getId(x - 1, y));
 
-      if(y > 0 && rand() % 10 < 8)
+      if(y > 0 && randomInt(0, 10) < 8)
         connect(id, getId(x, y - 1));
     }
   }
 
-  r.startNode = rand() % r.nodes.size();
+  r.startNode = randomInt(0, r.nodes.size());
 
   return r;
 }
