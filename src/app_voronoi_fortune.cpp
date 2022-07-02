@@ -360,8 +360,8 @@ void createCircleEventIfAny(EventQueue& eventQueue, Arc* arc, const Edge& leftEd
   const float intersectionX = (edge2B - edge1B) / (edge1A - edge2A);
   const float intersectionY = edge1A * intersectionX + edge1B;
 
-  const bool isInLeftEdgeDirection = (leftEdge.direction().x < 0 == intersectionX < leftEdge.origin(lineY).x);
-  const bool isInRightEdgeDirection = (rightEdge.direction().x < 0 == intersectionX < rightEdge.origin(lineY).x);
+  const bool isInLeftEdgeDirection = (leftEdge.direction().x < 0) == (intersectionX < leftEdge.origin(lineY).x);
+  const bool isInRightEdgeDirection = (rightEdge.direction().x < 0) == (intersectionX < rightEdge.origin(lineY).x);
 
   if(isInLeftEdgeDirection && isInRightEdgeDirection)
   {
