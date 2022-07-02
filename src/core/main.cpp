@@ -19,11 +19,16 @@
 
 #undef main
 
-float g_Scale = 20.0f;
-float g_TargetScale = 20.0f;
+struct Camera
+{
+  Vec2 pos{};
+  float scale = 20.0f;
+};
+
+Camera g_Camera;
+Camera g_TargetCamera;
+
 Vec2 g_ScreenSize{};
-Vec2 g_Pos{};
-Vec2 g_TargetPos{};
 bool gMustScreenShot = false;
 
 Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
@@ -32,8 +37,8 @@ Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
 SDL_Point transform(Vec2 v)
 {
   SDL_Point r;
-  r.x = g_ScreenSize.x / 2 + (v.x - g_Pos.x) * g_Scale;
-  r.y = g_ScreenSize.y / 2 - (v.y - g_Pos.y) * g_Scale;
+  r.x = g_ScreenSize.x / 2 + (v.x - g_Camera.pos.x) * g_Camera.scale;
+  r.y = g_ScreenSize.y / 2 - (v.y - g_Camera.pos.y) * g_Camera.scale;
   return r;
 };
 
@@ -41,8 +46,8 @@ SDL_Point transform(Vec2 v)
 Vec2 reverseTransform(SDL_Point p)
 {
   Vec2 v;
-  v.x = +(p.x - g_ScreenSize.x / 2) / g_Scale + g_Pos.x;
-  v.y = -(p.y - g_ScreenSize.y / 2) / g_Scale + g_Pos.y;
+  v.x = +(p.x - g_ScreenSize.x / 2) / g_Camera.scale + g_Camera.pos.x;
+  v.y = -(p.y - g_ScreenSize.y / 2) / g_Camera.scale + g_Camera.pos.y;
   return v;
 }
 
@@ -216,22 +221,22 @@ bool readInput(IApp* app, bool& reset)
       switch(event.key.keysym.sym)
       {
       case SDLK_KP_PLUS:
-        g_TargetScale = g_Scale * scaleSpeed;
+        g_TargetCamera.scale = g_Camera.scale * scaleSpeed;
         break;
       case SDLK_KP_MINUS:
-        g_TargetScale = g_Scale / scaleSpeed;
+        g_TargetCamera.scale = g_Camera.scale / scaleSpeed;
         break;
       case SDLK_KP_4:
-        g_TargetPos = g_Pos + Vec2(-scrollSpeed, 0);
+        g_TargetCamera.pos = g_Camera.pos + Vec2(-scrollSpeed, 0);
         break;
       case SDLK_KP_6:
-        g_TargetPos = g_Pos + Vec2(+scrollSpeed, 0);
+        g_TargetCamera.pos = g_Camera.pos + Vec2(+scrollSpeed, 0);
         break;
       case SDLK_KP_2:
-        g_TargetPos = g_Pos + Vec2(0, -scrollSpeed);
+        g_TargetCamera.pos = g_Camera.pos + Vec2(0, -scrollSpeed);
         break;
       case SDLK_KP_8:
-        g_TargetPos = g_Pos + Vec2(0, +scrollSpeed);
+        g_TargetCamera.pos = g_Camera.pos + Vec2(0, +scrollSpeed);
         break;
       case SDLK_F2:
         reset = true;
@@ -259,10 +264,10 @@ bool readInput(IApp* app, bool& reset)
       if(event.wheel.y)
       {
         const auto scaleFactor = event.wheel.y > 0 ? (scaleSpeed * 1.1) : 1.0 / (scaleSpeed * 1.1);
-        const auto newScale = g_Scale * scaleFactor;
-        auto relativePos = mousePos - g_Pos;
-        g_TargetPos = mousePos - relativePos * (g_Scale / newScale);
-        g_TargetScale = newScale;
+        const auto newScale = g_Camera.scale * scaleFactor;
+        auto relativePos = mousePos - g_Camera.pos;
+        g_TargetCamera.pos = mousePos - relativePos * (g_Camera.scale / newScale);
+        g_TargetCamera.scale = newScale;
       }
     }
   }
@@ -335,8 +340,8 @@ int main(int argc, char* argv[])
       }
 
       const float alpha = 0.8;
-      g_Pos = (g_TargetPos * (1 - alpha) + g_Pos * alpha);
-      g_Scale = (g_TargetScale * (1 - alpha) + g_Scale * alpha);
+      g_Camera.pos = (g_TargetCamera.pos * (1 - alpha) + g_Camera.pos * alpha);
+      g_Camera.scale = (g_TargetCamera.scale * (1 - alpha) + g_Camera.scale * alpha);
 
       app->tick();
       drawScreen(renderer, app.get());
