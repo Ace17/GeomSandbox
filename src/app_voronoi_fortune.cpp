@@ -481,7 +481,7 @@ struct FortuneVoronoiAlgoritm
     const Vec2 min = {-20, -15};
     const Vec2 max = {20, 15};
 
-    std::vector<Vec2> r(15);
+    std::vector<Vec2> r(randomInt(15, 100));
 
     for(auto& p : r)
       p = randomPos(min, max);
