@@ -76,7 +76,6 @@ struct Arc
     const float c = leftC - rightC;
     const float det = b * b - 4.f * a * c;
     const float x1 = (-b + sqrt(det)) / (2 * a);
-    const float x2 = (-b - sqrt(det)) / (2 * a);
 
     return x1;
   }
