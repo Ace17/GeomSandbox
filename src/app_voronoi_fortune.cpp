@@ -209,10 +209,10 @@ void drawLine(const Arc* rightArc, const Arc* leftArc, Color color)
 
 void drawEdge(const Edge& edge, Color color) { drawLine(edge.rightArc, edge.leftArc, color); }
 
-void drawHorizontalLine(Vec2 point, Color color)
+void drawHorizontalLine(float y, Color color)
 {
-  const Vec2 topPoint = {screenMinX, point.y};
-  const Vec2 bottomPoint = {screenMaxX, point.y};
+  const Vec2 topPoint = {screenMinX, y};
+  const Vec2 bottomPoint = {screenMaxX, y};
   sandbox_line(topPoint, bottomPoint, color);
 }
 
@@ -317,7 +317,7 @@ struct CircleEvent final : public Event
 
     sandbox_breakpoint();
     drawBeachLine(rootArc, intersection.y, Yellow);
-    drawHorizontalLine(intersection, Red);
+    drawHorizontalLine(intersection.y, Red);
     drawEvents(eventQueue);
     drawDiagram(diagram, Yellow);
 
@@ -448,7 +448,7 @@ struct siteEvent final : public Event
 
       sandbox_breakpoint();
       drawBeachLine(rootArc, Pos.y, Yellow);
-      drawHorizontalLine(Pos, Red);
+      drawHorizontalLine(Pos.y, Red);
       drawEvents(eventQueue);
       drawDiagram(diagram, Yellow);
       createCircleEvents(eventQueue, newLeftArc, newArc, newRightArc);
@@ -510,7 +510,7 @@ struct FortuneVoronoiAlgoritm
       // Draw context
       const Vec2 eventPos = event->pos();
       drawBeachLine(rootArc, eventPos.y, Yellow);
-      drawHorizontalLine(eventPos, Red);
+      drawHorizontalLine(eventPos.y, Red);
       drawEvents(eventQueue);
       drawDiagram(diagram, Yellow);
 
