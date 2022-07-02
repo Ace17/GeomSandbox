@@ -206,7 +206,7 @@ struct AStarAlgorithm
           sandbox_circle(node.renderPos, 1.2, Red);
           sandbox_circle(neighborRenderPos, 1.2, Green);
           sandbox_line(node.renderPos, neighborRenderPos, Green);
-          char buffer[32];
+          char buffer[256];
           sprintf(buffer, "%d+%d=%d", neighborDistanceFromEnd, neighborCost, neighborDistanceFromEnd + neighborCost);
           sandbox_text(neighborRenderPos, buffer, Green);
           sandbox_breakpoint();
