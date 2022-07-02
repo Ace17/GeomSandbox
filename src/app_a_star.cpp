@@ -172,7 +172,6 @@ struct AStarAlgorithm
   static Output execute(Graph input)
   {
     auto& nodes = input.nodes;
-    const Vec2& endPos = nodes[input.endNode].pos;
     const int nodesCount = (int)nodes.size();
 
     VisitedGraph visited;
@@ -237,9 +236,8 @@ struct AStarAlgorithm
   static void display(const Graph& input, const Output& output)
   {
     auto& nodes = input.nodes;
-    const Vec2& endpos = nodes[input.endNode].pos;
 
-    for(int idx = 0; idx < nodes.size(); ++idx)
+    for(int idx = 0; idx < (int)nodes.size(); ++idx)
     {
       auto& node = nodes[idx];
       sandbox_circle(node.renderPos, 0.5, Gray);

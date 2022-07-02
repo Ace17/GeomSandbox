@@ -19,9 +19,9 @@ struct RandomPolygon
 {
   static int generateInput() { return 0; }
 
-  static Polygon2f execute(int input) { return createRandomPolygon2f(); }
+  static Polygon2f execute(int /*input*/) { return createRandomPolygon2f(); }
 
-  static void display(int input, const Polygon2f& output)
+  static void display(int /*input*/, const Polygon2f& output)
   {
     // no input to draw
     sandbox_line({-1, 0}, {1, 0});

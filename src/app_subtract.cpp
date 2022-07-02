@@ -243,6 +243,8 @@ struct SubtractApp : IApp
     case Key::Down:
       m_a.pos.y -= 1;
       break;
+    default:
+      break;
     }
   }
 

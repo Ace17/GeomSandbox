@@ -45,7 +45,6 @@ int opInsertFace(Polygon2f& poly, int faceIdx, float ratio)
   const auto face = poly.faces[faceIdx];
   const auto A = poly.vertices[face.a];
   const auto B = poly.vertices[face.b];
-  const auto N = poly.normal(faceIdx);
 
   // split face
   const auto iY = opSplitFace(poly, faceIdx);
@@ -307,7 +306,6 @@ void recenterPolygon(Polygon2f& polygon)
 {
   BoundingBox bbox;
 
-  Vec2 polygonBoxMax = polygon.vertices.front();
   for(const Vec2 vertex : polygon.vertices)
     bbox.add(vertex);
 

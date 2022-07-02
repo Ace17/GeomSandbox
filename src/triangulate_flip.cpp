@@ -46,7 +46,7 @@ std::vector<int> sortPointsFromLeftToRight(span<const Vec2> points)
 {
   std::vector<int> order(points.len);
 
-  for(int i = 0; i < points.len; ++i)
+  for(int i = 0; i < (int)points.len; ++i)
     order[i] = i;
 
   auto byCoordinates = [&](int ia, int ib)
@@ -156,6 +156,7 @@ struct HalfEdge
 
 std::vector<HalfEdge> convertToHalfEdge(span<const Vec2> points, span<const Triangle> triangles)
 {
+  (void)points;
   std::vector<HalfEdge> he;
   std::map<std::pair<int, int>, int> pointToEdge;
 
@@ -202,16 +203,16 @@ std::vector<Edge> flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
 
   while(!stack.empty())
   {
-    // |              .
-    // |             /|\
-    // |         L1 / | \ R2
-    // |           /  |  \
-    // |          /   |   \
-    // |          \  E|   /
-    // |           \  |  /
-    // |         L2 \ | / R1
-    // |             \|/
-    // |              .
+    // |              .             |
+    // |             /|\            |
+    // |         L1 / | \ R2        |
+    // |           /  |  \          |
+    // |          /   |   \         |
+    // |          \  E|   /         |
+    // |           \  |  /          |
+    // |         L2 \ | / R1        |
+    // |             \|/            |
+    // |              .             |
     const auto E = stack.back();
     stack.pop_back();
 
@@ -220,6 +221,11 @@ std::vector<Edge> flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
 
     const auto R1 = he[he[E].twin].next;
     const auto R2 = he[L1].next;
+
+    (void)L1;
+    (void)L2;
+    (void)R1;
+    (void)R2;
 
     for(auto edge : he)
       sandbox_line(points[edge.point], points[he[edge.next].point]);

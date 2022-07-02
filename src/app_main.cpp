@@ -85,6 +85,8 @@ struct MainMenuApp : IApp
       sub.reset(func());
       break;
     }
+    default:
+      break;
     }
   }
 

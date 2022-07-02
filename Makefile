@@ -19,6 +19,7 @@ LDFLAGS+=$(shell pkg-config $(PKGS) --libs)
 #LDFLAGS+=-g
 
 CXXFLAGS+=-O3
+CXXFLAGS+=-Wall -Wextra -Werror
 
 # Core
 SRCS:=\

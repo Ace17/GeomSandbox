@@ -135,8 +135,8 @@ struct VoronoiDiagram
     Vec2 siteA;
     Vec2 siteB;
 
-    optional<Vec2> vertexA;
-    optional<Vec2> vertexB;
+    optional<Vec2> vertexA{};
+    optional<Vec2> vertexB{};
 
     void setVertex(const Vec2& vertex)
     {

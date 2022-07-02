@@ -142,6 +142,8 @@ struct PolycutApp : IApp
     case Key::Space:
       m_selection = (m_selection + 1) % 2;
       break;
+    default:
+      break;
     }
 
     compute();

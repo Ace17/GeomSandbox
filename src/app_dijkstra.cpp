@@ -189,7 +189,7 @@ struct DijkstraAlgorithm
   {
     auto& nodes = input.nodes;
 
-    for(int idx = 0; idx < nodes.size(); ++idx)
+    for(int idx = 0; idx < (int)nodes.size(); ++idx)
     {
       auto& node = nodes[idx];
       sandbox_circle(node.pos, 0.5, Gray);

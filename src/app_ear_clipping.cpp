@@ -84,7 +84,7 @@ bool isValidEar(const Polygon2f& polygon, Ear& ear)
   if(!convexAngle)
     return false;
 
-  for(int idx = 0; idx < polygon.vertices.size(); idx++)
+  for(int idx = 0; idx < (int)polygon.vertices.size(); idx++)
   {
     if(idx != ear.tip && idx != ear.a && idx != ear.b && isInsideTriangle(a, tip, b, polygon.vertices[idx]))
       return false;
@@ -102,7 +102,7 @@ void removeFacesForCorner(Polygon2f& polygon, int idx)
 
 Segment clipEar(Polygon2f& polygon)
 {
-  for(int idx = 0; idx < polygon.vertices.size(); idx++)
+  for(int idx = 0; idx < (int)polygon.vertices.size(); idx++)
   {
     Ear ear = polygonEarFromIndex(polygon, idx);
     if(isValidEar(polygon, ear))

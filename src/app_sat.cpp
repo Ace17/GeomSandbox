@@ -272,6 +272,8 @@ struct SeparatingAxisTestApp : IApp
     case Key::Space:
       currentSelection = 1 - currentSelection;
       break;
+    default:
+      break;
     }
 
     compute();

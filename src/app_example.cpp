@@ -61,7 +61,7 @@ struct ExampleAlgorithm
 
   static void display(span<const Vec2> input, span<const Segment> output)
   {
-    for(int idx = 0; idx < input.len; ++idx)
+    for(int idx = 0; idx < (int)input.len; ++idx)
     {
       char buffer[16];
       snprintf(buffer, sizeof buffer, "%d", idx);

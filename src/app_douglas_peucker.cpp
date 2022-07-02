@@ -121,7 +121,7 @@ std::vector<Segment> simplify_DouglasPeucker(const std::vector<Vec2>& input, flo
   }
 
   float maxDistance = 0.0f;
-  int fartherIdx;
+  int fartherIdx = 0;
   for(int idx = range.a + 1; idx <= range.b - 1; idx++)
   {
     const float distance = distanceBetweenLineAndPoint(start, end, input[idx]);
@@ -188,12 +188,12 @@ struct DouglasPeuckerAlgorithm
 
   static void display(span<const Vec2> input, span<const Segment> output)
   {
-    for(int idx = 0; idx < input.len; ++idx)
+    for(int idx = 0; idx < (int)input.len; ++idx)
     {
       drawPointWithIdentifier(input[idx], idx, White, Red);
 
       const int next_idx = (idx + 1);
-      if(next_idx < input.len)
+      if(next_idx < (int)input.len)
         sandbox_line(input[idx], input[next_idx]);
     }
 

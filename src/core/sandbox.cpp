@@ -6,11 +6,11 @@
 
 struct NullVisualizer : IVisualizer
 {
-  void line(Vec2 a, Vec2 b, Color color){};
-  void rect(Vec2 a, Vec2 b, Color color){};
-  void circle(Vec2 center, float radius, Color color){};
-  void text(Vec2 pos, const char* text, Color color){};
-  void printf(const char* fmt, va_list args){};
+  void line(Vec2, Vec2, Color){};
+  void rect(Vec2, Vec2, Color){};
+  void circle(Vec2, float, Color){};
+  void text(Vec2, const char*, Color){};
+  void printf(const char*, va_list){};
   void step() override{};
 };
 
