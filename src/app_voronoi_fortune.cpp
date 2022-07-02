@@ -246,7 +246,7 @@ using EventQueue = std::vector<Event*>;
 struct Event
 {
   virtual ~Event() = default;
-  virtual Vec2 pos() const = 0;
+  virtual float y() const = 0;
   virtual void happen(EventQueue& eventQueue, Arc*& rootArc, VoronoiDiagram& diagram) = 0;
   virtual void draw() const = 0;
 };
@@ -295,7 +295,7 @@ struct CircleEvent final : public Event
   Arc* arc;
   Vec2 intersection;
 
-  Vec2 pos() const override { return intersection; }
+  float y() const override { return intersection.y; }
   void happen(EventQueue& eventQueue, Arc*& rootArc, VoronoiDiagram& diagram) override
   {
     sandbox_printf("circleEvent at %f;%f\n", intersection.x, intersection.y);
@@ -410,7 +410,7 @@ struct siteEvent final : public Event
   {
   }
 
-  Vec2 pos() const override { return Pos; }
+  float y() const override { return Pos.y; }
   void happen(EventQueue& eventQueue, Arc*& rootArc, VoronoiDiagram& diagram) override
   {
     sandbox_printf("siteEvent at %f;%f\n", Pos.x, Pos.y);
@@ -502,15 +502,15 @@ struct FortuneVoronoiAlgoritm
     while(!eventQueue.empty())
     {
       // Pop next event
-      auto orderByY = [](Event* a, Event* b) { return a->pos().y < b->pos().y; };
+      auto orderByY = [](Event* a, Event* b) { return a->y() < b->y(); };
       std::sort(eventQueue.begin(), eventQueue.end(), orderByY);
       Event* event = eventQueue.back();
       eventQueue.pop_back();
 
       // Draw context
-      const Vec2 eventPos = event->pos();
-      drawBeachLine(rootArc, eventPos.y, Yellow);
-      drawHorizontalLine(eventPos.y, Red);
+      const float eventPosY = event->y();
+      drawBeachLine(rootArc, eventPosY, Yellow);
+      drawHorizontalLine(eventPosY, Red);
       drawEvents(eventQueue);
       drawDiagram(diagram, Yellow);
 
