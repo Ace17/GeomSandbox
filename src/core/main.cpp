@@ -28,6 +28,7 @@ bool gMustScreenShot = false;
 
 Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
 
+// 'logical' to 'screen' coordinates
 SDL_Point transform(Vec2 v)
 {
   SDL_Point r;
@@ -35,6 +36,15 @@ SDL_Point transform(Vec2 v)
   r.y = g_ScreenSize.y / 2 - (v.y - g_Pos.y) * g_Scale;
   return r;
 };
+
+// 'screen' to 'logical' coordinates
+Vec2 reverseTransform(SDL_Point p)
+{
+  Vec2 v;
+  v.x = +(p.x - g_ScreenSize.x / 2) / g_Scale + g_Pos.x;
+  v.y = -(p.y - g_ScreenSize.y / 2) / g_Scale + g_Pos.y;
+  return v;
+}
 
 int convert255(float val)
 {
@@ -191,6 +201,9 @@ bool readInput(IApp* app, bool& reset)
 {
   SDL_Event event;
 
+  static const float scaleSpeed = 1.05;
+  static const float scrollSpeed = 1.0;
+
   while(SDL_PollEvent(&event))
   {
     if(event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE))
@@ -200,8 +213,6 @@ bool readInput(IApp* app, bool& reset)
     {
       app->keydown(fromSdlKey(event.key.keysym.sym));
 
-      const float scaleSpeed = 1.05;
-      const float scrollSpeed = 1.0;
       switch(event.key.keysym.sym)
       {
       case SDLK_KP_PLUS:
@@ -238,6 +249,21 @@ bool readInput(IApp* app, bool& reset)
     {
       if(event.window.event == SDL_WINDOWEVENT_RESIZED)
         g_ScreenSize = {(float)event.window.data1, (float)event.window.data2};
+    }
+    else if(event.type == SDL_MOUSEWHEEL)
+    {
+      int mouseX, mouseY;
+      SDL_GetMouseState(&mouseX, &mouseY);
+      const Vec2 mousePos = reverseTransform(SDL_Point{mouseX, mouseY});
+
+      if(event.wheel.y)
+      {
+        const auto scaleFactor = event.wheel.y > 0 ? (scaleSpeed * 1.1) : 1.0 / (scaleSpeed * 1.1);
+        const auto newScale = g_Scale * scaleFactor;
+        auto relativePos = mousePos - g_Pos;
+        g_TargetPos = mousePos - relativePos * (g_Scale / newScale);
+        g_TargetScale = newScale;
+      }
     }
   }
 
