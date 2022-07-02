@@ -240,9 +240,9 @@ void drawDiagram(const VoronoiDiagram& diagram, Color color)
   }
 }
 
-class Event;
-struct CompareEvents;
+struct Event;
 using EventQueue = std::vector<Event*>;
+
 struct Event
 {
   virtual ~Event() = default;
