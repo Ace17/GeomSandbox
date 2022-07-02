@@ -32,6 +32,11 @@ Vec2 g_ScreenSize{};
 bool gMustScreenShot = false;
 
 Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
+template<typename T>
+T lerp(T a, T b, float alpha)
+{
+  return a * (1.0f - alpha) + b * alpha;
+}
 
 // 'logical' to 'screen' coordinates
 SDL_Point transform(Vec2 v)
@@ -340,8 +345,8 @@ int main(int argc, char* argv[])
       }
 
       const float alpha = 0.8;
-      g_Camera.pos = (g_TargetCamera.pos * (1 - alpha) + g_Camera.pos * alpha);
-      g_Camera.scale = (g_TargetCamera.scale * (1 - alpha) + g_Camera.scale * alpha);
+      g_Camera.pos = lerp(g_TargetCamera.pos, g_Camera.pos, alpha);
+      g_Camera.scale = lerp(g_TargetCamera.scale, g_Camera.scale, alpha);
 
       app->tick();
       drawScreen(renderer, app.get());
