@@ -145,5 +145,5 @@ struct EarClippingAlgorithm
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<EarClippingAlgorithm>>()); }
-const int reg = registerApp("EarClippingAlgorithm", &create);
+const int reg = registerApp("EarClipping", &create);
 }
