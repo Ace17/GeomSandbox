@@ -42,6 +42,7 @@ SRCS+=\
 # Algos
 SRCS+=\
 			src/app_a_star.cpp\
+			src/app_bsp_build.cpp\
 			src/app_dijkstra.cpp\
 			src/app_douglas_peucker.cpp\
 			src/app_ear_clipping.cpp\
@@ -60,6 +61,7 @@ SRCS+=\
 # Common stuff
 SRCS+=\
 			src/random.cpp\
+			src/bsp.cpp\
 
 $(BIN)/GeomSandbox.exe: $(SRCS:%=$(BIN)/%.o)
 
