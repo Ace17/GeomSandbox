@@ -15,11 +15,23 @@
 template<typename>
 struct FuncTraits;
 
+template<typename T>
+struct RemoveRef
+{
+  using type = T;
+};
+
+template<typename T>
+struct RemoveRef<const T&>
+{
+  using type = T;
+};
+
 template<typename ReturnTypeP, typename ArgTypeP>
 struct FuncTraits<ReturnTypeP(ArgTypeP)>
 {
-  using OutputType = ReturnTypeP;
-  using InputType = ArgTypeP;
+  using OutputType = typename RemoveRef<ReturnTypeP>::type;
+  using InputType = typename RemoveRef<ArgTypeP>::type;
 };
 
 struct AbstractAlgorithm
