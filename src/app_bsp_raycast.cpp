@@ -32,19 +32,42 @@ void drawPlane(const Hyperplane& plane)
   sandbox_printf("drawPlane: {%.2f,%.2f} {%.2f,%.2f}\n", p.x, p.y, t.x, t.y);
 }
 
+float raycast(Vec2 a, Vec2 b, const BspNode* node);
+
+float raycast_aux(Vec2 a, Vec2 b, const BspNode* node)
+{
+  float ratio = raycast(a, b, node);
+
+  drawPlane(node->plane);
+  {
+    const auto pa = dot_product(a, node->plane.normal) - node->plane.dist;
+    const auto pb = dot_product(b, node->plane.normal) - node->plane.dist;
+
+    const auto p0 = node->plane.normal * node->plane.dist;
+    auto acolor = pa < 0 ? Red : Green;
+    auto bcolor = pb < 0 ? Red : Green;
+    sandbox_circle(p0 + node->plane.normal * pa, 0.2, acolor);
+    sandbox_text(p0 + node->plane.normal * pa, "a", acolor);
+    sandbox_circle(p0 + node->plane.normal * pb, 0.2, bcolor);
+    sandbox_text(p0 + node->plane.normal * pb, "b", bcolor);
+    sandbox_line(a, a + (b - a) * ratio, Green);
+  }
+  sandbox_breakpoint();
+
+  return ratio;
+}
+
 float raycast(Vec2 a, Vec2 b, const BspNode* node)
 {
   const auto pa = dot_product(a, node->plane.normal) - node->plane.dist;
   const auto pb = dot_product(b, node->plane.normal) - node->plane.dist;
 
-  drawPlane(node->plane);
-  sandbox_breakpoint();
-
+  // The ray is fully on the negative side
   if(pa < +BspEpsilon && pb < +BspEpsilon)
   {
     if(node->negChild)
     {
-      return raycast(a, b, node->negChild.get());
+      return raycast_aux(a, b, node->negChild.get());
     }
     else
     {
@@ -52,33 +75,43 @@ float raycast(Vec2 a, Vec2 b, const BspNode* node)
     }
   }
 
+  // The ray is fully on the positive side
   if(pa > +BspEpsilon && pb > +BspEpsilon)
   {
     if(node->posChild)
-      return raycast(a, b, node->posChild.get());
+      return raycast_aux(a, b, node->posChild.get());
     else
       return 1; // all empty
   }
 
+  // The ray goes from the negative side to the positive side
   if(pa < +BspEpsilon && pb > +BspEpsilon)
   {
+    const auto intersection_ratio = (pa / (pa - pb));
+    const auto intersection = a + (b - a) * intersection_ratio;
+
+    // raycast inside the negative side
     if(!node->negChild)
       return 0; // all solid
-    auto ratio = raycast(a, b, node->negChild.get());
+
+    auto ratio = raycast_aux(a, intersection, node->negChild.get());
     if(ratio < 1)
-      return ratio;
-    else if(node->posChild)
-      return raycast(a, b, node->posChild.get());
-    else
+      return ratio * intersection_ratio; // blocked inside the negative side
+
+    // raycast inside the positive side
+    if(!node->posChild)
       return 1;
+
+    return intersection_ratio + raycast_aux(intersection, b, node->posChild.get()) * (1 - intersection_ratio);
   }
 
+  // The ray goes from the positive side to the negative side
   if(pa > +BspEpsilon && pb < +BspEpsilon)
   {
     const auto intersection = a + (b - a) * (pa / (pa - pb));
     if(node->posChild)
     {
-      auto ratio = raycast(a, intersection, node->posChild.get());
+      auto ratio = raycast_aux(a, intersection, node->posChild.get());
       if(ratio < 1)
         return ratio * (pa / (pa - pb));
     }
@@ -88,7 +121,7 @@ float raycast(Vec2 a, Vec2 b, const BspNode* node)
 
     if(node->negChild)
     {
-      auto ratio = raycast(a, b, node->negChild.get());
+      auto ratio = raycast_aux(a, b, node->negChild.get());
       if(ratio < 1)
         return ratio;
     }
@@ -175,14 +208,14 @@ struct BspRaycast
     AlgoInput input;
     input.polygon = poly;
     input.bspRoot = createBspTree(poly);
-    input.rayPos = randomPos({-30, -30}, {+30, +30});
-    input.rayDir = randomPos({-30, -30}, {+30, +30});
+    input.rayPos = {-10, -4}; // randomPos({-30, -30}, {+30, +30});
+    input.rayDir = {24, 2}; // randomPos({-30, -30}, {+30, +30});
     return input;
   }
 
   static float execute(const AlgoInput& input)
   {
-    return raycast(input.rayPos, input.rayPos + input.rayDir, input.bspRoot.get());
+    return raycast_aux(input.rayPos, input.rayPos + input.rayDir, input.bspRoot.get());
   }
 
   static void display(const AlgoInput& input, float fraction)
