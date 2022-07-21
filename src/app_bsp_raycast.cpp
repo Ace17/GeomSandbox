@@ -33,11 +33,11 @@ void drawPlane(const Hyperplane& plane)
   sandbox_printf("drawPlane: {%.2f,%.2f} {%.2f,%.2f}\n", p.x, p.y, t.x, t.y);
 }
 
-float raycast(Vec2 a, Vec2 b, const BspNode* node);
+float raycast_rec(Vec2 a, Vec2 b, const BspNode* node);
 
 float raycast_aux(Vec2 a, Vec2 b, const BspNode* node)
 {
-  const float ratio = raycast(a, b, node);
+  const float ratio = raycast_rec(a, b, node);
 
   drawPlane(node->plane);
   {
@@ -62,7 +62,111 @@ float raycast_aux(Vec2 a, Vec2 b, const BspNode* node)
   return ratio;
 }
 
-float raycast(Vec2 a, Vec2 b, const BspNode* node)
+template<typename T>
+T lerp(T a, T b, float alpha)
+{
+  return a * (1 - alpha) + b * alpha;
+}
+
+float raycast(Vec2 a, Vec2 b, const BspNode* root)
+{
+  struct Chunk
+  {
+    float beg, end; // between 0 and 1 from 'a' to 'b'
+    const BspNode* node;
+    bool solid = false; // only valid if `node` is null
+  };
+  std::vector<Chunk> stack;
+
+  stack.push_back(Chunk{0, 1, root});
+
+  float ratio = 1;
+
+  while(stack.size())
+  {
+    for(auto& entry : stack)
+    {
+      auto color = &entry == &stack.back() ? Green : LightBlue;
+
+      const auto beg = lerp(a, b, entry.beg);
+      const auto end = lerp(a, b, entry.end);
+      sandbox_line(beg, end, color);
+      char buf[256];
+      sprintf(buf, "%d", int(stack.size()) - int(&entry - &stack.front()));
+      sandbox_text((beg+end) * 0.5, buf);
+      sandbox_circle(beg, 0.2, color);
+      sandbox_circle(end, 0.2, color);
+    }
+
+    auto curr = stack.back();
+    stack.pop_back();
+
+    const auto beg = lerp(a, b, curr.beg);
+    const auto end = lerp(a, b, curr.end);
+
+    if(!curr.node)
+    {
+      if(curr.solid && ratio > curr.beg)
+        ratio = curr.beg;
+      sandbox_text({}, "leaf");
+    }
+    else
+    {
+      const auto proj_beg = dot_product(beg, curr.node->plane.normal) - curr.node->plane.dist;
+      const auto proj_end = dot_product(end, curr.node->plane.normal) - curr.node->plane.dist;
+
+      const auto proj_a = dot_product(a, curr.node->plane.normal) - curr.node->plane.dist;
+      const auto proj_b = dot_product(b, curr.node->plane.normal) - curr.node->plane.dist;
+
+      const auto pmid = proj_a / (proj_a - proj_b);
+
+      if(proj_beg < +BspEpsilon && proj_end >= +BspEpsilon)
+      {
+        stack.push_back(Chunk{pmid, curr.end, curr.node->posChild.get(), false});
+        stack.push_back(Chunk{curr.beg, pmid, curr.node->negChild.get(), true});
+        sandbox_text({}, "crossed (neg to pos)");
+      }
+      else if(proj_beg >= +BspEpsilon && proj_end < +BspEpsilon)
+      {
+        stack.push_back(Chunk{pmid, curr.end, curr.node->negChild.get(), true});
+        stack.push_back(Chunk{curr.beg, pmid, curr.node->posChild.get(), false});
+        sandbox_text({}, "crossed (pos to neg)");
+      }
+      else if(proj_beg >= +BspEpsilon && proj_end >= +BspEpsilon)
+      {
+        stack.push_back(Chunk{pmid, curr.end, curr.node->posChild.get(), false});
+        sandbox_text({}, "all positive");
+      }
+      else
+      {
+        stack.push_back(Chunk{curr.beg, pmid, curr.node->negChild.get(), true});
+        sandbox_text({}, "all negative");
+      }
+
+      {
+        const auto acolor = proj_beg < 0 ? Red : Green;
+        const auto bcolor = proj_end < 0 ? Red : Green;
+
+        drawPlane(curr.node->plane);
+
+        const auto p0 = curr.node->plane.normal * curr.node->plane.dist;
+
+        sandbox_circle(p0 + curr.node->plane.normal * proj_beg, 0.2, acolor);
+        sandbox_text(p0 + curr.node->plane.normal * proj_beg, "beg", acolor);
+
+        sandbox_circle(p0 + curr.node->plane.normal * proj_end, 0.2, bcolor);
+        sandbox_text(p0 + curr.node->plane.normal * proj_end, "end", bcolor);
+
+      }
+    }
+
+    sandbox_breakpoint();
+  }
+
+  return ratio;
+}
+
+float raycast_rec(Vec2 a, Vec2 b, const BspNode* node)
 {
   const auto pa = dot_product(a, node->plane.normal) - node->plane.dist;
   const auto pb = dot_product(b, node->plane.normal) - node->plane.dist;
@@ -230,7 +334,7 @@ struct BspRaycast
 
   static float execute(const AlgoInput& input)
   {
-    return raycast_aux(input.rayPos, input.rayPos + input.rayDir, input.bspRoot.get());
+    return raycast(input.rayPos, input.rayPos + input.rayDir, input.bspRoot.get());
   }
 
   static void display(const AlgoInput& input, float fraction)
@@ -242,8 +346,9 @@ struct BspRaycast
 
     sandbox_line(input.rayPos, input.rayPos + input.rayDir, Red);
     sandbox_circle(input.rayPos + input.rayDir, 0.2, Red);
-    sandbox_line(input.rayPos, input.rayPos + input.rayDir * fraction, Green);
-    sandbox_circle(input.rayPos, 0.2, Green);
+    (void)fraction;
+    //sandbox_line(input.rayPos, input.rayPos + input.rayDir * fraction, Green);
+    //sandbox_circle(input.rayPos, 0.2, Green);
   }
 
   static void drawBspNode(const BspNode* node, std::vector<Hyperplane>& clips)
