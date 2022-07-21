@@ -14,6 +14,7 @@
 #include <cassert>
 #include <cmath>
 #include <vector>
+#include <cstdio>
 
 #include "bounding_box.h"
 #include "bsp.h"
@@ -36,7 +37,7 @@ float raycast(Vec2 a, Vec2 b, const BspNode* node);
 
 float raycast_aux(Vec2 a, Vec2 b, const BspNode* node)
 {
-  float ratio = raycast(a, b, node);
+  const float ratio = raycast(a, b, node);
 
   drawPlane(node->plane);
   {
@@ -51,6 +52,10 @@ float raycast_aux(Vec2 a, Vec2 b, const BspNode* node)
     sandbox_circle(p0 + node->plane.normal * pb, 0.2, bcolor);
     sandbox_text(p0 + node->plane.normal * pb, "b", bcolor);
     sandbox_line(a, a + (b - a) * ratio, Green);
+
+    char msg[256];
+    sprintf(msg, "ratio=%.2f", ratio);
+    sandbox_text({0,0}, msg);
   }
   sandbox_breakpoint();
 
@@ -71,6 +76,7 @@ float raycast(Vec2 a, Vec2 b, const BspNode* node)
     }
     else
     {
+      sandbox_text({0,1}, "all solid negative");
       return 0; // all solid
     }
   }
@@ -81,7 +87,10 @@ float raycast(Vec2 a, Vec2 b, const BspNode* node)
     if(node->posChild)
       return raycast_aux(a, b, node->posChild.get());
     else
+    {
+      sandbox_text({0,1}, "all empty positive");
       return 1; // all empty
+    }
   }
 
   // The ray goes from the negative side to the positive side
@@ -92,7 +101,10 @@ float raycast(Vec2 a, Vec2 b, const BspNode* node)
 
     // raycast inside the negative side
     if(!node->negChild)
+    {
+      sandbox_text({0,1}, "start solid negative (2)");
       return 0; // all solid
+    }
 
     auto ratio = raycast_aux(a, intersection, node->negChild.get());
     if(ratio < 1)
@@ -100,7 +112,10 @@ float raycast(Vec2 a, Vec2 b, const BspNode* node)
 
     // raycast inside the positive side
     if(!node->posChild)
+    {
+      sandbox_text({0,1}, "all empty positive (2)");
       return 1;
+    }
 
     return intersection_ratio + raycast_aux(intersection, b, node->posChild.get()) * (1 - intersection_ratio);
   }
