@@ -5,13 +5,12 @@
 // License, or (at your option) any later version.
 
 ///////////////////////////////////////////////////////////////////////////////
-// Contour-tracing algorithm.
 
 #include "core/algorithm_app.h"
 #include "core/sandbox.h"
 
 #include <array>
-#include <cmath>
+#include <vector>
 
 #include "random.h"
 
@@ -23,10 +22,38 @@ constexpr int gridHeight = 10;
 constexpr int tileCount = gridWidth * gridHeight;
 
 constexpr float tileRenderSize = 2.5;
+constexpr float borderCornerOffset = 0.3;
 
 using Grid = std::array<bool, tileCount>;
+using PolygonBorder = std::vector<Vec2>;
+
+struct Coord
+{
+  int x;
+  int y;
+
+  bool operator==(const Coord& other) const { return x == other.x && y == other.y; }
+  bool operator!=(const Coord& other) const { return !operator==(other); }
+
+  Coord operator+(const Coord& other) const { return {x + other.x, y + other.y}; }
+};
+
+struct TSegment
+{
+  Coord a;
+  Coord b;
+};
 
 float lerp(float a, float b, float r) { return (a * (1.f - r)) + (b * r); }
+
+int tileIndex(const Coord& coord) { return coord.y * gridWidth + coord.x; }
+
+bool tileIsFilled(const Grid& grid, const Coord& coord)
+{
+  if(coord.x < 0 || coord.y < 0 || coord.x >= gridWidth || coord.y >= gridHeight)
+    return false;
+  return grid[tileIndex(coord)];
+}
 
 Vec2 tileRenderPosition(int x, int y)
 {
@@ -47,8 +74,10 @@ void drawGridLines()
   }
 }
 
-void drawFilledTile(const Vec2& position, const Vec2& size, const Color& color)
+void drawFilledTile(int x, int y, const Color& color)
 {
+  const Vec2 position = tileRenderPosition(x, y);
+  const Vec2 size = Vec2(tileRenderSize, tileRenderSize);
   const Vec2 tileEnd = position + size;
   const int traceCount = 5;
   for(int i = 0; i < traceCount; i++)
@@ -71,6 +100,100 @@ void drawFilledTile(const Vec2& position, const Vec2& size, const Color& color)
   }
 }
 
+void drawTestedCellBorders(int x, int y, const Color& color)
+{
+  const Vec2 topLeft = tileRenderPosition(x, y) + Vec2(0.f, tileRenderSize);
+  const Vec2 topRight = topLeft + Vec2(tileRenderSize, 0.f);
+  const Vec2 bottomRight = topRight + Vec2(0.f, -tileRenderSize);
+  sandbox_line(topLeft, topRight, color);
+  sandbox_line(topRight, bottomRight, color);
+}
+
+void drawSegment(const TSegment& segment, const Color& color)
+{
+  constexpr float arrowTipLength = 0.5f;
+  constexpr float arrowTipWidth = 0.3f;
+
+  const Vec2 segmentRenderStart = tileRenderPosition(segment.a.x, segment.a.y);
+  const Vec2 segmentRenderEnd = tileRenderPosition(segment.b.x, segment.b.y);
+
+  const Vec2 direction = segmentRenderEnd - segmentRenderStart;
+  const Vec2 perpendicular = rotateLeft(direction);
+  const Vec2 arrowTipPointLeft = segmentRenderEnd - direction * arrowTipLength + perpendicular * arrowTipWidth;
+  const Vec2 arrowTipPointRight = segmentRenderEnd - direction * arrowTipLength - perpendicular * arrowTipWidth;
+  sandbox_line(segmentRenderStart, segmentRenderEnd, color);
+  sandbox_line(segmentRenderEnd, arrowTipPointLeft, color);
+  sandbox_line(segmentRenderEnd, arrowTipPointRight, color);
+}
+
+void drawSegmentList(const std::vector<TSegment>& segments, const Color& color)
+{
+  for(const TSegment& segment : segments)
+  {
+    drawSegment(segment, color);
+  }
+}
+
+void drawBorder(const PolygonBorder& border, const Color& color)
+{
+  for(int i = 0; i < static_cast<int>(border.size()) - 1; i++)
+  {
+    sandbox_line(border[i], border[i + 1], color);
+  }
+}
+
+void drawOutputBorders(const std::vector<PolygonBorder>& borders)
+{
+  for(const PolygonBorder& border : borders)
+  {
+    drawBorder(border, Red);
+  }
+}
+
+std::vector<TSegment> fillSegments(const Grid& input)
+{
+  std::vector<TSegment> segments;
+  for(int y = -1; y < gridHeight; y++)
+  {
+    for(int x = -1; x < gridWidth; x++)
+    {
+      drawTestedCellBorders(x, y, Green);
+      drawSegmentList(segments, Yellow);
+      sandbox_breakpoint();
+
+      std::vector<TSegment> newSegments;
+      const Coord topLeft = {x, y + 1};
+      const Coord topRight = topLeft + Coord({1, 0});
+      const Coord bottomRight = topRight + Coord({0, -1});
+      if(!tileIsFilled(input, {x, y}))
+      {
+        if(tileIsFilled(input, {x + 1, y}))
+          newSegments.push_back({topRight, bottomRight});
+        if(tileIsFilled(input, {x, y + 1}))
+          newSegments.push_back({topLeft, topRight});
+      }
+      else
+      {
+        if(!tileIsFilled(input, {x + 1, y}))
+          newSegments.push_back({bottomRight, topRight});
+        if(!tileIsFilled(input, {x, y + 1}))
+          newSegments.push_back({topRight, topLeft});
+      }
+
+      if(!newSegments.empty())
+      {
+        drawTestedCellBorders(x, y, Green);
+        drawSegmentList(segments, Yellow);
+        drawSegmentList(newSegments, Green);
+        sandbox_breakpoint();
+        segments.insert(segments.end(), newSegments.begin(), newSegments.end());
+      }
+    }
+  }
+
+  return segments;
+}
+
 struct ContourTracingAlgorithm
 {
   static Grid generateInput()
@@ -83,14 +206,16 @@ struct ContourTracingAlgorithm
     return grid;
   }
 
-  static int execute(Grid input)
+  static std::vector<PolygonBorder> execute(Grid input)
   {
+    std::vector<TSegment> segments = fillSegments(input);
+
+    std::vector<PolygonBorder> output;
     // TODO
-    (void)input;
-    return 0;
+    return output;
   }
 
-  static void display(Grid input, int output)
+  static void display(Grid input, const std::vector<PolygonBorder>& output)
   {
     for(int y = 0; y < gridHeight; y++)
     {
@@ -99,16 +224,12 @@ struct ContourTracingAlgorithm
         const int tileIndex = y * gridWidth + x;
         if(input[tileIndex])
         {
-          const Vec2 rectStart = tileRenderPosition(x, y);
-          const Vec2 rectSize = Vec2(tileRenderSize, tileRenderSize);
-          drawFilledTile(rectStart, rectSize, LightBlue);
+          drawFilledTile(x, y, LightBlue);
         }
       }
     }
     drawGridLines();
-
-    // TODO
-    (void)output;
+    drawOutputBorders(output);
   }
 };
 
