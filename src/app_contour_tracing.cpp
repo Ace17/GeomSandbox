@@ -23,7 +23,7 @@ constexpr int gridHeight = 10;
 constexpr int tileCount = gridWidth * gridHeight;
 
 constexpr float tileRenderSize = 2.5;
-constexpr float borderCornerOffset = 0.3;
+constexpr float borderCornerOffset = 0.5;
 
 using Grid = std::array<bool, tileCount>;
 using PolygonBorder = std::vector<Vec2>;
@@ -202,6 +202,12 @@ std::vector<TSegment> fillSegments(const Grid& input)
   return segments;
 }
 
+Vec2 segmentDirection(const TSegment& segment)
+{
+  const Coord direction = segment.b - segment.a;
+  return Vec2(direction.x, direction.y);
+}
+
 auto getNextSegmentIterator(std::vector<TSegment>& segments, const TSegment& startSegment)
 {
   const Coord segmentTip = startSegment.b;
@@ -245,11 +251,12 @@ struct ContourTracingAlgorithm
     {
       PolygonBorder newBorder;
       auto segmentIt = segments.begin();
-      newBorder.push_back(tileRenderPosition(segmentIt->a));
       do
       {
         const TSegment currentSegment = *segmentIt;
-        newBorder.push_back(tileRenderPosition(currentSegment.b));
+        const Vec2 direction = segmentDirection(currentSegment);
+        newBorder.push_back(tileRenderPosition(currentSegment.a) + direction * borderCornerOffset);
+        newBorder.push_back(tileRenderPosition(currentSegment.b) - direction * borderCornerOffset);
         *segmentIt = segments.back();
         segments.pop_back();
         drawSegmentList(segments, Yellow);
@@ -259,6 +266,7 @@ struct ContourTracingAlgorithm
         segmentIt = getNextSegmentIterator(segments, currentSegment);
       } while(segmentIt != segments.end());
 
+      newBorder.push_back(newBorder.front());
       output.push_back(newBorder);
     }
 
