@@ -9,6 +9,7 @@
 #include "core/algorithm_app.h"
 #include "core/sandbox.h"
 
+#include <algorithm>
 #include <array>
 #include <vector>
 
@@ -36,12 +37,17 @@ struct Coord
   bool operator!=(const Coord& other) const { return !operator==(other); }
 
   Coord operator+(const Coord& other) const { return {x + other.x, y + other.y}; }
+  Coord operator-(const Coord& other) const { return {x - other.x, y - other.y}; }
 };
+
+Coord rotateLeft(Coord c) { return Coord({-c.y, c.x}); }
 
 struct TSegment
 {
   Coord a;
   Coord b;
+
+  bool operator==(const TSegment& other) const { return a == other.a && b == other.b; }
 };
 
 float lerp(float a, float b, float r) { return (a * (1.f - r)) + (b * r); }
@@ -61,6 +67,8 @@ Vec2 tileRenderPosition(int x, int y)
   const float renderY = y * tileRenderSize - gridHeight * tileRenderSize / 2.f;
   return {renderX, renderY};
 }
+
+Vec2 tileRenderPosition(const Coord& coord) { return tileRenderPosition(coord.x, coord.y); }
 
 void drawGridLines()
 {
@@ -194,6 +202,28 @@ std::vector<TSegment> fillSegments(const Grid& input)
   return segments;
 }
 
+auto getNextSegmentIterator(std::vector<TSegment>& segments, const TSegment& startSegment)
+{
+  const Coord segmentTip = startSegment.b;
+  const Coord segmentDir = startSegment.a - startSegment.b;
+
+  const Coord directionsToTry[3] = {
+        rotateLeft(segmentDir),
+        rotateLeft(rotateLeft(segmentDir)),
+        rotateLeft(rotateLeft(rotateLeft(segmentDir))),
+  };
+
+  for(const Coord& direction : directionsToTry)
+  {
+    const TSegment segmentToTry = {segmentTip, segmentTip + direction};
+    auto it = std::find(segments.begin(), segments.end(), segmentToTry);
+    if(it != segments.end())
+      return it;
+  }
+
+  return segments.end();
+}
+
 struct ContourTracingAlgorithm
 {
   static Grid generateInput()
@@ -211,7 +241,27 @@ struct ContourTracingAlgorithm
     std::vector<TSegment> segments = fillSegments(input);
 
     std::vector<PolygonBorder> output;
-    // TODO
+    while(!segments.empty())
+    {
+      PolygonBorder newBorder;
+      auto segmentIt = segments.begin();
+      newBorder.push_back(tileRenderPosition(segmentIt->a));
+      do
+      {
+        const TSegment currentSegment = *segmentIt;
+        newBorder.push_back(tileRenderPosition(currentSegment.b));
+        *segmentIt = segments.back();
+        segments.pop_back();
+        drawSegmentList(segments, Yellow);
+        drawBorder(newBorder, Green);
+        drawOutputBorders(output);
+        sandbox_breakpoint();
+        segmentIt = getNextSegmentIterator(segments, currentSegment);
+      } while(segmentIt != segments.end());
+
+      output.push_back(newBorder);
+    }
+
     return output;
   }
 
