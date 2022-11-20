@@ -48,7 +48,8 @@ struct MainMenuApp : IApp
       return;
     }
 
-    Vec2 pos{};
+    const Vec2 startPos = Vec2(0, 10);
+    Vec2 pos = startPos;
     for(auto& name : appNames)
     {
       drawer->text(pos, name.c_str());
@@ -56,7 +57,7 @@ struct MainMenuApp : IApp
     }
 
     {
-      Vec2 rectMin{-1, float(-selection - 1)};
+      Vec2 rectMin = startPos + Vec2(-1, float(-selection - 1));
       drawer->rect(rectMin, {30, 1});
     }
   }
