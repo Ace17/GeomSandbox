@@ -22,7 +22,6 @@ namespace
 
 struct ProjectionOnAxis
 {
-  float center;
   float min, max;
 };
 
@@ -41,7 +40,7 @@ struct RaycastResult
 // Cast a ray from 'pos' to 'pos+delta', stops when colliding with 'obstacle'.
 // The return value represents the allowed move, as a fraction of the desired move (delta).
 // (The final position is then 'pos + return_value * delta')
-RaycastResult raycast(Vec2 pos, Vec2 delta, IShape* obstacle)
+RaycastResult raycast(Vec2 pos, Vec2 delta, const IShape* obstacle)
 {
   auto axes = obstacle->axesToTest();
 
@@ -83,37 +82,57 @@ RaycastResult raycast(Vec2 pos, Vec2 delta, IShape* obstacle)
   return r;
 }
 
+struct AffineTransformShape : IShape
+{
+  ProjectionOnAxis projectOnAxis(Vec2 axis) const override
+  {
+    Vec2 scaledAxis = {axis.x * scale.x, axis.y * scale.y};
+    ProjectionOnAxis r = sub->projectOnAxis(scaledAxis);
+
+    const auto transOnAxis = axis * translate;
+
+    r.min += transOnAxis;
+    r.max += transOnAxis;
+
+    assert(r.min <= r.max);
+
+    return r;
+  }
+
+  std::vector<Vec2> axesToTest() const override { return sub->axesToTest(); }
+
+  const IShape* sub;
+  Vec2 translate = {};
+  Vec2 scale = {1, 1};
+};
+
+// an [-1;+1]x[-1;+1] AABB
 struct BoxShape : IShape
 {
   ProjectionOnAxis projectOnAxis(Vec2 axis) const override
   {
     ProjectionOnAxis r;
 
-    const float projectedExtent = fabs(halfSize.x * axis.x) + fabs(halfSize.y * axis.y);
+    const float projectedExtent = fabs(axis.x) + fabs(axis.y);
 
-    r.center = center * axis;
-    r.min = r.center - projectedExtent;
-    r.max = r.center + projectedExtent;
+    r.min = -projectedExtent;
+    r.max = +projectedExtent;
 
     return r;
   }
 
   std::vector<Vec2> axesToTest() const override { return {{1, 0}, {0, 1}}; }
-
-  Vec2 center;
-  Vec2 halfSize;
 };
+
+static const BoxShape boxShape;
 
 struct PolygonShape : IShape
 {
-  Vec2 center;
   std::vector<Vec2> vertices;
 
   ProjectionOnAxis projectOnAxis(Vec2 axis) const override
   {
     ProjectionOnAxis r;
-
-    r.center = center * axis;
 
     r.min = vertices[0] * axis;
     r.max = vertices[0] * axis;
@@ -143,8 +162,7 @@ struct PolygonShape : IShape
   }
 };
 
-// Minkowski sum of two shapes, centered on shapeA
-// (shapeB's position is ignored).
+// Minkowski sum of two shapes
 struct CombinedShape : IShape
 {
   IShape* shapeA;
@@ -156,9 +174,8 @@ struct CombinedShape : IShape
     ProjectionOnAxis projB = shapeB->projectOnAxis(axis);
 
     ProjectionOnAxis r;
-    r.center = projA.center;
-    r.min = projA.min - (projB.center - projB.min);
-    r.max = projA.max + (projB.max - projB.center);
+    r.min = projA.min + projB.min;
+    r.max = projA.max + projB.max;
 
     return r;
   }
@@ -183,12 +200,12 @@ struct SeparatingAxisTestApp : IApp
     boxTarget = randomPos({-20, -10}, {20, 10});
 
     {
-      obstacleBox.halfSize = randomPos({2, 2}, {5, 5});
-      obstacleBox.center = randomPos({5, -5}, {15, 5});
+      obstacleBoxHalfSize = randomPos({2, 2}, {5, 5});
+      obstacleBoxCenter = randomPos({5, -5}, {15, 5});
     }
 
     {
-      obstaclePolygon.center = randomPos({-25, -5}, {-5, 5});
+      const Vec2 center = randomPos({-25, -5}, {-5, 5});
 
       const int N = randomInt(3, 12);
       const float radiusX = randomFloat(2, 5);
@@ -199,7 +216,7 @@ struct SeparatingAxisTestApp : IApp
         Vec2 v;
         v.x = cos(i * M_PI * 2 / N + phase) * radiusX;
         v.y = sin(i * M_PI * 2 / N + phase) * radiusY;
-        obstaclePolygon.vertices.push_back(obstaclePolygon.center + v);
+        obstaclePolygon.vertices.push_back(center + v);
       }
     }
 
@@ -219,16 +236,19 @@ struct SeparatingAxisTestApp : IApp
     drawer->line(boxStart, boxTarget, White);
 
     // draw obstacles
-    drawBox(drawer, obstacleBox.center, obstacleBox.halfSize, Yellow, "obstacle");
+    drawBox(drawer, obstacleBoxCenter, obstacleBoxHalfSize, Yellow, "obstacle");
 
+    Vec2 center{};
     for(int i = 0; i < (int)obstaclePolygon.vertices.size(); ++i)
     {
       auto v0 = obstaclePolygon.vertices[i];
       auto v1 = obstaclePolygon.vertices[(i + 1) % obstaclePolygon.vertices.size()];
       drawer->line(v0, v1, Yellow);
+      center += v0;
     }
-    drawer->text(obstaclePolygon.center, "obstacle", Yellow);
-    drawCross(drawer, obstaclePolygon.center, Yellow);
+    center = center * (1.0 / obstaclePolygon.vertices.size());
+    drawer->text(center, "obstacle", Yellow);
+    drawCross(drawer, center, Yellow);
 
     // draw start, target, and finish positions
     drawBox(drawer, boxStart, boxHalfSize, Green, "start");
@@ -283,10 +303,16 @@ struct SeparatingAxisTestApp : IApp
   {
     const auto delta = Vec2(boxTarget - boxStart);
 
-    BoxShape moverShape{};
-    moverShape.halfSize = boxHalfSize;
+    AffineTransformShape moverShape{};
+    moverShape.sub = &boxShape;
+    moverShape.scale = boxHalfSize;
 
-    IShape* obstacleShapes[] = {&obstaclePolygon, &obstacleBox};
+    AffineTransformShape obstacleBoxShape{};
+    obstacleBoxShape.sub = &boxShape;
+    obstacleBoxShape.scale = obstacleBoxHalfSize;
+    obstacleBoxShape.translate = obstacleBoxCenter;
+
+    IShape* obstacleShapes[] = {&obstaclePolygon, &obstacleBoxShape};
 
     RaycastResult minRaycast;
     minRaycast.fraction = 1;
@@ -315,7 +341,8 @@ struct SeparatingAxisTestApp : IApp
   Vec2 boxFinish; // the position we actually reach (=target if we don't hit the obstacle
   Vec2 collisionNormal{};
 
-  BoxShape obstacleBox{};
+  Vec2 obstacleBoxCenter;
+  Vec2 obstacleBoxHalfSize;
   PolygonShape obstaclePolygon{};
 
   int currentSelection = 0;
