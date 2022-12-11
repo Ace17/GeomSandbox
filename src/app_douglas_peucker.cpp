@@ -133,6 +133,7 @@ std::vector<Segment> simplify_DouglasPeucker(const std::vector<Vec2>& input, flo
   }
 
   std::vector<Segment> result;
+  result.reserve(1); // workaround gcc 12.2.0 bug causing an error at compile time.
   drawDistanceShapeAroundSegment(start, end, maxDistanceToSimplify, Yellow);
   if(maxDistance <= maxDistanceToSimplify)
   {
