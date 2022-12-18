@@ -99,7 +99,17 @@ struct AffineTransformShape : IShape
     return r;
   }
 
-  std::vector<Vec2> axesToTest() const override { return sub->axesToTest(); }
+  std::vector<Vec2> axesToTest() const override
+  {
+    // axis are normal vectors: transform them using inverse(transposed(transform))
+    std::vector<Vec2> r = sub->axesToTest();
+    for(auto& v : r)
+    {
+      v.x /= scale.x;
+      v.y /= scale.y;
+    }
+    return r;
+  }
 
   const IShape* sub;
   Vec2 translate = {};
