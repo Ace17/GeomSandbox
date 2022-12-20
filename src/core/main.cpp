@@ -10,19 +10,23 @@
 #include <map>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 
-#include "SDL.h"
 #include "app.h"
 #include "drawer.h"
 #include "font.h"
 #include "geom.h"
 
+#define GL_GLEXT_PROTOTYPES
+
+#include <SDL.h>
+#include <SDL_opengl.h>
 #undef main
 
 struct Camera
 {
   Vec2 pos{};
-  float scale = 20.0f;
+  float scale = 60.0f;
 };
 
 Camera g_Camera;
@@ -31,7 +35,6 @@ Camera g_TargetCamera;
 Vec2 g_ScreenSize{};
 bool gMustScreenShot = false;
 
-Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
 template<typename T>
 T lerp(T a, T b, float alpha)
 {
@@ -39,48 +42,141 @@ T lerp(T a, T b, float alpha)
 }
 
 // 'logical' to 'screen' coordinates
-SDL_Point transform(Vec2 v)
+Vec2 transform(Vec2 v)
 {
-  SDL_Point r;
-  r.x = g_ScreenSize.x / 2 + (v.x - g_Camera.pos.x) * g_Camera.scale;
-  r.y = g_ScreenSize.y / 2 - (v.y - g_Camera.pos.y) * g_Camera.scale;
+  Vec2 r;
+  r.x = (v.x - g_Camera.pos.x) * g_Camera.scale;
+  r.y = (v.y - g_Camera.pos.y) * g_Camera.scale;
+
+  r.x /= g_ScreenSize.x;
+  r.y /= g_ScreenSize.y;
+
   return r;
 };
+
+Vec2 screenCoordsToViewportCoords(SDL_Point p)
+{
+  const auto halfScreenSize = g_ScreenSize * 0.5;
+  Vec2 v;
+  v.x = +(float(p.x) - halfScreenSize.x) / halfScreenSize.x;
+  v.y = -(float(p.y) - halfScreenSize.y) / halfScreenSize.y;
+  return v;
+}
 
 // 'screen' to 'logical' coordinates
 Vec2 reverseTransform(SDL_Point p)
 {
-  Vec2 v;
-  v.x = +(p.x - g_ScreenSize.x / 2) / g_Camera.scale + g_Camera.pos.x;
-  v.y = -(p.y - g_ScreenSize.y / 2) / g_Camera.scale + g_Camera.pos.y;
+  Vec2 v = screenCoordsToViewportCoords(p);
+
+  v.x *= g_ScreenSize.x;
+  v.y *= g_ScreenSize.y;
+
+  v.x = v.x / g_Camera.scale + g_Camera.pos.x;
+  v.y = v.y / g_Camera.scale + g_Camera.pos.y;
   return v;
 }
 
-int convert255(float val)
+int createFontTexture()
 {
-  int result = int(val * 255.0f);
+  struct Pixel
+  {
+    uint8_t r, g, b, a;
+  };
 
-  if(result < 0)
-    result = 0;
+  const int glyphSize = 8;
+  const int cols = 16;
+  const int rows = 8;
 
-  if(result > 255)
-    result = 255;
+  const int width = glyphSize * cols;
+  const int height = glyphSize * rows;
+  std::vector<Pixel> pixels(width * height);
 
-  return result;
+  const Pixel white{0xff, 0xff, 0xff, 0xff};
+
+  for(int c = 0; c < 128; ++c)
+  {
+    const int x = (c % cols) * glyphSize;
+    const int y = (c / cols) * glyphSize;
+
+    for(int row = 0; row < 8; ++row)
+      for(int col = 0; col < 8; ++col)
+      {
+        if((font8x8_basic[c % 128][row] >> (col)) & 1)
+          pixels[(x + col) + (y + row) * width] = white;
+      }
+  }
+
+  GLuint texture;
+
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  return texture;
 }
 
-struct SdlDrawer : IDrawer
+int createWhiteTexture()
 {
-  SDL_Renderer* renderer;
+  uint8_t data[64];
+  memset(data, 0xff, sizeof data);
+
+  GLuint texture;
+
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 4, 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  return texture;
+}
+
+struct Vertex
+{
+  float x, y;
+  float u, v;
+  float r, g, b, a;
+};
+
+enum
+{
+  attrib_position,
+  attrib_color,
+  attrib_uv,
+};
+
+struct OpenGlDrawer : IDrawer
+{
+  OpenGlDrawer()
+  {
+    glGenBuffers(1, &gpuVbo);
+
+    fontTexture = createFontTexture();
+    whiteTexture = createWhiteTexture();
+  }
+
+  ~OpenGlDrawer()
+  {
+    glDeleteBuffers(1, &gpuVbo);
+
+    glDeleteTextures(1, &fontTexture);
+    glDeleteTextures(1, &whiteTexture);
+  }
 
   void line(Vec2 a, Vec2 b, Color color) override
   {
     const auto A = transform(a);
     const auto B = transform(b);
 
-    setColor(color);
-
-    SDL_RenderDrawLine(renderer, A.x, A.y, B.x, B.y);
+    rawLine(A, B, color);
   }
 
   void rect(Vec2 a, Vec2 b, Color color) override
@@ -88,96 +184,179 @@ struct SdlDrawer : IDrawer
     const auto A = transform(a);
     const auto B = transform(a + b);
 
-    setColor(color);
+    cpuVbo_Lines.push_back({A.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
+    cpuVbo_Lines.push_back({B.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
 
-    SDL_RenderDrawLine(renderer, A.x, A.y, A.x, B.y);
-    SDL_RenderDrawLine(renderer, B.x, A.y, B.x, B.y);
-    SDL_RenderDrawLine(renderer, A.x, A.y, B.x, A.y);
-    SDL_RenderDrawLine(renderer, A.x, B.y, B.x, B.y);
+    cpuVbo_Lines.push_back({B.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
+    cpuVbo_Lines.push_back({B.x, B.y, 0, 0, color.r, color.g, color.b, color.a});
+
+    cpuVbo_Lines.push_back({B.x, B.y, 0, 0, color.r, color.g, color.b, color.a});
+    cpuVbo_Lines.push_back({A.x, B.y, 0, 0, color.r, color.g, color.b, color.a});
+
+    cpuVbo_Lines.push_back({A.x, B.y, 0, 0, color.r, color.g, color.b, color.a});
+    cpuVbo_Lines.push_back({A.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
   }
+
+  static Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
 
   void circle(Vec2 center, float radius, Color color)
   {
-    setColor(color);
     auto const N = 20;
-    SDL_Point PREV{};
+    Vec2 PREV{};
 
     for(int i = 0; i <= N; ++i)
     {
       auto A = transform(center + direction(i * 2 * M_PI / N) * radius);
 
       if(i > 0)
-        SDL_RenderDrawLine(renderer, A.x, A.y, PREV.x, PREV.y);
+        rawLine(PREV, A, color);
 
       PREV = A;
     }
   }
 
+  static constexpr float fontSize = 16;
+
   void text(Vec2 pos, const char* text, Color color) override
   {
+    const auto W = fontSize / (g_ScreenSize.x / 2);
     auto POS = transform(pos);
-    setColor(color);
 
     while(*text)
     {
-      drawChar(POS.x, POS.y, *text);
-      POS.x += 16;
+      rawChar(POS, *text, color);
+      POS.x += W;
       ++text;
     }
   }
 
-  void drawChar(int x, int y, char c)
+  void rawLine(Vec2 A, Vec2 B, Color color)
   {
-    for(int row = 0; row < 16; ++row)
-      for(int col = 0; col < 16; ++col)
-      {
-        if((font8x8_basic[c % 128][row / 2] >> (col / 2)) & 1)
-          SDL_RenderDrawPoint(renderer, x + col, y + row);
-      }
+    cpuVbo_Lines.push_back({A.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
+    cpuVbo_Lines.push_back({B.x, B.y, 0, 0, color.r, color.g, color.b, color.a});
   }
 
-  void setColor(Color color)
+  void rawChar(Vec2 POS, char c, Color color)
   {
-    const auto red = convert255(color.r);
-    const auto green = convert255(color.g);
-    const auto blue = convert255(color.b);
-    const auto alpha = convert255(color.a);
+    const int cols = 16;
+    const int rows = 8;
 
-    SDL_SetRenderDrawColor(renderer, red, green, blue, alpha);
+    const int col = c % cols;
+    const int row = c / cols;
+
+    const float u0 = (col + 0.0f) / cols;
+    const float u1 = (col + 1.0f) / cols;
+    const float v0 = (row + 1.0f) / rows;
+    const float v1 = (row + 0.0f) / rows;
+
+    const auto W = fontSize / (g_ScreenSize.x / 2);
+    const auto H = fontSize / (g_ScreenSize.y / 2);
+
+    POS.y -= H;
+
+    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, u0, v0, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, u1, v1, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + W, POS.y + 0, u1, v0, color.r, color.g, color.b, color.a});
+
+    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, u0, v0, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + H, u0, v1, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, u1, v1, color.r, color.g, color.b, color.a});
   }
+
+  void flush()
+  {
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBindBuffer(GL_ARRAY_BUFFER, gpuVbo);
+
+    glActiveTexture(GL_TEXTURE0);
+
+    glEnableVertexAttribArray(attrib_position);
+    glVertexAttribPointer(attrib_position, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
+
+    glEnableVertexAttribArray(attrib_color);
+    glVertexAttribPointer(attrib_color, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, r));
+
+    glEnableVertexAttribArray(attrib_uv);
+    glVertexAttribPointer(attrib_uv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u));
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * cpuVbo_Lines.size(), cpuVbo_Lines.data(), GL_DYNAMIC_DRAW);
+    glBindTexture(GL_TEXTURE_2D, whiteTexture);
+    glDrawArrays(GL_LINES, 0, cpuVbo_Lines.size());
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * cpuVbo_Triangles.size(), cpuVbo_Triangles.data(), GL_DYNAMIC_DRAW);
+    glBindTexture(GL_TEXTURE_2D, fontTexture);
+    glDrawArrays(GL_TRIANGLES, 0, cpuVbo_Triangles.size());
+
+    cpuVbo_Lines.clear();
+    cpuVbo_Triangles.clear();
+  }
+
+  private:
+  GLuint gpuVbo;
+  std::vector<Vertex> cpuVbo_Lines;
+  std::vector<Vertex> cpuVbo_Triangles;
+  GLuint fontTexture{};
+  GLuint whiteTexture{};
 };
 
-void takeScreenshot(SDL_Renderer* renderer)
+void takeScreenshot()
 {
   static int counter;
-  int w, h;
-  SDL_GetRendererOutputSize(renderer, &w, &h);
-  SDL_Surface* sshot = SDL_CreateRGBSurface(0, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
-  SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_ARGB8888, sshot->pixels, sshot->pitch);
-  char filename[256];
-  snprintf(filename, sizeof filename, "screenshot-%03d.bmp", counter++);
-  SDL_SaveBMP(sshot, filename);
-  SDL_FreeSurface(sshot);
 
-  fprintf(stderr, "Saved screenshot to: %s\n", filename);
+  int width = g_ScreenSize.x;
+  int height = g_ScreenSize.y;
+
+  SDL_Surface* sshot = SDL_CreateRGBSurface(0, width, height, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+
+  uint8_t* pixels = (uint8_t*)sshot->pixels;
+
+  glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+  // reverse upside down
+  {
+    const auto rowSize = width * 4;
+    std::vector<uint8_t> rowBuf(rowSize);
+
+    for(int row = 0; row < height / 2; ++row)
+    {
+      const auto rowLo = row;
+      const auto rowHi = height - 1 - row;
+      auto pRowLo = pixels + rowLo * rowSize;
+      auto pRowHi = pixels + rowHi * rowSize;
+      memcpy(rowBuf.data(), pRowLo, rowSize);
+      memcpy(pRowLo, pRowHi, rowSize);
+      memcpy(pRowHi, rowBuf.data(), rowSize);
+    }
+  }
+
+  // save to BMP file
+  {
+    char filename[256];
+    snprintf(filename, sizeof filename, "screenshot-%03d.bmp", counter++);
+    SDL_SaveBMP(sshot, filename);
+    fprintf(stderr, "Saved screenshot to: %s\n", filename);
+  }
+
+  SDL_FreeSurface(sshot);
 }
 
-void drawScreen(SDL_Renderer* renderer, IApp* app)
+void drawScreen(IApp* app)
 {
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-  SDL_RenderClear(renderer);
+  glClearColor(0, 0, 0, 0);
+  glClear(GL_COLOR_BUFFER_BIT);
 
-  SdlDrawer drawer;
-  drawer.renderer = renderer;
+  OpenGlDrawer drawer;
   app->draw(&drawer);
+  drawer.flush();
 
   if(gMustScreenShot)
   {
-    takeScreenshot(renderer);
+    takeScreenshot();
     gMustScreenShot = false;
   }
-
-  SDL_RenderPresent(renderer);
 }
 
 Key fromSdlKey(int key)
@@ -258,7 +437,10 @@ bool readInput(IApp* app, bool& reset)
     else if(event.type == SDL_WINDOWEVENT)
     {
       if(event.window.event == SDL_WINDOWEVENT_RESIZED)
+      {
         g_ScreenSize = {(float)event.window.data1, (float)event.window.data2};
+        glViewport(0, 0, g_ScreenSize.x, g_ScreenSize.y);
+      }
     }
     else if(event.type == SDL_MOUSEWHEEL)
     {
@@ -292,69 +474,182 @@ int registerApp(const char* name, CreationFunc* func)
   return 0;
 }
 
-int main(int argc, char* argv[])
+static const char* vertex_shader = R"(#version 130
+in vec2 pos;
+in vec2 uv;
+in vec4 color;
+out vec4 v_color;
+out vec2 v_uv;
+void main()
 {
-  try
+    v_color = color;
+    v_uv = uv;
+    gl_Position = vec4( pos, 0.0, 1.0 );
+}
+)";
+
+static const char* fragment_shader = R"(#version 130
+uniform sampler2D diffuse;
+in vec4 v_color;
+in vec2 v_uv;
+out vec4 o_color;
+void main()
+{
+    o_color = v_color * texture(diffuse, v_uv);
+}
+)";
+
+int createShaderStage(int type, const char* code)
+{
+  auto vs = glCreateShader(type);
+
+  glShaderSource(vs, 1, &code, nullptr);
+  glCompileShader(vs);
+
+  GLint status;
+  glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
+  if(!status)
+    throw std::runtime_error("Shader compilation error");
+
+  return vs;
+}
+
+int createShaderProgram()
+{
+  auto vs = createShaderStage(GL_VERTEX_SHADER, vertex_shader);
+  auto fs = createShaderStage(GL_FRAGMENT_SHADER, fragment_shader);
+
+  auto program = glCreateProgram();
+  glAttachShader(program, vs);
+  glAttachShader(program, fs);
+
+  glBindAttribLocation(program, attrib_position, "pos");
+  glBindAttribLocation(program, attrib_color, "color");
+  glBindAttribLocation(program, attrib_uv, "uv");
+  glLinkProgram(program);
+
+  glDeleteShader(vs);
+  glDeleteShader(fs);
+
+  return program;
+}
+
+struct SdlMainFrame
+{
+  SdlMainFrame(const char* windowTitle)
   {
-    std::string appName = "MainMenu";
-
-    if(argc >= 2)
-      appName = argv[1];
-
-    auto i_func = Registry().find(appName);
-
-    if(i_func == Registry().end())
-    {
-      fprintf(stderr, "Unknown app: '%s'\n", appName.c_str());
-      fprintf(stderr, "Available apps:\n");
-
-      for(auto& app : Registry())
-        fprintf(stderr, "  %s\n", app.first.c_str());
-
-      return 1;
-    }
-
     if(SDL_Init(SDL_INIT_VIDEO) != 0)
       throw std::runtime_error("Can't init SDL");
 
-    SDL_Window* window;
-    SDL_Renderer* renderer;
+    g_ScreenSize = {1280, 720};
 
-    const int WIDTH = 1280;
-    const int HEIGHT = 720;
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-    g_ScreenSize = {(float)WIDTH, (float)HEIGHT};
-    if(SDL_CreateWindowAndRenderer(WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer) != 0)
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+
+    window = SDL_CreateWindow("Minimal", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, g_ScreenSize.x, g_ScreenSize.y,
+          SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+
+    if(!window)
     {
       SDL_Quit();
       throw std::runtime_error("Can't create window");
     }
 
-    SDL_SetWindowTitle(window, appName.c_str());
-    CreationFunc* func = Registry()[appName];
-    auto app = std::unique_ptr<IApp>(func());
-
-    bool reset = false;
-
-    while(readInput(app.get(), reset))
+    context = SDL_GL_CreateContext(window);
+    if(!context)
     {
-      if(reset)
-      {
-        app.reset(func());
-        reset = false;
-      }
-
-      const float alpha = 0.8;
-      g_Camera.pos = lerp(g_TargetCamera.pos, g_Camera.pos, alpha);
-      g_Camera.scale = lerp(g_TargetCamera.scale, g_Camera.scale, alpha);
-
-      app->tick();
-      drawScreen(renderer, app.get());
-
-      SDL_Delay(10);
+      SDL_Quit();
+      throw std::runtime_error("Can't create OpenGL context");
     }
 
+    // create our unique vertex array
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    // create our unique shader, and select it
+    shaderProgram = createShaderProgram();
+    glUseProgram(shaderProgram);
+
+    SDL_SetWindowTitle(window, windowTitle);
+  }
+
+  ~SdlMainFrame()
+  {
+    glUseProgram(0);
+    glDeleteProgram(shaderProgram);
+    glBindVertexArray(0);
+    glDeleteVertexArrays(1, &vao);
+
+    SDL_GL_DeleteContext(context);
+    SDL_DestroyWindow(window);
     SDL_Quit();
+  }
+
+  void flush() { SDL_GL_SwapWindow(window); }
+
+private:
+  SDL_Window* window{};
+  SDL_GLContext context{};
+  GLuint shaderProgram{};
+  GLuint vao{};
+};
+
+void safeMain(span<const char*> args)
+{
+  std::string appName = "MainMenu";
+
+  if(args.len >= 2)
+    appName = args[1];
+
+  auto i_func = Registry().find(appName);
+
+  if(i_func == Registry().end())
+  {
+    fprintf(stderr, "Unknown app: '%s'\n", appName.c_str());
+    fprintf(stderr, "Available apps:\n");
+
+    for(auto& app : Registry())
+      fprintf(stderr, "  %s\n", app.first.c_str());
+
+    throw std::runtime_error("Unknown app");
+  }
+
+  SdlMainFrame mainFrame(("GeomSandbox: " + appName).c_str());
+
+  CreationFunc* func = Registry()[appName];
+  auto app = std::unique_ptr<IApp>(func());
+
+  bool reset = false;
+
+  while(readInput(app.get(), reset))
+  {
+    if(reset)
+    {
+      app.reset(func());
+      reset = false;
+    }
+
+    const float alpha = 0.8;
+    g_Camera.pos = lerp(g_TargetCamera.pos, g_Camera.pos, alpha);
+    g_Camera.scale = lerp(g_TargetCamera.scale, g_Camera.scale, alpha);
+
+    app->tick();
+    drawScreen(app.get());
+
+    mainFrame.flush();
+
+    SDL_Delay(10);
+  }
+}
+
+int main(int argc, const char* argv[])
+{
+  try
+  {
+    safeMain({(size_t)argc, argv});
     return 0;
   }
   catch(const std::exception& e)

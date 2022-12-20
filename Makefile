@@ -9,6 +9,7 @@ all: true_all
 TARGETS+=$(BIN)/GeomSandbox.exe
 
 PKGS+=sdl2
+PKGS+=gl
 
 HOST:=$(shell $(CXX) -dumpmachine | sed 's/.*-//')
 
