@@ -6,6 +6,7 @@
 
 struct NullVisualizer : IVisualizer
 {
+  void line(Vec3, Vec3, Color){};
   void line(Vec2, Vec2, Color){};
   void rect(Vec2, Vec2, Color){};
   void circle(Vec2, float, Color){};

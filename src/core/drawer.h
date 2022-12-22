@@ -23,4 +23,6 @@ struct IDrawer
   virtual void rect(Vec2 a, Vec2 b, Color color = White) = 0;
   virtual void circle(Vec2 center, float radius, Color color = White) = 0;
   virtual void text(Vec2 pos, const char* text, Color color = White) = 0;
+
+  virtual void line(Vec3 a, Vec3 b, Color color = White) = 0;
 };

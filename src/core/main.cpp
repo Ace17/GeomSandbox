@@ -16,6 +16,7 @@
 #include "drawer.h"
 #include "font.h"
 #include "geom.h"
+#include "matrix4.h"
 
 #define GL_GLEXT_PROTOTYPES
 
@@ -25,8 +26,9 @@
 
 struct Camera
 {
-  Vec2 pos{};
-  float scale = 60.0f;
+  Vec3 pos{0, 0, +24};
+  float scale = 0.06f;
+  bool perspective = false;
 };
 
 Camera g_Camera;
@@ -55,8 +57,8 @@ Vec2 reverseTransform(SDL_Point p)
 {
   Vec2 v = screenCoordsToViewportCoords(p);
 
-  v.x *= g_ScreenSize.x;
-  v.y *= g_ScreenSize.y;
+  const auto aspectRatio = g_ScreenSize.x / g_ScreenSize.y;
+  v.x *= aspectRatio;
 
   v.x = v.x / g_Camera.scale + g_Camera.pos.x;
   v.y = v.y / g_Camera.scale + g_Camera.pos.y;
@@ -128,7 +130,7 @@ int createWhiteTexture()
 
 struct Vertex
 {
-  float x, y;
+  float x, y, z;
   float u, v;
   float r, g, b, a;
 };
@@ -141,8 +143,8 @@ enum
 };
 
 static const char* vertex_shader = R"(#version 130
-uniform mat3x3 mvp;
-in vec2 pos;
+uniform mat4x4 mvp;
+in vec3 pos;
 in vec2 uv;
 in vec4 color;
 out vec4 v_color;
@@ -151,8 +153,7 @@ void main()
 {
     v_color = color;
     v_uv = uv;
-    vec3 transformedPos = mvp * vec3(pos, 1);
-    gl_Position = vec4(transformedPos.xy, 0.0, 1.0 );
+    gl_Position = mvp * vec4(pos, 1);
 }
 )";
 
@@ -225,6 +226,7 @@ struct OpenGlDrawer : IDrawer
   }
 
   void line(Vec2 a, Vec2 b, Color color) override { rawLine(a, b, color); }
+  void line(Vec3 a, Vec3 b, Color color) override { rawLine(a, b, color); }
 
   void rect(Vec2 a, Vec2 b, Color color) override
   {
@@ -259,7 +261,7 @@ struct OpenGlDrawer : IDrawer
     }
   }
 
-  static constexpr float fontSize = 32;
+  static constexpr float fontSize = 0.032;
 
   void text(Vec2 pos, const char* text, Color color) override
   {
@@ -275,8 +277,14 @@ struct OpenGlDrawer : IDrawer
 
   void rawLine(Vec2 A, Vec2 B, Color color)
   {
-    cpuVbo_Lines.push_back({A.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
-    cpuVbo_Lines.push_back({B.x, B.y, 0, 0, color.r, color.g, color.b, color.a});
+    cpuVbo_Lines.push_back({A.x, A.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    cpuVbo_Lines.push_back({B.x, B.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+  }
+
+  void rawLine(Vec3 A, Vec3 B, Color color)
+  {
+    cpuVbo_Lines.push_back({A.x, A.y, A.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    cpuVbo_Lines.push_back({B.x, B.y, B.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
   }
 
   void rawChar(Vec2 POS, char c, Color color)
@@ -297,31 +305,41 @@ struct OpenGlDrawer : IDrawer
 
     POS.y -= H;
 
-    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, u0, v0, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, u1, v1, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + W, POS.y + 0, u1, v0, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + W, POS.y + 0, 1, /* uv */ u1, v0, color.r, color.g, color.b, color.a});
 
-    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, u0, v0, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + H, u0, v1, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, u1, v1, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + H, 1, /* uv */ u0, v1, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
   }
 
   void flush()
   {
     const int mvpLoc = glGetUniformLocation(shaderProgram, "mvp");
+    const auto aspectRatio = g_ScreenSize.x / g_ScreenSize.y;
 
     // setup transform
     {
-      float M[3][3] = {};
-      M[0][0] = M[1][1] = M[2][2] = 1;
+      Matrix4f M;
+      if(g_Camera.perspective)
+      {
+        const auto zNear = 0.1;
+        const auto zFar = 100;
 
-      M[0][0] = g_Camera.scale / g_ScreenSize.x;
-      M[1][1] = g_Camera.scale / g_ScreenSize.y;
+        const auto V = translate(-1 * g_Camera.pos);
+        const auto P = perspective(M_PI * 0.5, aspectRatio, zNear, zFar);
 
-      M[2][0] = -g_Camera.pos.x * (g_Camera.scale / g_ScreenSize.x);
-      M[2][1] = -g_Camera.pos.y * (g_Camera.scale / g_ScreenSize.y);
-
-      glUniformMatrix3fv(mvpLoc, 1, GL_FALSE, &M[0][0]);
+        M = P * V;
+      }
+      else
+      {
+        const auto scaleX = g_Camera.scale / aspectRatio;
+        const auto scaleY = g_Camera.scale;
+        M = scale(Vec3{scaleX, scaleY, 0}) * translate(-1 * g_Camera.pos);
+      }
+      M = transpose(M); // make the matrix column-major
+      glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, &M[0][0]);
     }
 
     glUseProgram(shaderProgram);
@@ -335,7 +353,7 @@ struct OpenGlDrawer : IDrawer
     glActiveTexture(GL_TEXTURE0);
 
     glEnableVertexAttribArray(attrib_position);
-    glVertexAttribPointer(attrib_position, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
+    glVertexAttribPointer(attrib_position, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
 
     glEnableVertexAttribArray(attrib_color);
     glVertexAttribPointer(attrib_color, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, r));
@@ -472,16 +490,25 @@ bool readInput(IApp* app, bool& reset)
         g_TargetCamera.scale = g_Camera.scale / scaleSpeed;
         break;
       case SDLK_KP_4:
-        g_TargetCamera.pos = g_Camera.pos + Vec2(-scrollSpeed, 0);
+        g_TargetCamera.pos = g_Camera.pos + Vec3(-scrollSpeed, 0, 0);
+        break;
+      case SDLK_KP_5:
+        g_Camera.perspective = !g_Camera.perspective;
         break;
       case SDLK_KP_6:
-        g_TargetCamera.pos = g_Camera.pos + Vec2(+scrollSpeed, 0);
+        g_TargetCamera.pos = g_Camera.pos + Vec3(+scrollSpeed, 0, 0);
         break;
       case SDLK_KP_2:
-        g_TargetCamera.pos = g_Camera.pos + Vec2(0, -scrollSpeed);
+        g_TargetCamera.pos = g_Camera.pos + Vec3(0, -scrollSpeed, 0);
         break;
       case SDLK_KP_8:
-        g_TargetCamera.pos = g_Camera.pos + Vec2(0, +scrollSpeed);
+        g_TargetCamera.pos = g_Camera.pos + Vec3(0, +scrollSpeed, 0);
+        break;
+      case SDLK_KP_1:
+        g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, +scrollSpeed);
+        break;
+      case SDLK_KP_7:
+        g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, -scrollSpeed);
         break;
       case SDLK_F2:
         reset = true;
@@ -507,7 +534,8 @@ bool readInput(IApp* app, bool& reset)
     {
       int mouseX, mouseY;
       SDL_GetMouseState(&mouseX, &mouseY);
-      const Vec2 mousePos = reverseTransform(SDL_Point{mouseX, mouseY});
+      const Vec2 mousePos2d = reverseTransform(SDL_Point{mouseX, mouseY});
+      const Vec3 mousePos = {mousePos2d.x, mousePos2d.y, 0};
 
       if(event.wheel.y)
       {

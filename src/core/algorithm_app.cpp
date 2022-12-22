@@ -9,6 +9,8 @@
 
 namespace
 {
+Vec3 to3d(Vec2 v) { return {v.x, v.y, 0}; }
+
 int64_t getSteadyClockMs()
 {
   using namespace std::chrono;
@@ -27,7 +29,7 @@ struct Visualizer : IVisualizer
 {
   struct VisualLine
   {
-    Vec2 a, b;
+    Vec3 a, b;
     Color color;
   };
 
@@ -66,7 +68,8 @@ struct Visualizer : IVisualizer
   void rect(Vec2 a, Vec2 b, Color color) { m_screen.rects.push_back({a, b, color}); }
   void circle(Vec2 center, float radius, Color color) { m_screen.circles.push_back({center, radius, color}); }
   void text(Vec2 pos, const char* text, Color color) { m_screen.texts.push_back({pos, text, color}); }
-  void line(Vec2 a, Vec2 b, Color c) override { m_screen.lines.push_back({a, b, c}); }
+  void line(Vec2 a, Vec2 b, Color c) override { m_screen.lines.push_back({to3d(a), to3d(b), c}); }
+  void line(Vec3 a, Vec3 b, Color c) override { m_screen.lines.push_back({a, b, c}); }
   void printf(const char* fmt, va_list args)
   {
     char buffer[4096]{};
