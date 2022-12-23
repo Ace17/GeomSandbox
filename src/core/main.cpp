@@ -41,19 +41,6 @@ T lerp(T a, T b, float alpha)
   return a * (1.0f - alpha) + b * alpha;
 }
 
-// 'logical' to 'screen' coordinates
-Vec2 transform(Vec2 v)
-{
-  Vec2 r;
-  r.x = (v.x - g_Camera.pos.x) * g_Camera.scale;
-  r.y = (v.y - g_Camera.pos.y) * g_Camera.scale;
-
-  r.x /= g_ScreenSize.x;
-  r.y /= g_ScreenSize.y;
-
-  return r;
-};
-
 Vec2 screenCoordsToViewportCoords(SDL_Point p)
 {
   const auto halfScreenSize = g_ScreenSize * 0.5;
@@ -153,6 +140,68 @@ enum
   attrib_uv,
 };
 
+static const char* vertex_shader = R"(#version 130
+uniform mat3x3 mvp;
+in vec2 pos;
+in vec2 uv;
+in vec4 color;
+out vec4 v_color;
+out vec2 v_uv;
+void main()
+{
+    v_color = color;
+    v_uv = uv;
+    vec3 transformedPos = mvp * vec3(pos, 1);
+    gl_Position = vec4(transformedPos.xy, 0.0, 1.0 );
+}
+)";
+
+static const char* fragment_shader = R"(#version 130
+uniform sampler2D diffuse;
+in vec4 v_color;
+in vec2 v_uv;
+out vec4 o_color;
+void main()
+{
+    o_color = v_color * texture(diffuse, v_uv);
+}
+)";
+
+int createShaderStage(int type, const char* code)
+{
+  auto vs = glCreateShader(type);
+
+  glShaderSource(vs, 1, &code, nullptr);
+  glCompileShader(vs);
+
+  GLint status;
+  glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
+  if(!status)
+    throw std::runtime_error("Shader compilation error");
+
+  return vs;
+}
+
+int createShaderProgram()
+{
+  auto vs = createShaderStage(GL_VERTEX_SHADER, vertex_shader);
+  auto fs = createShaderStage(GL_FRAGMENT_SHADER, fragment_shader);
+
+  auto program = glCreateProgram();
+  glAttachShader(program, vs);
+  glAttachShader(program, fs);
+
+  glBindAttribLocation(program, attrib_position, "pos");
+  glBindAttribLocation(program, attrib_color, "color");
+  glBindAttribLocation(program, attrib_uv, "uv");
+  glLinkProgram(program);
+
+  glDeleteShader(vs);
+  glDeleteShader(fs);
+
+  return program;
+}
+
 struct OpenGlDrawer : IDrawer
 {
   OpenGlDrawer()
@@ -161,28 +210,26 @@ struct OpenGlDrawer : IDrawer
 
     fontTexture = createFontTexture();
     whiteTexture = createWhiteTexture();
+
+    shaderProgram = createShaderProgram();
   }
 
   ~OpenGlDrawer()
   {
-    glDeleteBuffers(1, &gpuVbo);
+    glDeleteProgram(shaderProgram);
 
     glDeleteTextures(1, &fontTexture);
     glDeleteTextures(1, &whiteTexture);
+
+    glDeleteBuffers(1, &gpuVbo);
   }
 
-  void line(Vec2 a, Vec2 b, Color color) override
-  {
-    const auto A = transform(a);
-    const auto B = transform(b);
-
-    rawLine(A, B, color);
-  }
+  void line(Vec2 a, Vec2 b, Color color) override { rawLine(a, b, color); }
 
   void rect(Vec2 a, Vec2 b, Color color) override
   {
-    const auto A = transform(a);
-    const auto B = transform(a + b);
+    const auto A = a;
+    const auto B = a + b;
 
     cpuVbo_Lines.push_back({A.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
     cpuVbo_Lines.push_back({B.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
@@ -206,7 +253,7 @@ struct OpenGlDrawer : IDrawer
 
     for(int i = 0; i <= N; ++i)
     {
-      auto A = transform(center + direction(i * 2 * M_PI / N) * radius);
+      auto A = center + direction(i * 2 * M_PI / N) * radius;
 
       if(i > 0)
         rawLine(PREV, A, color);
@@ -215,17 +262,16 @@ struct OpenGlDrawer : IDrawer
     }
   }
 
-  static constexpr float fontSize = 16;
+  static constexpr float fontSize = 32;
 
   void text(Vec2 pos, const char* text, Color color) override
   {
-    const auto W = fontSize / (g_ScreenSize.x / 2);
-    auto POS = transform(pos);
+    const auto W = fontSize / g_Camera.scale;
 
     while(*text)
     {
-      rawChar(POS, *text, color);
-      POS.x += W;
+      rawChar(pos, *text, color);
+      pos.x += W;
       ++text;
     }
   }
@@ -249,8 +295,8 @@ struct OpenGlDrawer : IDrawer
     const float v0 = (row + 1.0f) / rows;
     const float v1 = (row + 0.0f) / rows;
 
-    const auto W = fontSize / (g_ScreenSize.x / 2);
-    const auto H = fontSize / (g_ScreenSize.y / 2);
+    const auto W = fontSize / g_Camera.scale;
+    const auto H = fontSize / g_Camera.scale;
 
     POS.y -= H;
 
@@ -265,6 +311,24 @@ struct OpenGlDrawer : IDrawer
 
   void flush()
   {
+    const int mvpLoc = glGetUniformLocation(shaderProgram, "mvp");
+
+    // setup transform
+    {
+      float M[3][3] = {};
+      M[0][0] = M[1][1] = M[2][2] = 1;
+
+      M[0][0] = g_Camera.scale / g_ScreenSize.x;
+      M[1][1] = g_Camera.scale / g_ScreenSize.y;
+
+      M[2][0] = -g_Camera.pos.x * (g_Camera.scale / g_ScreenSize.x);
+      M[2][1] = -g_Camera.pos.y * (g_Camera.scale / g_ScreenSize.y);
+
+      glUniformMatrix3fv(mvpLoc, 1, GL_FALSE, &M[0][0]);
+    }
+
+    glUseProgram(shaderProgram);
+
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -295,6 +359,7 @@ struct OpenGlDrawer : IDrawer
   }
 
   private:
+  GLuint shaderProgram{};
   GLuint gpuVbo;
   std::vector<Vertex> cpuVbo_Lines;
   std::vector<Vertex> cpuVbo_Triangles;
@@ -343,12 +408,11 @@ void takeScreenshot()
   SDL_FreeSurface(sshot);
 }
 
-void drawScreen(IApp* app)
+void drawScreen(OpenGlDrawer& drawer, IApp* app)
 {
   glClearColor(0, 0, 0, 0);
   glClear(GL_COLOR_BUFFER_BIT);
 
-  OpenGlDrawer drawer;
   app->draw(&drawer);
   drawer.flush();
 
@@ -474,66 +538,6 @@ int registerApp(const char* name, CreationFunc* func)
   return 0;
 }
 
-static const char* vertex_shader = R"(#version 130
-in vec2 pos;
-in vec2 uv;
-in vec4 color;
-out vec4 v_color;
-out vec2 v_uv;
-void main()
-{
-    v_color = color;
-    v_uv = uv;
-    gl_Position = vec4( pos, 0.0, 1.0 );
-}
-)";
-
-static const char* fragment_shader = R"(#version 130
-uniform sampler2D diffuse;
-in vec4 v_color;
-in vec2 v_uv;
-out vec4 o_color;
-void main()
-{
-    o_color = v_color * texture(diffuse, v_uv);
-}
-)";
-
-int createShaderStage(int type, const char* code)
-{
-  auto vs = glCreateShader(type);
-
-  glShaderSource(vs, 1, &code, nullptr);
-  glCompileShader(vs);
-
-  GLint status;
-  glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
-  if(!status)
-    throw std::runtime_error("Shader compilation error");
-
-  return vs;
-}
-
-int createShaderProgram()
-{
-  auto vs = createShaderStage(GL_VERTEX_SHADER, vertex_shader);
-  auto fs = createShaderStage(GL_FRAGMENT_SHADER, fragment_shader);
-
-  auto program = glCreateProgram();
-  glAttachShader(program, vs);
-  glAttachShader(program, fs);
-
-  glBindAttribLocation(program, attrib_position, "pos");
-  glBindAttribLocation(program, attrib_color, "color");
-  glBindAttribLocation(program, attrib_uv, "uv");
-  glLinkProgram(program);
-
-  glDeleteShader(vs);
-  glDeleteShader(fs);
-
-  return program;
-}
-
 struct SdlMainFrame
 {
   SdlMainFrame(const char* windowTitle)
@@ -569,17 +573,13 @@ struct SdlMainFrame
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    // create our unique shader, and select it
-    shaderProgram = createShaderProgram();
-    glUseProgram(shaderProgram);
-
     SDL_SetWindowTitle(window, windowTitle);
   }
 
   ~SdlMainFrame()
   {
     glUseProgram(0);
-    glDeleteProgram(shaderProgram);
+
     glBindVertexArray(0);
     glDeleteVertexArrays(1, &vao);
 
@@ -590,10 +590,9 @@ struct SdlMainFrame
 
   void flush() { SDL_GL_SwapWindow(window); }
 
-private:
+  private:
   SDL_Window* window{};
   SDL_GLContext context{};
-  GLuint shaderProgram{};
   GLuint vao{};
 };
 
@@ -619,6 +618,8 @@ void safeMain(span<const char*> args)
 
   SdlMainFrame mainFrame(("GeomSandbox: " + appName).c_str());
 
+  OpenGlDrawer drawer;
+
   CreationFunc* func = Registry()[appName];
   auto app = std::unique_ptr<IApp>(func());
 
@@ -637,7 +638,7 @@ void safeMain(span<const char*> args)
     g_Camera.scale = lerp(g_TargetCamera.scale, g_Camera.scale, alpha);
 
     app->tick();
-    drawScreen(app.get());
+    drawScreen(drawer, app.get());
 
     mainFrame.flush();
 
