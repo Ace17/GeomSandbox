@@ -231,17 +231,15 @@ struct OpenGlDrawer : IDrawer
     const auto A = a;
     const auto B = a + b;
 
-    cpuVbo_Lines.push_back({A.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
-    cpuVbo_Lines.push_back({B.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
+    const auto P0 = Vec2(A.x, A.y);
+    const auto P1 = Vec2(B.x, A.y);
+    const auto P2 = Vec2(B.x, B.y);
+    const auto P3 = Vec2(A.x, B.y);
 
-    cpuVbo_Lines.push_back({B.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
-    cpuVbo_Lines.push_back({B.x, B.y, 0, 0, color.r, color.g, color.b, color.a});
-
-    cpuVbo_Lines.push_back({B.x, B.y, 0, 0, color.r, color.g, color.b, color.a});
-    cpuVbo_Lines.push_back({A.x, B.y, 0, 0, color.r, color.g, color.b, color.a});
-
-    cpuVbo_Lines.push_back({A.x, B.y, 0, 0, color.r, color.g, color.b, color.a});
-    cpuVbo_Lines.push_back({A.x, A.y, 0, 0, color.r, color.g, color.b, color.a});
+    rawLine(P0, P1, color);
+    rawLine(P1, P2, color);
+    rawLine(P2, P3, color);
+    rawLine(P3, P0, color);
   }
 
   static Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
