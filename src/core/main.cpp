@@ -242,8 +242,6 @@ struct OpenGlDrawer : IDrawer
     rawLine(P3, P0, color);
   }
 
-  static Vec2 direction(float angle) { return Vec2(cos(angle), sin(angle)); }
-
   void circle(Vec2 center, float radius, Color color)
   {
     auto const N = 20;
@@ -251,7 +249,8 @@ struct OpenGlDrawer : IDrawer
 
     for(int i = 0; i <= N; ++i)
     {
-      auto A = center + direction(i * 2 * M_PI / N) * radius;
+      const auto angle = i * 2 * M_PI / N;
+      auto A = center + Vec2(cos(angle), sin(angle)) * radius;
 
       if(i > 0)
         rawLine(PREV, A, color);
