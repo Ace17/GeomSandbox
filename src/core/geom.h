@@ -167,6 +167,14 @@ struct span
     ptr = s.data();
     len = s.size();
   }
+
+  // construction from static array
+  template<size_t N>
+  span(T (&tab)[N])
+  {
+    ptr = tab;
+    len = N;
+  }
 };
 
 ///////////////////////////////////////////////////////////////////////////////

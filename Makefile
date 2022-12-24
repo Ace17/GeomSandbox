@@ -39,6 +39,7 @@ SRCS+=\
 			src/app_subtract.cpp\
 			src/collide2d.cpp\
 			src/app_example.cpp\
+			src/app_portals_2d.cpp\
 			src/app_main.cpp\
 
 # Algos
