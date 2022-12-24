@@ -40,6 +40,13 @@ struct SpinningCube : IApp
       Vec3 orig = v;
       v.z = orig.z * cos(angle) - orig.x * sin(angle);
       v.x = orig.z * sin(angle) + orig.x * cos(angle);
+
+      const auto angle2 = angle * 0.5;
+
+      orig = v;
+      v.x = orig.x * cos(angle2) - orig.y * sin(angle2);
+      v.y = orig.x * sin(angle2) + orig.y * cos(angle2);
+
       v = v * 5;
     }
 
