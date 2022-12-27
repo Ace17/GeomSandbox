@@ -50,86 +50,152 @@ World createWorld()
 {
   World world;
 
-  world.segments.resize(32 + 4 * 2);
+  Vec2 P[44];
+  P[0] = {4, 0};
+  P[1] = {14, 0};
+  P[2] = {0, 2};
+  P[3] = {4, 2};
+  P[4] = {6, 2};
+  P[5] = {8, 2};
+  P[6] = {10, 2};
+  P[7] = {12, 2};
+  P[8] = {14, 2};
+  P[9] = {7, 3};
+  P[10] = {8, 3};
+  P[11] = {10, 3};
+  P[12] = {11, 3};
+  P[13] = {0, 5};
+  P[14] = {2, 5};
+  P[15] = {4, 5};
+  P[16] = {6, 5};
+  P[17] = {0, 6};
+  P[18] = {2, 6};
+  P[19] = {4, 6};
+  P[20] = {6, 6};
+  P[21] = {7, 6};
+  P[22] = {11, 6};
+  P[23] = {12, 6};
+  P[24] = {0, 10};
+  P[25] = {2, 10};
+  P[26] = {4, 10};
+  P[27] = {6, 10};
+  P[28] = {0, 11};
+  P[29] = {2, 11};
+  P[30] = {4, 11};
+  P[31] = {5, 11};
+  P[32] = {5, 12};
+  P[33] = {6, 12};
+  P[34] = {11, 12};
+  P[35] = {12, 12};
+  P[36] = {5, 14};
+  P[37] = {6, 14};
+  P[38] = {0, 16};
+  P[39] = {5, 16};
+  P[40] = {6, 16};
+  P[41] = {11, 16};
+  P[42] = {12, 16};
+  P[43] = {14, 16};
 
-  // bottom wall
-  world.segments[0] = {{0, 0}, {3, 0}};
-  world.segments[1] = {{3, 0}, {3, 1}};
-  world.segments[2] = {{3, 1}, {4, 1}};
-  world.segments[3] = {{4, 1}, {4, 0}};
-  world.segments[4] = {{4, 0}, {7, 0}};
+  world.segments.resize(60);
 
-  // top wall
-  world.segments[5] = {{0, 7}, {3, 7}};
-  world.segments[6] = {{3, 7}, {3, 6}};
-  world.segments[7] = {{3, 6}, {4, 6}};
-  world.segments[8] = {{4, 6}, {4, 7}};
-  world.segments[9] = {{4, 7}, {7, 7}};
+  world.segments[0] = {P[2], P[3]};
+  world.segments[1] = {P[3], P[0]};
+  world.segments[2] = {P[0], P[1]};
+  world.segments[3] = {P[1], P[8]};
+  world.segments[4] = {P[7], P[8]};
+  world.segments[5] = {P[7], P[6]};
+  world.segments[6] = {P[5], P[6]};
+  world.segments[7] = {P[4], P[5]};
+  world.segments[8] = {P[3], P[4]};
+  world.segments[9] = {P[2], P[13]};
+  world.segments[10] = {P[13], P[14]};
+  world.segments[11] = {P[14], P[18]};
+  world.segments[12] = {P[18], P[19]};
+  world.segments[13] = {P[19], P[15]};
+  world.segments[14] = {P[15], P[16]};
+  world.segments[15] = {P[16], P[4]};
+  world.segments[16] = {P[5], P[10]};
+  world.segments[17] = {P[6], P[11]};
+  world.segments[18] = {P[7], P[23]};
+  world.segments[19] = {P[9], P[10]};
+  world.segments[20] = {P[11], P[12]};
+  world.segments[21] = {P[9], P[21]};
+  world.segments[22] = {P[17], P[18]};
+  world.segments[23] = {P[19], P[20]};
+  world.segments[24] = {P[20], P[21]};
+  world.segments[25] = {P[22], P[23]};
+  world.segments[26] = {P[17], P[24]};
+  world.segments[27] = {P[20], P[27]};
+  world.segments[28] = {P[23], P[35]};
+  world.segments[29] = {P[24], P[25]};
+  world.segments[30] = {P[25], P[26]};
+  world.segments[31] = {P[26], P[27]};
+  world.segments[32] = {P[25], P[29]};
+  world.segments[33] = {P[26], P[30]};
+  world.segments[34] = {P[27], P[33]};
+  world.segments[35] = {P[28], P[29]};
+  world.segments[36] = {P[30], P[31]};
+  world.segments[37] = {P[31], P[32]};
+  world.segments[38] = {P[28], P[38]};
+  world.segments[39] = {P[32], P[33]};
+  world.segments[40] = {P[34], P[35]};
+  world.segments[41] = {P[36], P[39]};
+  world.segments[42] = {P[36], P[37]};
+  world.segments[43] = {P[34], P[41]};
+  world.segments[44] = {P[35], P[42]};
+  world.segments[45] = {P[37], P[40]};
+  world.segments[46] = {P[38], P[39]};
+  world.segments[47] = {P[40], P[41]};
+  world.segments[48] = {P[42], P[43]};
+  world.segments[49] = {P[8], P[43]};
+  world.segments[50] = {P[22], P[12]};
+  world.segments[51] = {P[33], P[37]};
+  world.segments[52] = {P[37], P[33]};
+  world.segments[53] = {P[26], P[25]};
+  world.segments[54] = {P[19], P[18]};
 
-  // left wall
-  world.segments[10] = {{0, 0}, {0, 3}};
-  world.segments[11] = {{0, 3}, {1, 3}};
-  world.segments[12] = {{1, 3}, {1, 4}};
-  world.segments[13] = {{1, 4}, {0, 4}};
-  world.segments[14] = {{0, 4}, {0, 7}};
+  world.segments[55] = {P[8], P[7]};
+  world.segments[56] = {P[6], P[5]};
+  world.segments[57] = {P[4], P[3]};
 
-  // right wall
-  world.segments[15] = {{7, 0}, {7, 3}};
-  world.segments[16] = {{7, 3}, {6, 3}};
-  world.segments[17] = {{6, 3}, {6, 4}};
-  world.segments[18] = {{6, 4}, {7, 4}};
-  world.segments[19] = {{7, 4}, {7, 7}};
+  world.segments[58] = {P[27], P[20]};
+  world.segments[59] = {P[35], P[23]};
 
-  // cross
-  world.segments[20] = {{2.5, 3}, {3, 3}};
-  world.segments[21] = {{3, 3}, {3, 2.5}};
-  world.segments[22] = {{3, 2.5}, {4, 2.5}};
-  world.segments[23] = {{4, 2.5}, {4, 3}};
-  world.segments[24] = {{4, 3}, {4.5, 3}};
-  world.segments[25] = {{4.5, 3}, {4.5, 4}};
-  world.segments[26] = {{4.5, 4}, {4, 4}};
-  world.segments[27] = {{4, 4}, {4, 4.5}};
-  world.segments[28] = {{4, 4.5}, {3, 4.5}};
-  world.segments[29] = {{3, 4.5}, {3, 4}};
-  world.segments[30] = {{3, 4}, {2.5, 4}};
-  world.segments[31] = {{2.5, 4}, {2.5, 3}};
+  world.cells.resize(6);
+  world.cells[0].walls = {46, 38, 35, 32, 33, 36, 37, 39, 42, 41};
+  world.cells[0].portals = {{30, 1}, {51, 3}};
+  world.cells[0].detector = {{0, 10}, {6, 16}};
 
-  world.segments[32] = {{4, 1}, {4, 2.5}};
-  world.segments[33] = {{1, 4}, {2.5, 4}};
-  world.segments[34] = {{3, 4.5}, {3, 6}};
-  world.segments[35] = {{4.5, 3}, {6, 3}};
-  world.segments[36] = {{4, 2.5}, {4, 1}};
-  world.segments[37] = {{2.5, 4}, {1, 4}};
-  world.segments[38] = {{3, 6}, {3, 4.5}};
-  world.segments[39] = {{6, 3}, {4.5, 3}};
+  world.cells[1].walls = {29, 31, 26, 22, 23};
+  world.cells[1].portals = {{12, 2}, {27, 3}, {53, 0}};
+  world.cells[1].detector = {{0, 6}, {6, 10}};
 
-  world.cells.resize(4);
-  world.cells[0].walls = {0, 10, 1, 2, 11, 12, 31, 20, 21, 22};
-  world.cells[0].portals = {{32, 1}, {37, 3}};
-  world.cells[0].detector = {{0, 0}, {4, 4}};
+  world.cells[2].walls = {11, 10, 9, 0, 13, 14, 15};
+  world.cells[2].portals = {{8, 5}, {54, 1}};
+  world.cells[2].detector = {{0, 2}, {6, 6}};
 
-  world.cells[1].walls = {3, 4, 15, 16, 23, 24};
-  world.cells[1].portals = {{36, 0}, {39, 2}};
-  world.cells[1].detector = {{4, 0}, {7, 3}};
+  world.cells[3].walls = {45, 47, 43, 40, 25, 20, 17, 16, 19, 21, 24, 50, 34};
+  world.cells[3].portals = {{52, 0}, {28, 4}, {6, 5}, {58, 1}};
+  world.cells[3].detector = {{6, 2}, {12, 16}};
 
-  world.cells[2].walls = {17, 18, 19, 9, 8, 7, 25, 26, 27, 28};
-  world.cells[2].portals = {{35, 1}, {38, 3}};
-  world.cells[2].detector = {{3, 3}, {7, 7}};
+  world.cells[4].walls = {44, 48, 49, 18};
+  world.cells[4].portals = {{4, 5}, {59, 3}};
+  world.cells[4].detector = {{12, 2}, {14, 16}};
 
-  world.cells[3].walls = {13, 30, 29, 6, 5, 14};
-  world.cells[3].portals = {{33, 0}, {34, 2}};
-  world.cells[3].detector = {{0, 4}, {3, 7}};
+  world.cells[5].walls = {1, 7, 5, 3, 2};
+  world.cells[5].portals = {{55, 2}, {56, 3}, {57, 4}};
+  world.cells[5].detector = {{4, 0}, {14, 2}};
 
   for(auto& s : world.segments)
   {
-    s.a = (s.a - Vec2(3, 3)) * 3.0;
-    s.b = (s.b - Vec2(3, 3)) * 3.0;
+    s.a = (s.a - Vec2(3, 3));
+    s.b = (s.b - Vec2(3, 3));
   }
 
   for(auto& c : world.cells)
   {
-    c.detector.mins = (c.detector.mins - Vec2(3, 3)) * 3.0;
-    c.detector.maxs = (c.detector.maxs - Vec2(3, 3)) * 3.0;
+    c.detector.mins = (c.detector.mins - Vec2(3, 3));
+    c.detector.maxs = (c.detector.maxs - Vec2(3, 3));
   }
 
   return world;
@@ -239,7 +305,7 @@ struct Collide2DApp : IApp
   {
     world = createWorld();
 
-    pos = Vec2(-3, -4);
+    pos = Vec2(0, 0);
   }
 
   void tick() override
