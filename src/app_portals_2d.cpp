@@ -385,10 +385,45 @@ struct Collide2DApp : IApp
     drawer->text({-7, -10}, buf);
   }
 
+  struct HalfLine
+  {
+    Vec2 point;
+    Vec2 tangent;
+  };
+
   static void drawFrustum(IDrawer* drawer, const Frustum& frustum)
   {
-    drawPlane(drawer, frustum.a);
-    drawPlane(drawer, frustum.b);
+    {
+      auto point = frustum.a.normal * frustum.a.dist;
+      auto tangent = rotateLeft(frustum.a.normal);
+      auto halfLine = clipLineAgainstPlane(point, tangent, frustum.b);
+      drawHalfLine(drawer, halfLine);
+      drawer->line(halfLine.point + halfLine.tangent * 3, halfLine.point + halfLine.tangent * 3 + frustum.a.normal * 1);
+    }
+    {
+      auto point = frustum.b.normal * frustum.b.dist;
+      auto tangent = rotateLeft(frustum.b.normal);
+      auto halfLine = clipLineAgainstPlane(point, tangent, frustum.a);
+      drawHalfLine(drawer, halfLine);
+      drawer->line(halfLine.point + halfLine.tangent * 3, halfLine.point + halfLine.tangent * 3 + frustum.b.normal * 1);
+    }
+  }
+
+  static HalfLine clipLineAgainstPlane(Vec2 linePoint, Vec2 lineTangent, Plane plane)
+  {
+    auto planeP = plane.normal * plane.dist;
+    const auto k = dot_product(planeP - linePoint, plane.normal) / dot_product(lineTangent, plane.normal);
+    HalfLine r;
+    r.point = linePoint + lineTangent * k;
+    r.tangent = lineTangent;
+    if(dot_product(r.tangent, plane.normal) < 0)
+      r.tangent = r.tangent * -1;
+    return r;
+  }
+
+  static void drawHalfLine(IDrawer* drawer, const HalfLine& halfLine)
+  {
+    drawer->line(halfLine.point, halfLine.point + halfLine.tangent * 100);
   }
 
   static void drawPlane(IDrawer* drawer, const Plane& plane)
