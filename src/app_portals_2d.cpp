@@ -183,7 +183,7 @@ World createWorld()
   world.cells[4].detector = {{12, 2}, {14, 16}};
 
   world.cells[5].walls = {1, 7, 5, 3, 2};
-  world.cells[5].portals = {{55, 2}, {56, 3}, {57, 4}};
+  world.cells[5].portals = {{57, 2}, {56, 3}, {55, 4}};
   world.cells[5].detector = {{4, 0}, {14, 2}};
 
   for(auto& s : world.segments)
@@ -262,6 +262,34 @@ void append(std::vector<int>& dst, const std::vector<int>& src)
 
 std::vector<Frustum> frustums;
 
+Segment intersectSegmentWithPositiveHalfPlane(Plane p, Segment s)
+{
+  float distA = dot_product(p.normal, s.a);
+  float distB = dot_product(p.normal, s.b);
+
+  if(distA < p.dist && distB < p.dist)
+    return {}; // the segment is fully in the negative half space
+
+  if(distA > p.dist && distB > p.dist)
+    return s; //  the segment is fully in the positive half space
+
+  float fraction = (p.dist - distA) / (distB - distA);
+
+  const auto I = s.a + (s.b - s.a) * fraction;
+
+  if(distA > p.dist)
+    return {s.a, I};
+  else
+    return {I, s.b};
+}
+
+Segment clipSegmentToFrustum(Frustum frustum, Segment s)
+{
+  s = intersectSegmentWithPositiveHalfPlane(frustum.a, s);
+  s = intersectSegmentWithPositiveHalfPlane(frustum.b, s);
+  return s;
+}
+
 std::vector<int> computeListOfVisibleCellsAux(const World& world, int fromCell, Vec2 pos, int depth, Frustum frustum)
 {
   std::vector<int> r;
@@ -285,7 +313,11 @@ std::vector<int> computeListOfVisibleCellsAux(const World& world, int fromCell, 
 
     if(frustum.a.normal == Vec2{} || intersects(frustum, portalSegment))
     {
-      auto subFrustum = computeFrustum(pos, portalSegment);
+      auto clippedSegment = portalSegment;
+      if(!(frustum.a.normal == Vec2{}))
+        clippedSegment = clipSegmentToFrustum(frustum, clippedSegment);
+
+      auto subFrustum = computeFrustum(pos, clippedSegment);
       frustums.push_back(subFrustum);
       append(r, computeListOfVisibleCellsAux(world, portal.destCell, pos, depth + 1, subFrustum));
     }
