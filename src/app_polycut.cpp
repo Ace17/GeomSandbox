@@ -164,7 +164,7 @@ struct PolycutApp : IApp
     auto a = m_poly.vertices[face.a];
     auto b = m_poly.vertices[face.b];
     m_cutPlane.normal = rotateLeft(normalize(b - a));
-    m_cutPlane.dist = dot_product(m_cutPlane.normal, a);
+    m_cutPlane.dist = dotProduct(m_cutPlane.normal, a);
 
     m_a = a;
     m_b = b;
@@ -173,7 +173,7 @@ struct PolycutApp : IApp
   void recomputePlaneFromAB()
   {
     m_cutPlane.normal = rotateLeft(normalize(m_b - m_a));
-    m_cutPlane.dist = dot_product(m_cutPlane.normal, m_a);
+    m_cutPlane.dist = dotProduct(m_cutPlane.normal, m_a);
   }
 
   Plane m_cutPlane;

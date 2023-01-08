@@ -212,7 +212,7 @@ struct Frustum
   Plane a, b; // plane normals points towards the inside
 };
 
-bool isOnPositiveSide(const Plane& plane, Vec2 point) { return dot_product(point, plane.normal) > plane.dist; }
+bool isOnPositiveSide(const Plane& plane, Vec2 point) { return dotProduct(point, plane.normal) > plane.dist; }
 
 bool intersects(const Frustum& frustum, const Segment& s)
 {
@@ -239,8 +239,8 @@ Frustum computeFrustum(Vec2 origin, Segment backPlane)
   Frustum r;
   r.a.normal = normalize(rotateLeft(backPlane.a - origin));
   r.b.normal = normalize(rotateLeft(backPlane.b - origin));
-  r.a.dist = dot_product(r.a.normal, origin);
-  r.b.dist = dot_product(r.b.normal, origin);
+  r.a.dist = dotProduct(r.a.normal, origin);
+  r.b.dist = dotProduct(r.b.normal, origin);
   if(!isOnPositiveSide(r.a, backPlane.b))
   {
     r.a.normal = r.a.normal * -1;
@@ -264,8 +264,8 @@ std::vector<Frustum> frustums;
 
 Segment intersectSegmentWithPositiveHalfPlane(Plane p, Segment s)
 {
-  float distA = dot_product(p.normal, s.a);
-  float distB = dot_product(p.normal, s.b);
+  float distA = dotProduct(p.normal, s.a);
+  float distB = dotProduct(p.normal, s.b);
 
   if(distA < p.dist && distB < p.dist)
     return {}; // the segment is fully in the negative half space
@@ -307,7 +307,7 @@ std::vector<int> computeListOfVisibleCellsAux(const World& world, int fromCell, 
     // backface culling of portals
     {
       const auto segmentNormal = rotateLeft(portalSegment.b - portalSegment.a);
-      if(dot_product(segmentNormal, pos - portalSegment.a) < 0)
+      if(dotProduct(segmentNormal, pos - portalSegment.a) < 0)
         continue;
     }
 
@@ -444,11 +444,11 @@ struct Collide2DApp : IApp
   static HalfLine clipLineAgainstPlane(Vec2 linePoint, Vec2 lineTangent, Plane plane)
   {
     auto planeP = plane.normal * plane.dist;
-    const auto k = dot_product(planeP - linePoint, plane.normal) / dot_product(lineTangent, plane.normal);
+    const auto k = dotProduct(planeP - linePoint, plane.normal) / dotProduct(lineTangent, plane.normal);
     HalfLine r;
     r.point = linePoint + lineTangent * k;
     r.tangent = lineTangent;
-    if(dot_product(r.tangent, plane.normal) < 0)
+    if(dotProduct(r.tangent, plane.normal) < 0)
       r.tangent = r.tangent * -1;
     return r;
   }

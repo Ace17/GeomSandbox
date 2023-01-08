@@ -262,10 +262,10 @@ float distanceBetweenSegments(std::array<Vec2, 2> u, std::array<Vec2, 2> v)
 
   for(auto axis : axises)
   {
-    const auto u0 = dot_product(axis, u[0]);
-    const auto u1 = dot_product(axis, u[1]);
-    const auto v0 = dot_product(axis, v[0]);
-    const auto v1 = dot_product(axis, v[1]);
+    const auto u0 = dotProduct(axis, u[0]);
+    const auto u1 = dotProduct(axis, u[1]);
+    const auto v0 = dotProduct(axis, v[0]);
+    const auto v1 = dotProduct(axis, v[1]);
 
     const auto dist = distanceBetweenSegments1d({u0, u1}, {v0, v1});
 

@@ -41,11 +41,11 @@ std::vector<ConvexPolygon> subtract(ConvexPolygon minuend, const ConvexPolygon& 
   {
     // frag is the convex in-front-of the cutting plane
     ConvexPolygon frag = minuend;
-    frag.planes.push_back({-sub.normal, -sub.dist - dot_product(subtrahend.pos - minuend.pos, sub.normal)});
+    frag.planes.push_back({-sub.normal, -sub.dist - dotProduct(subtrahend.pos - minuend.pos, sub.normal)});
     fragments.push_back(frag);
 
     // minuend becomes the convex behind the cutting plane
-    minuend.planes.push_back({sub.normal, sub.dist + dot_product(subtrahend.pos - minuend.pos, sub.normal)});
+    minuend.planes.push_back({sub.normal, sub.dist + dotProduct(subtrahend.pos - minuend.pos, sub.normal)});
   }
   return fragments;
 }
@@ -85,8 +85,8 @@ std::vector<HyperFace> clip(const std::vector<HyperFace>& faces, const Hyperplan
 
   for(auto f : faces)
   {
-    const auto dist_a = dot_product(f.a, plane.normal) - plane.dist;
-    const auto dist_b = dot_product(f.b, plane.normal) - plane.dist;
+    const auto dist_a = dotProduct(f.a, plane.normal) - plane.dist;
+    const auto dist_b = dotProduct(f.b, plane.normal) - plane.dist;
 
     if(dist_a > 0 && dist_b > 0)
       continue; // all outside: discard
@@ -138,7 +138,7 @@ std::vector<HyperFace> tesselate(const ConvexPolygon& polygon)
   }
 
   for(auto& plane : polygon.planes)
-    r = clip(r, {plane.normal, plane.dist + dot_product(plane.normal, polygon.pos)});
+    r = clip(r, {plane.normal, plane.dist + dotProduct(plane.normal, polygon.pos)});
 
   return r;
 }

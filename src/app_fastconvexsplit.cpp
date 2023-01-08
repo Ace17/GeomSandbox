@@ -92,7 +92,7 @@ bool isConvex(const Polygon2f& poly)
     for(auto vertex : poly.vertices)
     {
       auto dv = vertex - poly.vertices[face.a];
-      if(dot_product(dv, N) > epsilon)
+      if(dotProduct(dv, N) > epsilon)
         return false;
     }
   }
@@ -109,14 +109,14 @@ Plane chooseCuttingPlane(const Polygon2f& poly)
   {
     const auto T = poly.vertices[face.b] - poly.vertices[face.a];
     const auto N = normalize(-rotateLeft(T));
-    const auto plane = Plane{N, dot_product(N, poly.vertices[face.a])};
+    const auto plane = Plane{N, dotProduct(N, poly.vertices[face.a])};
 
     int frontCount = 0;
     int backCount = 0;
 
     for(auto v : poly.vertices)
     {
-      if(dot_product(v, plane.normal) > plane.dist + epsilon)
+      if(dotProduct(v, plane.normal) > plane.dist + epsilon)
         frontCount++;
       else
         backCount++;

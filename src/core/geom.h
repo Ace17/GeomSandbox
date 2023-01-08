@@ -1,4 +1,4 @@
-// Copyright (C) 2018 - Sebastien Alaiwan
+// Copyright (C) 2023 - Sebastien Alaiwan
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
@@ -23,24 +23,26 @@ struct Vec2
   {
   }
 
-  void operator+=(Vec2 other) { *this = *this + other; }
-  void operator-=(Vec2 other) { *this = *this - other; }
-  float operator*(Vec2 other) const { return x * other.x + y * other.y; }
+  friend void operator+=(Vec2& a, Vec2 b) { a = a + b; }
+  friend void operator-=(Vec2& a, Vec2 b) { a = a - b; }
+  friend void operator*=(Vec2& a, float b) { a = a * b; }
+  friend void operator/=(Vec2& a, float b) { a = a / b; }
 
-  Vec2 operator-() const { return Vec2{-x, -y}; }
+  friend Vec2 operator-(Vec2 v) { return Vec2{-v.x, -v.y}; }
+  friend Vec2 operator+(Vec2 a, Vec2 b) { return Vec2{a.x + b.x, a.y + b.y}; }
+  friend Vec2 operator-(Vec2 a, Vec2 b) { return Vec2{a.x - b.x, a.y - b.y}; }
+  friend Vec2 operator*(Vec2 v, float f) { return Vec2{v.x * f, v.y * f}; }
+  friend Vec2 operator*(float f, Vec2 v) { return v * f; }
+  friend Vec2 operator/(Vec2 v, float f) { return Vec2{v.x / f, v.y / f}; }
 
-  Vec2 operator+(Vec2 other) const { return Vec2{x + other.x, y + other.y}; }
-  Vec2 operator-(Vec2 other) const { return Vec2{x - other.x, y - other.y}; }
-  Vec2 operator*(float f) const { return Vec2{x * f, y * f}; }
-  Vec2 operator/(float f) const { return Vec2{x / f, y / f}; }
+  friend float operator*(Vec2 a, Vec2 b) { return dotProduct(a, b); }
+  friend bool operator==(Vec2 a, Vec2 b) { return a.x == b.x && a.y == b.y; }
 
-  bool operator==(const Vec2& other) const { return x == other.x && y == other.y; }
+  friend float magnitude(Vec2 v);
+  friend float dotProduct(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
+  friend Vec2 normalize(Vec2 v) { return v * magnitude(v); }
+  friend Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
 };
-
-float magnitude(Vec2 v);
-inline float dot_product(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
-inline Vec2 normalize(Vec2 v) { return v * (1.0 / magnitude(v)); }
-inline Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Vec3
@@ -59,57 +61,24 @@ struct Vec3
       , z(z_)
   {
   }
-
-  Vec3 operator+=(Vec3 const& other)
-  {
-    x += other.x;
-    y += other.y;
-    z += other.z;
-    return *this;
-  }
-
-  Vec3 operator-=(Vec3 const& other)
-  {
-    x -= other.x;
-    y -= other.y;
-    z -= other.z;
-    return *this;
-  }
-
-  template<typename F>
-  friend Vec3 operator*(Vec3 const& a, F val)
-  {
-    return Vec3(a.x * val, a.y * val, a.z * val);
-  }
-
-  template<typename F>
-  friend Vec3 operator*(F val, Vec3 const& a)
-  {
-    return Vec3(a.x * val, a.y * val, a.z * val);
-  }
-
-  friend Vec3 operator+(Vec3 const& a, Vec3 const& b)
-  {
-    Vec3 r = a;
-    r += b;
-    return r;
-  }
-
-  friend Vec3 operator-(Vec3 const& a, Vec3 const& b)
-  {
-    Vec3 r = a;
-    r -= b;
-    return r;
-  }
-
-  bool operator==(Vec3 const& other) const { return x == other.x && y == other.y && z == other.z; }
 };
 
+inline Vec3 operator-(Vec3 v) { return Vec3{-v.x, -v.y, -v.z}; }
+inline Vec3 operator+(Vec3 a, Vec3 b) { return {a.x + b.x, a.y + b.y, a.z + b.z}; }
+inline Vec3 operator-(Vec3 a, Vec3 b) { return {a.x - b.x, a.y - b.y, a.z - b.z}; }
+inline Vec3 operator*(Vec3 a, float val) { return {a.x * val, a.y * val, a.z * val}; }
+inline Vec3 operator*(float val, Vec3 a) { return {a.x * val, a.y * val, a.z * val}; }
+inline Vec3 operator/(Vec3 v, float f) { return {v.x / f, v.y / f, v.z / f}; }
+
+inline void operator+=(Vec3& a, Vec3 b) { a = a + b; }
+inline void operator-=(Vec3& a, Vec3 b) { a = a - b; }
+
 inline float dotProduct(Vec3 a, Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+inline float operator*(Vec3 a, Vec3 b) { return dotProduct(a, b); }
+inline bool operator==(Vec3 a, Vec3 b) { return a.x == b.x && a.y == b.y && a.z == b.z; }
 
-double magnitude(Vec3 v);
-
-inline Vec3 normalize(Vec3 v) { return v * (1.0f / magnitude(v)); }
+float magnitude(Vec3 v);
+inline Vec3 normalize(Vec3 v) { return v / magnitude(v); }
 
 inline Vec3 crossProduct(Vec3 a, Vec3 b)
 {

@@ -29,7 +29,7 @@ static float distanceBetweenLineAndPoint(Vec2 lineA, Vec2 lineB, Vec2 point)
 {
   const Vec2 segment = (lineB - lineA);
   const float lengthSq = segment * segment;
-  const float t = clamp(dot_product(point - lineA, segment) / lengthSq, 0, 1);
+  const float t = clamp(dotProduct(point - lineA, segment) / lengthSq, 0, 1);
   const Vec2 projection = lineA + segment * t;
   return magnitude(projection - point);
 }

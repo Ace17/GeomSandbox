@@ -88,11 +88,11 @@ float raycast(Vec2 a, Vec2 b, const BspNode* root)
     }
     else
     {
-      const auto proj_beg = dot_product(beg, curr.node->plane.normal) - curr.node->plane.dist;
-      const auto proj_end = dot_product(end, curr.node->plane.normal) - curr.node->plane.dist;
+      const auto proj_beg = dotProduct(beg, curr.node->plane.normal) - curr.node->plane.dist;
+      const auto proj_end = dotProduct(end, curr.node->plane.normal) - curr.node->plane.dist;
 
-      const auto proj_a = dot_product(a, curr.node->plane.normal) - curr.node->plane.dist;
-      const auto proj_b = dot_product(b, curr.node->plane.normal) - curr.node->plane.dist;
+      const auto proj_a = dotProduct(a, curr.node->plane.normal) - curr.node->plane.dist;
+      const auto proj_b = dotProduct(b, curr.node->plane.normal) - curr.node->plane.dist;
 
       const auto pmid = proj_a / (proj_a - proj_b);
 

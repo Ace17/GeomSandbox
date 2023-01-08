@@ -18,7 +18,7 @@ int addVertex(Polygon2f& poly, Vec2 a)
   for(int i = 0; i < N; ++i)
   {
     auto delta = poly.vertices[i] - a;
-    if(dot_product(delta, delta) < epsilon * epsilon)
+    if(dotProduct(delta, delta) < epsilon * epsilon)
       return i;
   }
 
@@ -63,8 +63,7 @@ void closePolygon(Polygon2f& poly, Vec2 tangentCut)
       orphans.push_back(p.first);
   }
 
-  auto byTangentCoord = [tangentCut](Vec2 a, Vec2 b)
-  { return dot_product(a, tangentCut) < dot_product(b, tangentCut); };
+  auto byTangentCoord = [tangentCut](Vec2 a, Vec2 b) { return dotProduct(a, tangentCut) < dotProduct(b, tangentCut); };
 
   std::sort(orphans.begin(), orphans.end(), byTangentCoord);
 
@@ -79,7 +78,7 @@ void splitPolygonAgainstPlane(const Polygon2f& poly, Plane plane, Polygon2f& fro
 
   for(auto v : poly.vertices)
   {
-    const auto dist = dot_product(v, plane.normal) - plane.dist;
+    const auto dist = dotProduct(v, plane.normal) - plane.dist;
     Color c;
     if(dist > epsilon)
       c = LightBlue;
@@ -96,8 +95,8 @@ void splitPolygonAgainstPlane(const Polygon2f& poly, Plane plane, Polygon2f& fro
     const auto a = poly.vertices[face.a];
     const auto b = poly.vertices[face.b];
 
-    const auto dist_a = dot_product(a, plane.normal) - plane.dist;
-    const auto dist_b = dot_product(b, plane.normal) - plane.dist;
+    const auto dist_a = dotProduct(a, plane.normal) - plane.dist;
+    const auto dist_b = dotProduct(b, plane.normal) - plane.dist;
 
     if(std::abs(dist_a) < epsilon && std::abs(dist_b) < epsilon)
     {

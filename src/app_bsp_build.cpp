@@ -38,22 +38,22 @@ void drawPolygon(const Polygon2f& poly, Color color)
 float intersectRayWithHyperPlane(Vec2 rayStart, Vec2 rayDir, Vec2 hyperplaneNormal, float hyperplaneDist)
 {
   // We want:
-  // [1] dot_product(I - pointOnHp, hyperplaneNormal) = 0;
+  // [1] dotProduct(I - pointOnHp, hyperplaneNormal) = 0;
   // [2] I = rayStart + k * rayDir
   // Using [1]:
-  // => dot_product(I, hyperplaneNormal) = dot_product(pointOnHp, hyperplaneNormal);
-  // => dot_product(I, hyperplaneNormal) = hyperplaneDist;
+  // => dotProduct(I, hyperplaneNormal) = dotProduct(pointOnHp, hyperplaneNormal);
+  // => dotProduct(I, hyperplaneNormal) = hyperplaneDist;
   // Using [2]:
-  // => dot_product(rayStart + k * rayDir, hyperplaneNormal) = hyperplaneDist;
-  // => dot_product(rayStart, hyperplaneNormal) + k * dot_product(rayDir, hyperplaneNormal) = hyperplaneDist;
-  // => k * dot_product(rayDir, hyperplaneNormal) = hyperplaneDist - dot_product(rayStart, hyperplaneNormal);
+  // => dotProduct(rayStart + k * rayDir, hyperplaneNormal) = hyperplaneDist;
+  // => dotProduct(rayStart, hyperplaneNormal) + k * dotProduct(rayDir, hyperplaneNormal) = hyperplaneDist;
+  // => k * dotProduct(rayDir, hyperplaneNormal) = hyperplaneDist - dotProduct(rayStart, hyperplaneNormal);
   //
-  //        hyperplaneDist - dot_product(rayStart, hyperplaneNormal)
+  //        hyperplaneDist - dotProduct(rayStart, hyperplaneNormal)
   // => k * --------------------------------------------------------
-  //                  dot_product(rayDir, hyperplaneNormal)
+  //                  dotProduct(rayDir, hyperplaneNormal)
   //
-  const float num = hyperplaneDist - dot_product(rayStart, hyperplaneNormal);
-  const float den = dot_product(rayDir, hyperplaneNormal);
+  const float num = hyperplaneDist - dotProduct(rayStart, hyperplaneNormal);
+  const float den = dotProduct(rayDir, hyperplaneNormal);
 
   return num / den;
 }
@@ -100,7 +100,7 @@ struct BspBuild
     {
       const float k = intersectRayWithHyperPlane(rayStart, rayDir, clipPlane.normal, clipPlane.dist);
 
-      if(dot_product(clipPlane.normal, rayDir) < 0)
+      if(dotProduct(clipPlane.normal, rayDir) < 0)
       {
         if(k < enter && fabs(k) < 1.0 / 0.0)
           enter = k;

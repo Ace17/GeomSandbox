@@ -20,8 +20,8 @@ enum class Klass
 
 Klass classify(const BspFace& face, const Hyperplane& plane, BspFace& posFace, BspFace& negFace)
 {
-  auto a = dot_product(plane.normal, face.a) - plane.dist;
-  auto b = dot_product(plane.normal, face.b) - plane.dist;
+  auto a = dotProduct(plane.normal, face.a) - plane.dist;
+  auto b = dotProduct(plane.normal, face.b) - plane.dist;
   auto pa = face.a;
   auto pb = face.b;
 
@@ -71,11 +71,11 @@ BspFace chooseSplitterFace(span<BspFace> faceList)
     int frontCount = 0;
     int backCount = 0;
 
-    const auto plane = Hyperplane{face.normal, dot_product(face.normal, face.a)};
+    const auto plane = Hyperplane{face.normal, dotProduct(face.normal, face.a)};
 
     for(auto v : faceList)
     {
-      if(dot_product(v.a, plane.normal) > plane.dist)
+      if(dotProduct(v.a, plane.normal) > plane.dist)
         frontCount++;
       else
         backCount++;
@@ -102,7 +102,7 @@ std::unique_ptr<BspNode> createBspTree(span<BspFace> faceList)
   auto splitterFace = chooseSplitterFace(faceList);
 
   result->plane.normal = splitterFace.normal;
-  result->plane.dist = dot_product(splitterFace.normal, splitterFace.a);
+  result->plane.dist = dotProduct(splitterFace.normal, splitterFace.a);
 
   std::vector<BspFace> posList;
   std::vector<BspFace> negList;
