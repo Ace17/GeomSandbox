@@ -78,9 +78,8 @@ float triangleArea(Vec2 a, Vec2 b, Vec2 c)
         {b, c, a},
         {c, a, b},
   }};
-  auto CompareEdges = [](const TriangleEdge& a, const TriangleEdge& b) {
-    return magnitudeSq(a.baseB - a.baseA) < magnitudeSq(b.baseB - b.baseA);
-  };
+  auto CompareEdges = [](const TriangleEdge& a, const TriangleEdge& b)
+  { return magnitudeSq(a.baseB - a.baseA) < magnitudeSq(b.baseB - b.baseA); };
   const auto maxEdgeIt = std::max_element(edges.begin(), edges.end(), CompareEdges);
   const float height = distanceBetweenLineAndPoint(maxEdgeIt->baseA, maxEdgeIt->baseB, maxEdgeIt->topPoint);
   return magnitude(maxEdgeIt->baseB - maxEdgeIt->baseA) * height / 2.f;
