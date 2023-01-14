@@ -1,4 +1,4 @@
-// Copyright (C) 2022 - Vivien Bonnet
+// Copyright (C) 2023 - Vivien Bonnet
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
@@ -154,7 +154,7 @@ struct VisvalingamAlgorithm
 
     auto CompareAreas = [](Vertex a, Vertex b) { return a.area < b.area; };
     auto minAreaIt = std::min_element(vertices.begin() + 1, vertices.end() - 1, CompareAreas);
-    while(minAreaIt->area < minAreaToKeep)
+    while(vertices.size() > 2 && minAreaIt->area < minAreaToKeep)
     {
       if(minAreaIt - 1 != vertices.begin())
       {
