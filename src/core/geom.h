@@ -40,7 +40,7 @@ struct Vec2
 
   friend float magnitude(Vec2 v);
   friend float dotProduct(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
-  friend Vec2 normalize(Vec2 v) { return v * magnitude(v); }
+  friend Vec2 normalize(Vec2 v) { return v / magnitude(v); }
   friend Vec2 rotateLeft(Vec2 v) { return Vec2(-v.y, v.x); }
 };
 
