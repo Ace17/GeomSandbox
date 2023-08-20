@@ -489,6 +489,9 @@ bool readInput(IApp* app, bool& reset)
       case SDLK_KP_MINUS:
         g_TargetCamera.scale = g_Camera.scale / scaleSpeed;
         break;
+      case SDLK_KP_3:
+        g_TargetCamera.pos = {0, 0, +24};
+        break;
       case SDLK_KP_4:
         g_TargetCamera.pos = g_Camera.pos + Vec3(-scrollSpeed, 0, 0);
         break;

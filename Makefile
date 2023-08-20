@@ -41,6 +41,7 @@ SRCS+=\
 			src/app_example.cpp\
 			src/app_line_distance.cpp\
 			src/app_portals_2d.cpp\
+			src/app_frustum_clusters.cpp\
 			src/app_main.cpp\
 
 # Algos
