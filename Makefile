@@ -47,6 +47,7 @@ SRCS+=\
 # Algos
 SRCS+=\
 			src/app_a_star.cpp\
+			src/app_bresenham.cpp\
 			src/app_bsp_build.cpp\
 			src/app_bsp_raycast.cpp\
 			src/app_contour_tracing.cpp\
