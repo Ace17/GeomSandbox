@@ -56,6 +56,7 @@ SRCS+=\
 			src/app_ear_clipping.cpp\
 			src/app_fastconvexsplit.cpp\
 			src/app_random_polygon.cpp\
+			src/app_spline_catmullrom.cpp\
 			src/app_thickline.cpp\
 			src/app_triangulate2.cpp\
 			src/app_triangulate_bowyerwatson.cpp\
