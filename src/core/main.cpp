@@ -458,6 +458,8 @@ Key fromSdlKey(int key)
     return Key::Space;
   case SDLK_HOME:
     return Key::Home;
+  case SDLK_END:
+    return Key::End;
   case SDLK_RETURN:
     return Key::Return;
   }

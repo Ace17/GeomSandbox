@@ -12,6 +12,7 @@ enum class Key
   Up,
   Down,
   Home,
+  End,
   PageUp,
   PageDown,
 };

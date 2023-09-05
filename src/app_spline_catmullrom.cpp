@@ -11,6 +11,7 @@
 #include "core/drawer.h"
 
 #include <cmath>
+#include <cstdio> // sprintf
 #include <vector>
 
 #include "random.h"
@@ -45,8 +46,13 @@ struct CatmullRomSpline : IApp
       auto p2 = controlPoints[(i + 1 + N) % N];
       auto p3 = controlPoints[(i + 2 + N) % N];
 
-      const Vec2 v0 = tension * (p2 - p0);
-      const Vec2 v1 = tension * (p3 - p1);
+      const float t0 = 0.0f;
+      const float t1 = t0 + pow(magnitude(p0 - p1), alpha);
+      const float t2 = t1 + pow(magnitude(p1 - p2), alpha);
+      const float t3 = t2 + pow(magnitude(p2 - p3), alpha);
+
+      const Vec2 v0 = tension * (t2 - t1) * ((p1 - p0) / (t1 - t0) - (p2 - p0) / (t2 - t0) + (p2 - p1) / (t2 - t1));
+      const Vec2 v1 = tension * (t2 - t1) * ((p2 - p1) / (t2 - t1) - (p3 - p1) / (t3 - t1) + (p3 - p2) / (t3 - t2));
 
       // We want to define the following curve:
       // p(t) = at^3 + bt^2 + ct + d
@@ -97,6 +103,12 @@ struct CatmullRomSpline : IApp
       const float size = 0.3;
       drawer->rect(cp - Vec2(size, size), 2 * Vec2(size, size), i == index ? Green : Yellow);
     }
+
+    {
+      char buf[256];
+      sprintf(buf, "alpha=%.2f tension=%.2f", alpha, tension);
+      drawer->text({}, buf);
+    }
   }
 
   void keydown(Key key) override
@@ -105,18 +117,19 @@ struct CatmullRomSpline : IApp
     switch(key)
     {
     case Key::Space:
-      if(tension == 0)
-        tension = 0.5;
-      else if(tension == 0.5)
-        tension = 1.0;
-      else if(tension == 1.0)
-        tension = 0;
-      break;
-    case Key::PageUp:
       index++;
       break;
+    case Key::Home:
+      alpha -= 0.01;
+      break;
+    case Key::End:
+      alpha += 0.01;
+      break;
+    case Key::PageUp:
+      tension -= 0.01;
+      break;
     case Key::PageDown:
-      index--;
+      tension += 0.01;
       break;
     case Key::Left:
       controlPoints[index].x -= speed;
@@ -139,7 +152,8 @@ struct CatmullRomSpline : IApp
 
   std::vector<Vec2> controlPoints;
   int index = 0;
-  float tension = 0.5;
+  float alpha = 0.5;
+  float tension = 1.0;
 };
 
 const int registered = registerApp("App.Spline.CatmullRom", []() -> IApp* { return new CatmullRomSpline; });
