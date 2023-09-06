@@ -599,6 +599,9 @@ struct SdlMainFrame
       throw std::runtime_error("Can't create OpenGL context");
     }
 
+    // Enable vsync
+    SDL_GL_SetSwapInterval(1);
+
     // create our unique vertex array
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -671,8 +674,6 @@ void safeMain(span<const char*> args)
     drawScreen(drawer, app.get());
 
     mainFrame.flush();
-
-    SDL_Delay(10);
   }
 }
 
