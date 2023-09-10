@@ -475,55 +475,61 @@ void processOneInputEvent(IApp* app, SDL_Event event)
   static const float scaleSpeed = 1.05;
   static const float scrollSpeed = 1.0;
 
-  if(event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE))
+  if(event.type == SDL_QUIT)
+  {
     gMustQuit = true;
+    return;
+  }
 
   if(event.type == SDL_KEYDOWN)
   {
+    switch(event.key.keysym.sym)
+    {
+    case SDLK_ESCAPE:
+      gMustQuit = true;
+      return;
+    case SDLK_KP_PLUS:
+      g_TargetCamera.scale = g_Camera.scale * scaleSpeed;
+      return;
+    case SDLK_KP_MINUS:
+      g_TargetCamera.scale = g_Camera.scale / scaleSpeed;
+      return;
+    case SDLK_KP_3:
+      g_TargetCamera.pos = {0, 0, +24};
+      return;
+    case SDLK_KP_4:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(-scrollSpeed, 0, 0);
+      return;
+    case SDLK_KP_5:
+      g_Camera.perspective = !g_Camera.perspective;
+      return;
+    case SDLK_KP_6:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(+scrollSpeed, 0, 0);
+      return;
+    case SDLK_KP_2:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, -scrollSpeed, 0);
+      return;
+    case SDLK_KP_8:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, +scrollSpeed, 0);
+      return;
+    case SDLK_KP_1:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, +scrollSpeed);
+      return;
+    case SDLK_KP_7:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, -scrollSpeed);
+      return;
+    case SDLK_F2:
+      gMustReset = true;
+      return;
+    case SDLK_F12:
+      gMustScreenShot = true;
+      return;
+    }
+
     InputEvent inputEvent;
     inputEvent.pressed = true;
     inputEvent.key = fromSdlKey(event.key.keysym.sym);
     app->processEvent(inputEvent);
-
-    switch(event.key.keysym.sym)
-    {
-    case SDLK_KP_PLUS:
-      g_TargetCamera.scale = g_Camera.scale * scaleSpeed;
-      break;
-    case SDLK_KP_MINUS:
-      g_TargetCamera.scale = g_Camera.scale / scaleSpeed;
-      break;
-    case SDLK_KP_3:
-      g_TargetCamera.pos = {0, 0, +24};
-      break;
-    case SDLK_KP_4:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(-scrollSpeed, 0, 0);
-      break;
-    case SDLK_KP_5:
-      g_Camera.perspective = !g_Camera.perspective;
-      break;
-    case SDLK_KP_6:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(+scrollSpeed, 0, 0);
-      break;
-    case SDLK_KP_2:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, -scrollSpeed, 0);
-      break;
-    case SDLK_KP_8:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, +scrollSpeed, 0);
-      break;
-    case SDLK_KP_1:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, +scrollSpeed);
-      break;
-    case SDLK_KP_7:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, -scrollSpeed);
-      break;
-    case SDLK_F2:
-      gMustReset = true;
-      break;
-    case SDLK_F12:
-      gMustScreenShot = true;
-      break;
-    }
   }
   else if(event.type == SDL_KEYUP)
   {
