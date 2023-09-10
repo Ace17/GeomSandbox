@@ -35,6 +35,9 @@ Camera g_Camera;
 Camera g_TargetCamera;
 
 Vec2 g_ScreenSize{};
+
+bool gMustReset = false;
+bool gMustQuit = false;
 bool gMustScreenShot = false;
 
 template<typename T>
@@ -467,99 +470,100 @@ Key fromSdlKey(int key)
   return Key::Unknown;
 }
 
-bool readInput(IApp* app, bool& reset)
+void processOneInputEvent(IApp* app, SDL_Event event)
 {
-  SDL_Event event;
-
   static const float scaleSpeed = 1.05;
   static const float scrollSpeed = 1.0;
 
-  while(SDL_PollEvent(&event))
+  if(event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE))
+    gMustQuit = true;
+
+  if(event.type == SDL_KEYDOWN)
   {
-    if(event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE))
-      return false;
+    InputEvent inputEvent;
+    inputEvent.pressed = true;
+    inputEvent.key = fromSdlKey(event.key.keysym.sym);
+    app->processEvent(inputEvent);
 
-    if(event.type == SDL_KEYDOWN)
+    switch(event.key.keysym.sym)
     {
-      InputEvent inputEvent;
-      inputEvent.pressed = true;
-      inputEvent.key = fromSdlKey(event.key.keysym.sym);
-      app->processEvent(inputEvent);
-
-      switch(event.key.keysym.sym)
-      {
-      case SDLK_KP_PLUS:
-        g_TargetCamera.scale = g_Camera.scale * scaleSpeed;
-        break;
-      case SDLK_KP_MINUS:
-        g_TargetCamera.scale = g_Camera.scale / scaleSpeed;
-        break;
-      case SDLK_KP_3:
-        g_TargetCamera.pos = {0, 0, +24};
-        break;
-      case SDLK_KP_4:
-        g_TargetCamera.pos = g_Camera.pos + Vec3(-scrollSpeed, 0, 0);
-        break;
-      case SDLK_KP_5:
-        g_Camera.perspective = !g_Camera.perspective;
-        break;
-      case SDLK_KP_6:
-        g_TargetCamera.pos = g_Camera.pos + Vec3(+scrollSpeed, 0, 0);
-        break;
-      case SDLK_KP_2:
-        g_TargetCamera.pos = g_Camera.pos + Vec3(0, -scrollSpeed, 0);
-        break;
-      case SDLK_KP_8:
-        g_TargetCamera.pos = g_Camera.pos + Vec3(0, +scrollSpeed, 0);
-        break;
-      case SDLK_KP_1:
-        g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, +scrollSpeed);
-        break;
-      case SDLK_KP_7:
-        g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, -scrollSpeed);
-        break;
-      case SDLK_F2:
-        reset = true;
-        break;
-      case SDLK_F12:
-        gMustScreenShot = true;
-        break;
-      }
-    }
-    else if(event.type == SDL_KEYUP)
-    {
-      InputEvent inputEvent;
-      inputEvent.pressed = false;
-      inputEvent.key = fromSdlKey(event.key.keysym.sym);
-      app->processEvent(inputEvent);
-    }
-    else if(event.type == SDL_WINDOWEVENT)
-    {
-      if(event.window.event == SDL_WINDOWEVENT_RESIZED)
-      {
-        g_ScreenSize = {(float)event.window.data1, (float)event.window.data2};
-        glViewport(0, 0, g_ScreenSize.x, g_ScreenSize.y);
-      }
-    }
-    else if(event.type == SDL_MOUSEWHEEL)
-    {
-      int mouseX, mouseY;
-      SDL_GetMouseState(&mouseX, &mouseY);
-      const Vec2 mousePos2d = reverseTransform(SDL_Point{mouseX, mouseY});
-      const Vec3 mousePos = {mousePos2d.x, mousePos2d.y, 0};
-
-      if(event.wheel.y)
-      {
-        const auto scaleFactor = event.wheel.y > 0 ? (scaleSpeed * 1.1) : 1.0 / (scaleSpeed * 1.1);
-        const auto newScale = g_Camera.scale * scaleFactor;
-        auto relativePos = mousePos - g_Camera.pos;
-        g_TargetCamera.pos = mousePos - relativePos * (g_Camera.scale / newScale);
-        g_TargetCamera.scale = newScale;
-      }
+    case SDLK_KP_PLUS:
+      g_TargetCamera.scale = g_Camera.scale * scaleSpeed;
+      break;
+    case SDLK_KP_MINUS:
+      g_TargetCamera.scale = g_Camera.scale / scaleSpeed;
+      break;
+    case SDLK_KP_3:
+      g_TargetCamera.pos = {0, 0, +24};
+      break;
+    case SDLK_KP_4:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(-scrollSpeed, 0, 0);
+      break;
+    case SDLK_KP_5:
+      g_Camera.perspective = !g_Camera.perspective;
+      break;
+    case SDLK_KP_6:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(+scrollSpeed, 0, 0);
+      break;
+    case SDLK_KP_2:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, -scrollSpeed, 0);
+      break;
+    case SDLK_KP_8:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, +scrollSpeed, 0);
+      break;
+    case SDLK_KP_1:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, +scrollSpeed);
+      break;
+    case SDLK_KP_7:
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, -scrollSpeed);
+      break;
+    case SDLK_F2:
+      gMustReset = true;
+      break;
+    case SDLK_F12:
+      gMustScreenShot = true;
+      break;
     }
   }
+  else if(event.type == SDL_KEYUP)
+  {
+    InputEvent inputEvent;
+    inputEvent.pressed = false;
+    inputEvent.key = fromSdlKey(event.key.keysym.sym);
+    app->processEvent(inputEvent);
+  }
+  else if(event.type == SDL_WINDOWEVENT)
+  {
+    if(event.window.event == SDL_WINDOWEVENT_RESIZED)
+    {
+      g_ScreenSize = {(float)event.window.data1, (float)event.window.data2};
+      glViewport(0, 0, g_ScreenSize.x, g_ScreenSize.y);
+    }
+  }
+  else if(event.type == SDL_MOUSEWHEEL)
+  {
+    int mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
+    const Vec2 mousePos2d = reverseTransform(SDL_Point{mouseX, mouseY});
+    const Vec3 mousePos = {mousePos2d.x, mousePos2d.y, 0};
 
-  return true;
+    if(event.wheel.y)
+    {
+      const auto scaleFactor = event.wheel.y > 0 ? (scaleSpeed * 1.1) : 1.0 / (scaleSpeed * 1.1);
+      const auto newScale = g_Camera.scale * scaleFactor;
+      auto relativePos = mousePos - g_Camera.pos;
+      g_TargetCamera.pos = mousePos - relativePos * (g_Camera.scale / newScale);
+      g_TargetCamera.scale = newScale;
+    }
+  }
+}
+
+void readInput(IApp* app)
+{
+  SDL_Event event;
+
+  while(SDL_PollEvent(&event))
+    processOneInputEvent(app, event);
 }
 
 std::map<std::string, CreationFunc*>& Registry()
@@ -662,14 +666,14 @@ void safeMain(span<const char*> args)
   CreationFunc* func = Registry()[appName];
   auto app = std::unique_ptr<IApp>(func());
 
-  bool reset = false;
-
-  while(readInput(app.get(), reset))
+  while(!gMustQuit)
   {
-    if(reset)
+    readInput(app.get());
+
+    if(gMustReset)
     {
       app.reset(func());
-      reset = false;
+      gMustReset = false;
     }
 
     const float alpha = 0.8;
