@@ -396,7 +396,7 @@ void takeScreenshot()
   int width = g_ScreenSize.x;
   int height = g_ScreenSize.y;
 
-  SDL_Surface* sshot = SDL_CreateRGBSurface(0, width, height, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+  SDL_Surface* sshot = SDL_CreateRGBSurface(0, width, height, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
 
   uint8_t* pixels = (uint8_t*)sshot->pixels;
 
