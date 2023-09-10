@@ -659,14 +659,16 @@ void safeMain(span<const char*> args)
   if(args.len >= 2)
     appName = args[1];
 
-  auto i_func = Registry().find(appName);
+  const auto& registry = Registry();
 
-  if(i_func == Registry().end())
+  auto i_func = registry.find(appName);
+
+  if(i_func == registry.end())
   {
     fprintf(stderr, "Unknown app: '%s'\n", appName.c_str());
     fprintf(stderr, "Available apps:\n");
 
-    for(auto& app : Registry())
+    for(auto& app : registry)
       fprintf(stderr, "  %s\n", app.first.c_str());
 
     throw std::runtime_error("Unknown app");
@@ -676,7 +678,7 @@ void safeMain(span<const char*> args)
 
   OpenGlDrawer drawer;
 
-  CreationFunc* func = Registry()[appName];
+  CreationFunc* const func = i_func->second;
   auto app = std::unique_ptr<IApp>(func());
 
   while(!gMustQuit)
