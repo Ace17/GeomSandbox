@@ -31,6 +31,8 @@ struct Camera
   bool perspective = false;
 };
 
+const float CAMERA_UPDATE_RATIO = 0.8;
+
 Camera g_Camera;
 Camera g_TargetCamera;
 
@@ -645,6 +647,12 @@ struct SdlMainFrame
   GLuint vao{};
 };
 
+void updateCamera()
+{
+  g_Camera.pos = lerp(g_TargetCamera.pos, g_Camera.pos, CAMERA_UPDATE_RATIO);
+  g_Camera.scale = lerp(g_TargetCamera.scale, g_Camera.scale, CAMERA_UPDATE_RATIO);
+}
+
 void safeMain(span<const char*> args)
 {
   std::string appName = "MainMenu";
@@ -682,9 +690,7 @@ void safeMain(span<const char*> args)
       gMustReset = false;
     }
 
-    const float alpha = 0.8;
-    g_Camera.pos = lerp(g_TargetCamera.pos, g_Camera.pos, alpha);
-    g_Camera.scale = lerp(g_TargetCamera.scale, g_Camera.scale, alpha);
+    updateCamera();
 
     app->tick();
     drawScreen(drawer, app.get());
