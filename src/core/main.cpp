@@ -32,6 +32,8 @@ struct Camera
 };
 
 const float CAMERA_UPDATE_RATIO = 0.8;
+const float SCALE_SPEED = 1.05;
+const float SCROLL_SPEED = 1.0;
 
 Camera g_Camera;
 Camera g_TargetCamera;
@@ -474,9 +476,6 @@ Key fromSdlKey(int key)
 
 void processOneInputEvent(IApp* app, SDL_Event event)
 {
-  static const float scaleSpeed = 1.05;
-  static const float scrollSpeed = 1.0;
-
   if(event.type == SDL_QUIT)
   {
     gMustQuit = true;
@@ -491,34 +490,34 @@ void processOneInputEvent(IApp* app, SDL_Event event)
       gMustQuit = true;
       return;
     case SDLK_KP_PLUS:
-      g_TargetCamera.scale = g_Camera.scale * scaleSpeed;
+      g_TargetCamera.scale = g_Camera.scale * SCALE_SPEED;
       return;
     case SDLK_KP_MINUS:
-      g_TargetCamera.scale = g_Camera.scale / scaleSpeed;
+      g_TargetCamera.scale = g_Camera.scale / SCALE_SPEED;
       return;
     case SDLK_KP_3:
       g_TargetCamera.pos = {0, 0, +24};
       return;
     case SDLK_KP_4:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(-scrollSpeed, 0, 0);
+      g_TargetCamera.pos = g_Camera.pos + Vec3(-SCROLL_SPEED, 0, 0);
       return;
     case SDLK_KP_5:
       g_Camera.perspective = !g_Camera.perspective;
       return;
     case SDLK_KP_6:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(+scrollSpeed, 0, 0);
+      g_TargetCamera.pos = g_Camera.pos + Vec3(+SCROLL_SPEED, 0, 0);
       return;
     case SDLK_KP_2:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, -scrollSpeed, 0);
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, -SCROLL_SPEED, 0);
       return;
     case SDLK_KP_8:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, +scrollSpeed, 0);
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, +SCROLL_SPEED, 0);
       return;
     case SDLK_KP_1:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, +scrollSpeed);
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, +SCROLL_SPEED);
       return;
     case SDLK_KP_7:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, -scrollSpeed);
+      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, -SCROLL_SPEED);
       return;
     case SDLK_F2:
       gMustReset = true;
@@ -557,7 +556,7 @@ void processOneInputEvent(IApp* app, SDL_Event event)
 
     if(event.wheel.y)
     {
-      const auto scaleFactor = event.wheel.y > 0 ? (scaleSpeed * 1.1) : 1.0 / (scaleSpeed * 1.1);
+      const auto scaleFactor = event.wheel.y > 0 ? (SCALE_SPEED * 1.1) : 1.0 / (SCALE_SPEED * 1.1);
       const auto newScale = g_Camera.scale * scaleFactor;
       auto relativePos = mousePos - g_Camera.pos;
       g_TargetCamera.pos = mousePos - relativePos * (g_Camera.scale / newScale);
