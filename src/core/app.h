@@ -17,6 +17,12 @@ enum class Key
   PageDown,
 };
 
+struct InputEvent
+{
+  bool pressed;
+  Key key;
+};
+
 struct IDrawer;
 
 struct IApp
@@ -25,8 +31,7 @@ struct IApp
 
   virtual void tick(){};
   virtual void draw(IDrawer*){};
-  virtual void keydown(Key){};
-  virtual void keyup(Key){};
+  virtual void processEvent(InputEvent){};
 };
 
 typedef IApp* CreationFunc();

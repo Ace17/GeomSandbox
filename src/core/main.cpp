@@ -481,7 +481,10 @@ bool readInput(IApp* app, bool& reset)
 
     if(event.type == SDL_KEYDOWN)
     {
-      app->keydown(fromSdlKey(event.key.keysym.sym));
+      InputEvent inputEvent;
+      inputEvent.pressed = true;
+      inputEvent.key = fromSdlKey(event.key.keysym.sym);
+      app->processEvent(inputEvent);
 
       switch(event.key.keysym.sym)
       {
@@ -525,7 +528,10 @@ bool readInput(IApp* app, bool& reset)
     }
     else if(event.type == SDL_KEYUP)
     {
-      app->keyup(fromSdlKey(event.key.keysym.sym));
+      InputEvent inputEvent;
+      inputEvent.pressed = false;
+      inputEvent.key = fromSdlKey(event.key.keysym.sym);
+      app->processEvent(inputEvent);
     }
     else if(event.type == SDL_WINDOWEVENT)
     {

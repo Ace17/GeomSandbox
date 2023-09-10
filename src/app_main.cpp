@@ -62,14 +62,20 @@ struct MainMenuApp : IApp
     }
   }
 
-  void keydown(Key key) override
+  void processEvent(InputEvent inputEvent) override
   {
     if(sub)
     {
-      sub->keydown(key);
+      sub->processEvent(inputEvent);
       return;
     }
 
+    if(inputEvent.pressed)
+      keydown(inputEvent.key);
+  }
+
+  void keydown(Key key)
+  {
     const int N = (int)appNames.size();
     switch(key)
     {
@@ -88,15 +94,6 @@ struct MainMenuApp : IApp
     }
     default:
       break;
-    }
-  }
-
-  void keyup(Key key) override
-  {
-    if(sub)
-    {
-      sub->keyup(key);
-      return;
     }
   }
 

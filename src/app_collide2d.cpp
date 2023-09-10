@@ -202,15 +202,13 @@ struct Collide2DApp : IApp
     }
   }
 
-  void keydown(Key key) override
+  void processEvent(InputEvent inputEvent) override
   {
-    keyState[(int)key] = true;
+    keyState[(int)inputEvent.key] = inputEvent.pressed;
 
-    if(key == Key::Space)
+    if(inputEvent.pressed && inputEvent.key == Key::Space)
       input.changeShape = true;
   }
-
-  void keyup(Key key) override { keyState[(int)key] = false; }
 
   bool keyState[128]{};
   World world{};

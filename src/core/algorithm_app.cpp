@@ -140,7 +140,13 @@ struct AlgorithmApp : IApp
     m_visuForAlgo.m_frontScreen = {};
   }
 
-  void keydown(Key key) override
+  void processEvent(InputEvent inputEvent) override
+  {
+    if(inputEvent.pressed)
+      keydown(inputEvent.key);
+  }
+
+  void keydown(Key key)
   {
     if(key == Key::Home)
     {

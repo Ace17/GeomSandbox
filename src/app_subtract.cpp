@@ -227,7 +227,13 @@ struct SubtractApp : IApp
     drawer->line(pos - Vec2{0, 1}, pos + Vec2{0, 1}, color);
   }
 
-  void keydown(Key key) override
+  void processEvent(InputEvent inputEvent) override
+  {
+    if(inputEvent.pressed)
+      keydown(inputEvent.key);
+  }
+
+  void keydown(Key key)
   {
     switch(key)
     {

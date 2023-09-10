@@ -111,7 +111,13 @@ struct CatmullRomSpline : IApp
     }
   }
 
-  void keydown(Key key) override
+  void processEvent(InputEvent event) override
+  {
+    if(event.pressed)
+      keydown(event.key);
+  }
+
+  void keydown(Key key)
   {
     const float speed = 0.1;
     switch(key)

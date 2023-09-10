@@ -105,7 +105,13 @@ struct PolycutApp : IApp
     drawPolygon(drawer, m_back, Green);
   }
 
-  void keydown(Key key) override
+  void processEvent(InputEvent inputEvent) override
+  {
+    if(inputEvent.pressed)
+      keydown(inputEvent.key);
+  }
+
+  void keydown(Key key)
   {
     auto& p = m_selection ? m_a : m_b;
 

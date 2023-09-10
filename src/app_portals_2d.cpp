@@ -467,8 +467,7 @@ struct Collide2DApp : IApp
     drawer->line(p, p + plane.normal);
   }
 
-  void keydown(Key key) override { keyState[(int)key] = true; }
-  void keyup(Key key) override { keyState[(int)key] = false; }
+  void processEvent(InputEvent inputEvent) override { keyState[(int)inputEvent.key] = inputEvent.pressed; }
 
   bool keyState[128]{};
   World world{};

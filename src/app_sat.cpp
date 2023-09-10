@@ -281,7 +281,13 @@ struct SeparatingAxisTestApp : IApp
     drawer->line(pos - Vec2{0, 1}, pos + Vec2{0, 1}, color);
   }
 
-  void keydown(Key key) override
+  void processEvent(InputEvent inputEvent) override
+  {
+    if(inputEvent.pressed)
+      keydown(inputEvent.key);
+  }
+
+  void keydown(Key key)
   {
     auto& box = currentSelection == 0 ? boxStart : boxTarget;
 
