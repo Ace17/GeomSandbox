@@ -261,8 +261,6 @@ struct OpenGlDrawer : IDrawer
     }
   }
 
-  static constexpr float fontSize = 0.032;
-
   void text(Vec2 pos, const char* text, Color color) override
   {
     const auto W = fontSize / g_Camera.scale;
@@ -273,45 +271,6 @@ struct OpenGlDrawer : IDrawer
       pos.x += W;
       ++text;
     }
-  }
-
-  void rawLine(Vec2 A, Vec2 B, Color color)
-  {
-    cpuVbo_Lines.push_back({A.x, A.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
-    cpuVbo_Lines.push_back({B.x, B.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
-  }
-
-  void rawLine(Vec3 A, Vec3 B, Color color)
-  {
-    cpuVbo_Lines.push_back({A.x, A.y, A.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
-    cpuVbo_Lines.push_back({B.x, B.y, B.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
-  }
-
-  void rawChar(Vec2 POS, char c, Color color)
-  {
-    const int cols = 16;
-    const int rows = 8;
-
-    const int col = c % cols;
-    const int row = c / cols;
-
-    const float u0 = (col + 0.0f) / cols;
-    const float u1 = (col + 1.0f) / cols;
-    const float v0 = (row + 1.0f) / rows;
-    const float v1 = (row + 0.0f) / rows;
-
-    const auto W = fontSize / g_Camera.scale;
-    const auto H = fontSize / g_Camera.scale;
-
-    POS.y -= H;
-
-    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + W, POS.y + 0, 1, /* uv */ u1, v0, color.r, color.g, color.b, color.a});
-
-    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + H, 1, /* uv */ u0, v1, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
   }
 
   void flush()
@@ -374,6 +333,47 @@ struct OpenGlDrawer : IDrawer
   }
 
   private:
+  static constexpr float fontSize = 0.032;
+
+  void rawLine(Vec2 A, Vec2 B, Color color)
+  {
+    cpuVbo_Lines.push_back({A.x, A.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    cpuVbo_Lines.push_back({B.x, B.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+  }
+
+  void rawLine(Vec3 A, Vec3 B, Color color)
+  {
+    cpuVbo_Lines.push_back({A.x, A.y, A.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    cpuVbo_Lines.push_back({B.x, B.y, B.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+  }
+
+  void rawChar(Vec2 POS, char c, Color color)
+  {
+    const int cols = 16;
+    const int rows = 8;
+
+    const int col = c % cols;
+    const int row = c / cols;
+
+    const float u0 = (col + 0.0f) / cols;
+    const float u1 = (col + 1.0f) / cols;
+    const float v0 = (row + 1.0f) / rows;
+    const float v1 = (row + 0.0f) / rows;
+
+    const auto W = fontSize / g_Camera.scale;
+    const auto H = fontSize / g_Camera.scale;
+
+    POS.y -= H;
+
+    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + W, POS.y + 0, 1, /* uv */ u1, v0, color.r, color.g, color.b, color.a});
+
+    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + H, 1, /* uv */ u0, v1, color.r, color.g, color.b, color.a});
+    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
+  }
+
   GLuint shaderProgram{};
   GLuint gpuVbo;
   std::vector<Vertex> cpuVbo_Lines;
