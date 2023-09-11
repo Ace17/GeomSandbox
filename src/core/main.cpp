@@ -319,8 +319,8 @@ struct OpenGlDrawer : IDrawer
 
   void uiText(Vec2 pos, const char* text, Color color)
   {
-    const auto W = 32;
-    const auto H = 32;
+    const auto W = 16;
+    const auto H = 16;
 
     while(*text)
     {
@@ -393,7 +393,7 @@ struct OpenGlDrawer : IDrawer
       // setup transform
       {
         Matrix4f M;
-        M = scale({1.0f / g_ScreenSize.x, 1.0f / g_ScreenSize.y, 1});
+        M = translate({-1, -1, 0}) * scale({2.0f / g_ScreenSize.x, 2.0f / g_ScreenSize.y, 1});
         M = transpose(M); // make the matrix column-major
         glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, &M[0][0]);
       }
@@ -502,8 +502,9 @@ void drawScreen(OpenGlDrawer& drawer, IApp* app, const char* appName)
 
   app->draw(&drawer);
 
-  drawer.uiRect({-g_ScreenSize.x + 32, g_ScreenSize.y - 32 + 8}, {800, -32 - 16}, White);
-  drawer.uiText({-g_ScreenSize.x + 32, g_ScreenSize.y - 32}, appName, White);
+  drawer.uiRect({5, 5}, {g_ScreenSize.x - 10, g_ScreenSize.y - 10}, White);
+  drawer.uiRect({32, g_ScreenSize.y - 32 + 8}, {800, -32 - 16}, White);
+  drawer.uiText({32, g_ScreenSize.y - 32}, appName, White);
   drawer.flush();
 
   if(gMustScreenShot)
