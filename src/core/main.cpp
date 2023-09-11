@@ -210,16 +210,46 @@ int createShaderProgram()
   return program;
 }
 
+struct PrimitiveBuffer
+{
+  PrimitiveBuffer() { glGenBuffers(1, &gpuVbo); }
+  ~PrimitiveBuffer() { glDeleteBuffers(1, &gpuVbo); }
+
+  void write(const Vertex& v) { cpuVbo.push_back(v); }
+  void draw()
+  {
+    glBindBuffer(GL_ARRAY_BUFFER, gpuVbo);
+
+    glEnableVertexAttribArray(attrib_position);
+    glVertexAttribPointer(attrib_position, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
+
+    glEnableVertexAttribArray(attrib_color);
+    glVertexAttribPointer(attrib_color, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, r));
+
+    glEnableVertexAttribArray(attrib_uv);
+    glVertexAttribPointer(attrib_uv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u));
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * cpuVbo.size(), cpuVbo.data(), GL_DYNAMIC_DRAW);
+    glDrawArrays(type, 0, cpuVbo.size());
+
+    cpuVbo.clear();
+  }
+
+  GLuint type;
+  GLuint gpuVbo;
+  std::vector<Vertex> cpuVbo;
+};
+
 struct OpenGlDrawer : IDrawer
 {
   OpenGlDrawer()
   {
-    glGenBuffers(1, &gpuVbo);
-
     fontTexture = createFontTexture();
     whiteTexture = createWhiteTexture();
 
     shaderProgram = createShaderProgram();
+    m_bufLines.type = GL_LINES;
+    m_bufTris.type = GL_TRIANGLES;
   }
 
   ~OpenGlDrawer()
@@ -228,8 +258,6 @@ struct OpenGlDrawer : IDrawer
 
     glDeleteTextures(1, &fontTexture);
     glDeleteTextures(1, &whiteTexture);
-
-    glDeleteBuffers(1, &gpuVbo);
   }
 
   void line(Vec2 a, Vec2 b, Color color) override { rawLine(a, b, color); }
@@ -314,29 +342,11 @@ struct OpenGlDrawer : IDrawer
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glBindBuffer(GL_ARRAY_BUFFER, gpuVbo);
-
-    glActiveTexture(GL_TEXTURE0);
-
-    glEnableVertexAttribArray(attrib_position);
-    glVertexAttribPointer(attrib_position, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
-
-    glEnableVertexAttribArray(attrib_color);
-    glVertexAttribPointer(attrib_color, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, r));
-
-    glEnableVertexAttribArray(attrib_uv);
-    glVertexAttribPointer(attrib_uv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u));
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * cpuVbo_Lines.size(), cpuVbo_Lines.data(), GL_DYNAMIC_DRAW);
     glBindTexture(GL_TEXTURE_2D, whiteTexture);
-    glDrawArrays(GL_LINES, 0, cpuVbo_Lines.size());
+    m_bufLines.draw();
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * cpuVbo_Triangles.size(), cpuVbo_Triangles.data(), GL_DYNAMIC_DRAW);
     glBindTexture(GL_TEXTURE_2D, fontTexture);
-    glDrawArrays(GL_TRIANGLES, 0, cpuVbo_Triangles.size());
-
-    cpuVbo_Lines.clear();
-    cpuVbo_Triangles.clear();
+    m_bufTris.draw();
   }
 
   private:
@@ -344,14 +354,14 @@ struct OpenGlDrawer : IDrawer
 
   void rawLine(Vec2 A, Vec2 B, Color color)
   {
-    cpuVbo_Lines.push_back({A.x, A.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
-    cpuVbo_Lines.push_back({B.x, B.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    m_bufLines.write({A.x, A.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    m_bufLines.write({B.x, B.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
   }
 
   void rawLine(Vec3 A, Vec3 B, Color color)
   {
-    cpuVbo_Lines.push_back({A.x, A.y, A.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
-    cpuVbo_Lines.push_back({B.x, B.y, B.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    m_bufLines.write({A.x, A.y, A.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    m_bufLines.write({B.x, B.y, B.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
   }
 
   void rawChar(Vec2 POS, char c, Color color)
@@ -372,19 +382,18 @@ struct OpenGlDrawer : IDrawer
 
     POS.y -= H;
 
-    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + W, POS.y + 0, 1, /* uv */ u1, v0, color.r, color.g, color.b, color.a});
+    m_bufTris.write({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
+    m_bufTris.write({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
+    m_bufTris.write({POS.x + W, POS.y + 0, 1, /* uv */ u1, v0, color.r, color.g, color.b, color.a});
 
-    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + 0, POS.y + H, 1, /* uv */ u0, v1, color.r, color.g, color.b, color.a});
-    cpuVbo_Triangles.push_back({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
+    m_bufTris.write({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
+    m_bufTris.write({POS.x + 0, POS.y + H, 1, /* uv */ u0, v1, color.r, color.g, color.b, color.a});
+    m_bufTris.write({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
   }
 
   GLuint shaderProgram{};
-  GLuint gpuVbo;
-  std::vector<Vertex> cpuVbo_Lines;
-  std::vector<Vertex> cpuVbo_Triangles;
+  PrimitiveBuffer m_bufLines;
+  PrimitiveBuffer m_bufTris;
   GLuint fontTexture{};
   GLuint whiteTexture{};
 };
