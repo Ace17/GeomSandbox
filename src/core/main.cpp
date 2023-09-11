@@ -250,6 +250,7 @@ struct OpenGlDrawer : IDrawer
     shaderProgram = createShaderProgram();
     m_bufLines.type = GL_LINES;
     m_bufTris.type = GL_TRIANGLES;
+    m_bufTrisUI.type = GL_TRIANGLES;
   }
 
   ~OpenGlDrawer()
@@ -259,6 +260,9 @@ struct OpenGlDrawer : IDrawer
     glDeleteTextures(1, &fontTexture);
     glDeleteTextures(1, &whiteTexture);
   }
+
+  /////////////////////////////////////////////////////////////////////////////
+  // IDrawer implementation
 
   void line(Vec2 a, Vec2 b, Color color) override { rawLine(a, b, color); }
   void line(Vec3 a, Vec3 b, Color color) override { rawLine(a, b, color); }
@@ -299,10 +303,27 @@ struct OpenGlDrawer : IDrawer
   void text(Vec2 pos, const char* text, Color color) override
   {
     const auto W = fontSize / g_Camera.scale;
+    const auto H = fontSize / g_Camera.scale;
 
     while(*text)
     {
-      rawChar(pos, *text, color);
+      rawChar(m_bufTris, pos, *text, color, W, H);
+      pos.x += W;
+      ++text;
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Public API
+
+  void uiText(Vec2 pos, const char* text, Color color)
+  {
+    const auto W = 32;
+    const auto H = 32;
+
+    while(*text)
+    {
+      rawChar(m_bufTrisUI, pos, *text, color, W, H);
       pos.x += W;
       ++text;
     }
@@ -312,6 +333,11 @@ struct OpenGlDrawer : IDrawer
   {
     const int mvpLoc = glGetUniformLocation(shaderProgram, "mvp");
     const auto aspectRatio = g_ScreenSize.x / g_ScreenSize.y;
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glUseProgram(shaderProgram);
 
     // setup transform
     {
@@ -336,17 +362,22 @@ struct OpenGlDrawer : IDrawer
       glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, &M[0][0]);
     }
 
-    glUseProgram(shaderProgram);
-
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     glBindTexture(GL_TEXTURE_2D, whiteTexture);
     m_bufLines.draw();
 
     glBindTexture(GL_TEXTURE_2D, fontTexture);
     m_bufTris.draw();
+
+    // setup transform
+    {
+      Matrix4f M;
+      M = scale({1.0f / g_ScreenSize.x, 1.0f / g_ScreenSize.y, 1});
+      M = transpose(M); // make the matrix column-major
+      glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, &M[0][0]);
+    }
+
+    glBindTexture(GL_TEXTURE_2D, fontTexture);
+    m_bufTrisUI.draw();
   }
 
   private:
@@ -364,7 +395,7 @@ struct OpenGlDrawer : IDrawer
     m_bufLines.write({B.x, B.y, B.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
   }
 
-  void rawChar(Vec2 POS, char c, Color color)
+  void rawChar(PrimitiveBuffer& buf, Vec2 POS, char c, Color color, float W, float H)
   {
     const int cols = 16;
     const int rows = 8;
@@ -377,23 +408,21 @@ struct OpenGlDrawer : IDrawer
     const float v0 = (row + 1.0f) / rows;
     const float v1 = (row + 0.0f) / rows;
 
-    const auto W = fontSize / g_Camera.scale;
-    const auto H = fontSize / g_Camera.scale;
-
     POS.y -= H;
 
-    m_bufTris.write({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
-    m_bufTris.write({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
-    m_bufTris.write({POS.x + W, POS.y + 0, 1, /* uv */ u1, v0, color.r, color.g, color.b, color.a});
+    buf.write({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
+    buf.write({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
+    buf.write({POS.x + W, POS.y + 0, 1, /* uv */ u1, v0, color.r, color.g, color.b, color.a});
 
-    m_bufTris.write({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
-    m_bufTris.write({POS.x + 0, POS.y + H, 1, /* uv */ u0, v1, color.r, color.g, color.b, color.a});
-    m_bufTris.write({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
+    buf.write({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
+    buf.write({POS.x + 0, POS.y + H, 1, /* uv */ u0, v1, color.r, color.g, color.b, color.a});
+    buf.write({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
   }
 
   GLuint shaderProgram{};
   PrimitiveBuffer m_bufLines;
   PrimitiveBuffer m_bufTris;
+  PrimitiveBuffer m_bufTrisUI;
   GLuint fontTexture{};
   GLuint whiteTexture{};
 };
@@ -439,12 +468,14 @@ void takeScreenshot()
   SDL_FreeSurface(sshot);
 }
 
-void drawScreen(OpenGlDrawer& drawer, IApp* app)
+void drawScreen(OpenGlDrawer& drawer, IApp* app, const char* appName)
 {
   glClearColor(0, 0, 0, 0);
   glClear(GL_COLOR_BUFFER_BIT);
 
   app->draw(&drawer);
+
+  drawer.uiText({-g_ScreenSize.x + 32, g_ScreenSize.y - 32}, appName, White);
   drawer.flush();
 
   if(gMustScreenShot)
@@ -703,7 +734,7 @@ void safeMain(span<const char*> args)
     updateCamera();
 
     app->tick();
-    drawScreen(drawer, app.get());
+    drawScreen(drawer, app.get(), appName.c_str());
 
     mainFrame.flush();
   }
