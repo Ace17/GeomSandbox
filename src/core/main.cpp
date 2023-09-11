@@ -250,6 +250,7 @@ struct OpenGlDrawer : IDrawer
     shaderProgram = createShaderProgram();
     m_bufLines.type = GL_LINES;
     m_bufTris.type = GL_TRIANGLES;
+    m_bufLinesUI.type = GL_LINES;
     m_bufTrisUI.type = GL_TRIANGLES;
   }
 
@@ -264,8 +265,8 @@ struct OpenGlDrawer : IDrawer
   /////////////////////////////////////////////////////////////////////////////
   // IDrawer implementation
 
-  void line(Vec2 a, Vec2 b, Color color) override { rawLine(a, b, color); }
-  void line(Vec3 a, Vec3 b, Color color) override { rawLine(a, b, color); }
+  void line(Vec2 a, Vec2 b, Color color) override { rawLine(m_bufLines, a, b, color); }
+  void line(Vec3 a, Vec3 b, Color color) override { rawLine(m_bufLines, a, b, color); }
 
   void rect(Vec2 a, Vec2 b, Color color) override
   {
@@ -277,10 +278,10 @@ struct OpenGlDrawer : IDrawer
     const auto P2 = Vec2(B.x, B.y);
     const auto P3 = Vec2(A.x, B.y);
 
-    rawLine(P0, P1, color);
-    rawLine(P1, P2, color);
-    rawLine(P2, P3, color);
-    rawLine(P3, P0, color);
+    rawLine(m_bufLines, P0, P1, color);
+    rawLine(m_bufLines, P1, P2, color);
+    rawLine(m_bufLines, P2, P3, color);
+    rawLine(m_bufLines, P3, P0, color);
   }
 
   void circle(Vec2 center, float radius, Color color) override
@@ -294,7 +295,7 @@ struct OpenGlDrawer : IDrawer
       auto A = center + Vec2(cos(angle), sin(angle)) * radius;
 
       if(i > 0)
-        rawLine(PREV, A, color);
+        rawLine(m_bufLines, PREV, A, color);
 
       PREV = A;
     }
@@ -329,6 +330,22 @@ struct OpenGlDrawer : IDrawer
     }
   }
 
+  void uiRect(Vec2 a, Vec2 b, Color color)
+  {
+    const auto A = a;
+    const auto B = a + b;
+
+    const auto P0 = Vec2(A.x, A.y);
+    const auto P1 = Vec2(B.x, A.y);
+    const auto P2 = Vec2(B.x, B.y);
+    const auto P3 = Vec2(A.x, B.y);
+
+    rawLine(m_bufLinesUI, P0, P1, color);
+    rawLine(m_bufLinesUI, P1, P2, color);
+    rawLine(m_bufLinesUI, P2, P3, color);
+    rawLine(m_bufLinesUI, P3, P0, color);
+  }
+
   void flush()
   {
     const int mvpLoc = glGetUniformLocation(shaderProgram, "mvp");
@@ -339,60 +356,69 @@ struct OpenGlDrawer : IDrawer
 
     glUseProgram(shaderProgram);
 
-    // setup transform
+    // draw world
     {
-      Matrix4f M;
-      if(g_Camera.perspective)
+      // setup transform
       {
-        const auto zNear = 0.1;
-        const auto zFar = 100;
+        Matrix4f M;
+        if(g_Camera.perspective)
+        {
+          const auto zNear = 0.1;
+          const auto zFar = 100;
 
-        const auto V = translate(-1 * g_Camera.pos);
-        const auto P = perspective(M_PI * 0.5, aspectRatio, zNear, zFar);
+          const auto V = translate(-1 * g_Camera.pos);
+          const auto P = perspective(M_PI * 0.5, aspectRatio, zNear, zFar);
 
-        M = P * V;
+          M = P * V;
+        }
+        else
+        {
+          const auto scaleX = g_Camera.scale / aspectRatio;
+          const auto scaleY = g_Camera.scale;
+          M = scale(Vec3{scaleX, scaleY, 0}) * translate(-1 * g_Camera.pos);
+        }
+        M = transpose(M); // make the matrix column-major
+        glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, &M[0][0]);
       }
-      else
-      {
-        const auto scaleX = g_Camera.scale / aspectRatio;
-        const auto scaleY = g_Camera.scale;
-        M = scale(Vec3{scaleX, scaleY, 0}) * translate(-1 * g_Camera.pos);
-      }
-      M = transpose(M); // make the matrix column-major
-      glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, &M[0][0]);
+
+      glBindTexture(GL_TEXTURE_2D, whiteTexture);
+      m_bufLines.draw();
+
+      glBindTexture(GL_TEXTURE_2D, fontTexture);
+      m_bufTris.draw();
     }
 
-    glBindTexture(GL_TEXTURE_2D, whiteTexture);
-    m_bufLines.draw();
-
-    glBindTexture(GL_TEXTURE_2D, fontTexture);
-    m_bufTris.draw();
-
-    // setup transform
+    // draw UI
     {
-      Matrix4f M;
-      M = scale({1.0f / g_ScreenSize.x, 1.0f / g_ScreenSize.y, 1});
-      M = transpose(M); // make the matrix column-major
-      glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, &M[0][0]);
-    }
+      // setup transform
+      {
+        Matrix4f M;
+        M = scale({1.0f / g_ScreenSize.x, 1.0f / g_ScreenSize.y, 1});
+        M = transpose(M); // make the matrix column-major
+        glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, &M[0][0]);
+      }
 
-    glBindTexture(GL_TEXTURE_2D, fontTexture);
-    m_bufTrisUI.draw();
+      glBindTexture(GL_TEXTURE_2D, whiteTexture);
+      m_bufLinesUI.draw();
+
+      glBindTexture(GL_TEXTURE_2D, fontTexture);
+      m_bufTrisUI.draw();
+    }
   }
 
   private:
   static constexpr float fontSize = 0.032;
 
-  void rawLine(Vec2 A, Vec2 B, Color color)
+  void rawLine(PrimitiveBuffer& buf, Vec2 A, Vec2 B, Color color)
   {
-    m_bufLines.write({A.x, A.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
-    m_bufLines.write({B.x, B.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    buf.write({A.x, A.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    buf.write({B.x, B.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
   }
 
-  void rawLine(Vec3 A, Vec3 B, Color color)
+  void rawLine(PrimitiveBuffer& buf, Vec3 A, Vec3 B, Color color)
   {
-    m_bufLines.write({A.x, A.y, A.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
-    m_bufLines.write({B.x, B.y, B.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    buf.write({A.x, A.y, A.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    buf.write({B.x, B.y, B.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
   }
 
   void rawChar(PrimitiveBuffer& buf, Vec2 POS, char c, Color color, float W, float H)
@@ -422,6 +448,7 @@ struct OpenGlDrawer : IDrawer
   GLuint shaderProgram{};
   PrimitiveBuffer m_bufLines;
   PrimitiveBuffer m_bufTris;
+  PrimitiveBuffer m_bufLinesUI;
   PrimitiveBuffer m_bufTrisUI;
   GLuint fontTexture{};
   GLuint whiteTexture{};
@@ -475,6 +502,7 @@ void drawScreen(OpenGlDrawer& drawer, IApp* app, const char* appName)
 
   app->draw(&drawer);
 
+  drawer.uiRect({-g_ScreenSize.x + 32, g_ScreenSize.y - 32 + 8}, {800, -32 - 16}, White);
   drawer.uiText({-g_ScreenSize.x + 32, g_ScreenSize.y - 32}, appName, White);
   drawer.flush();
 
