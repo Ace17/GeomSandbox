@@ -279,7 +279,7 @@ struct OpenGlDrawer : IDrawer
     rawLine(P3, P0, color);
   }
 
-  void circle(Vec2 center, float radius, Color color)
+  void circle(Vec2 center, float radius, Color color) override
   {
     auto const N = 20;
     Vec2 PREV{};
