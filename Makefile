@@ -108,5 +108,7 @@ include $(shell test -d $(BIN) && find $(BIN) -name "*.dep")
 
 clean:
 	rm -rf $(BIN)
+	mkdir $(BIN)
+	@echo "exclude /*" > $(BIN)/.rsync-filter
 
 true_all: $(TARGETS)
