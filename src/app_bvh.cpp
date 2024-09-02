@@ -156,7 +156,7 @@ struct BoundingVolumeHierarchy
 
       do
       {
-        t.a = randomPos(Vec2(-10, -10), Vec2(10, 10));
+        t.a = randomPos(Vec2(-20, -10), Vec2(20, 10));
         t.b = t.a + randomPos(Vec2(0, 0), Vec2(3, 3));
         t.c = t.a + randomPos(Vec2(0, 0), Vec2(3, 3));
       } while(det2d(t.b - t.a, t.c - t.a) < 0.5);
