@@ -81,7 +81,7 @@ AABB computeBoundingBox(span<const Triangle> allTriangles, span<const int> trian
   return r;
 }
 
-void subdivide(span<const Triangle> allTriangles, Node* node)
+void subdivide(Node* node, span<const Triangle> allTriangles)
 {
   Vec2 size = node->boundaries.maxs - node->boundaries.mins;
   Vec2 cuttingNormal;
@@ -187,7 +187,7 @@ struct BoundingVolumeHierarchy
       if(node->triangles.size() <= 2)
         continue;
 
-      subdivide(input.shapes, node);
+      subdivide(node, input.shapes);
 
       stack.push_back(node->children[1].get());
       stack.push_back(node->children[0].get());
