@@ -66,7 +66,7 @@ void addPoint(AABB& box, Vec2 point)
   box.maxs.y = std::max(box.maxs.y, point.y);
 }
 
-AABB computeBoundingBox(const std::vector<Triangle> allTriangles, const std::vector<int> triangles)
+AABB computeBoundingBox(span<const Triangle> allTriangles, span<const int> triangles)
 {
   AABB r;
   r.mins = r.maxs = allTriangles[triangles[0]].a;
@@ -81,7 +81,7 @@ AABB computeBoundingBox(const std::vector<Triangle> allTriangles, const std::vec
   return r;
 }
 
-void subdivide(const std::vector<Triangle>& allTriangles, Node* node)
+void subdivide(span<const Triangle> allTriangles, Node* node)
 {
   if(node->triangles.size() <= 2)
     return;
