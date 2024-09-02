@@ -83,9 +83,6 @@ AABB computeBoundingBox(span<const Triangle> allTriangles, span<const int> trian
 
 void subdivide(span<const Triangle> allTriangles, Node* node)
 {
-  if(node->triangles.size() <= 2)
-    return;
-
   Vec2 size = node->boundaries.maxs - node->boundaries.mins;
   Vec2 cuttingNormal;
 
@@ -127,9 +124,6 @@ void subdivide(span<const Triangle> allTriangles, Node* node)
     sandbox_rect(b->boundaries.mins, b->boundaries.maxs - b->boundaries.mins, Green);
     sandbox_breakpoint();
   }
-
-  subdivide(allTriangles, node->children[0].get());
-  subdivide(allTriangles, node->children[1].get());
 }
 
 struct Output
@@ -182,7 +176,23 @@ struct BoundingVolumeHierarchy
       r.rootNode->triangles.push_back(i);
     r.rootNode->boundaries = computeBoundingBox(input.shapes, r.rootNode->triangles);
 
-    subdivide(input.shapes, r.rootNode.get());
+    std::vector<Node*> stack;
+    stack.push_back(r.rootNode.get());
+
+    while(stack.size())
+    {
+      auto node = stack.back();
+      stack.pop_back();
+
+      if(node->triangles.size() <= 2)
+        continue;
+
+      subdivide(input.shapes, node);
+
+      stack.push_back(node->children[1].get());
+      stack.push_back(node->children[0].get());
+    }
+
     return r;
   }
 
