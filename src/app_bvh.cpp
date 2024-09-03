@@ -12,7 +12,6 @@
 #include "core/sandbox.h"
 
 #include <algorithm>
-#include <cassert>
 #include <memory>
 #include <vector>
 
@@ -85,9 +84,6 @@ void subdivide(Node* node, span<const Triangle> allTriangles)
 {
   Vec2 size = node->boundaries.maxs - node->boundaries.mins;
   Vec2 cuttingNormal;
-
-  assert(size.x > 0);
-  assert(size.y > 0);
 
   if(size.x > size.y)
     cuttingNormal = Vec2(1, 0);
