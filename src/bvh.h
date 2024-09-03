@@ -13,11 +13,11 @@ struct Triangle
 };
 
 // output
-struct Node
+struct BvhNode
 {
   BoundingBox boundaries;
   int children[2]; // non-leaf node
   std::vector<int> triangles; // leaf node
 };
 
-std::vector<Node> computeBoundingVolumeHierarchy(span<const Triangle> triangles);
+std::vector<BvhNode> computeBoundingVolumeHierarchy(span<const Triangle> triangles);

@@ -20,7 +20,7 @@ BoundingBox computeBoundingBox(span<const Triangle> allTriangles, span<const int
   return r;
 }
 
-void subdivide(int nodeIdx, span<const Triangle> allTriangles, std::vector<Node>& nodes)
+void subdivide(int nodeIdx, span<const Triangle> allTriangles, std::vector<BvhNode>& nodes)
 {
   auto node = &nodes[nodeIdx];
   Vec2 size = node->boundaries.max - node->boundaries.min;
@@ -70,9 +70,9 @@ void subdivide(int nodeIdx, span<const Triangle> allTriangles, std::vector<Node>
 }
 }
 
-std::vector<Node> computeBoundingVolumeHierarchy(span<const Triangle> triangles)
+std::vector<BvhNode> computeBoundingVolumeHierarchy(span<const Triangle> triangles)
 {
-  std::vector<Node> nodes;
+  std::vector<BvhNode> nodes;
   nodes.reserve(triangles.len * 2);
 
   nodes.push_back({});

@@ -41,12 +41,12 @@ struct Input
 
 struct Output
 {
-  std::vector<Node> nodes;
+  std::vector<BvhNode> nodes;
 };
 
 float det2d(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
 
-void drawNode(int curr, span<const Node> allNodes, int depth = 0)
+void drawNode(int curr, span<const BvhNode> allNodes, int depth = 0)
 {
   auto* node = &allNodes[curr];
   sandbox_rect(node->boundaries.min, node->boundaries.max - node->boundaries.min, colors[depth % 11]);
