@@ -2,6 +2,8 @@
 
 #include "core/geom.h"
 
+#include <algorithm>
+
 struct BoundingBox
 {
   BoundingBox()

@@ -6,24 +6,15 @@
 
 namespace
 {
-void addPoint(AABB& box, Vec2 point)
+BoundingBox computeBoundingBox(span<const Triangle> allTriangles, span<const int> triangles)
 {
-  box.mins.x = std::min(box.mins.x, point.x);
-  box.mins.y = std::min(box.mins.y, point.y);
-  box.maxs.x = std::max(box.maxs.x, point.x);
-  box.maxs.y = std::max(box.maxs.y, point.y);
-}
-
-AABB computeBoundingBox(span<const Triangle> allTriangles, span<const int> triangles)
-{
-  AABB r;
-  r.mins = r.maxs = allTriangles[triangles[0]].a;
+  BoundingBox r;
 
   for(auto& tri : triangles)
   {
-    addPoint(r, allTriangles[tri].a);
-    addPoint(r, allTriangles[tri].b);
-    addPoint(r, allTriangles[tri].c);
+    r.add(allTriangles[tri].a);
+    r.add(allTriangles[tri].b);
+    r.add(allTriangles[tri].c);
   }
 
   return r;
@@ -32,7 +23,7 @@ AABB computeBoundingBox(span<const Triangle> allTriangles, span<const int> trian
 void subdivide(int nodeIdx, span<const Triangle> allTriangles, std::vector<Node>& nodes)
 {
   auto node = &nodes[nodeIdx];
-  Vec2 size = node->boundaries.maxs - node->boundaries.mins;
+  Vec2 size = node->boundaries.max - node->boundaries.min;
   Vec2 cuttingNormal;
 
   if(size.x > size.y)
@@ -51,7 +42,7 @@ void subdivide(int nodeIdx, span<const Triangle> allTriangles, std::vector<Node>
     auto linePos = allTriangles[node->triangles[middle]].a;
     auto cuttingDir = rotateLeft(cuttingNormal);
     sandbox_line(linePos - cuttingDir * 100, linePos + cuttingDir * 100, Green);
-    sandbox_rect(node->boundaries.mins, node->boundaries.maxs - node->boundaries.mins, Red);
+    sandbox_rect(node->boundaries.min, node->boundaries.max - node->boundaries.min, Red);
     sandbox_breakpoint();
   }
 
@@ -72,8 +63,8 @@ void subdivide(int nodeIdx, span<const Triangle> allTriangles, std::vector<Node>
   {
     auto a = &nodes[node->children[0]];
     auto b = &nodes[node->children[1]];
-    sandbox_rect(a->boundaries.mins, a->boundaries.maxs - a->boundaries.mins, Green);
-    sandbox_rect(b->boundaries.mins, b->boundaries.maxs - b->boundaries.mins, Green);
+    sandbox_rect(a->boundaries.min, a->boundaries.max - a->boundaries.min, Green);
+    sandbox_rect(b->boundaries.min, b->boundaries.max - b->boundaries.min, Green);
     sandbox_breakpoint();
   }
 }

@@ -4,6 +4,8 @@
 
 #include <vector>
 
+#include "bounding_box.h"
+
 // input
 struct Triangle
 {
@@ -11,14 +13,9 @@ struct Triangle
 };
 
 // output
-struct AABB
-{
-  Vec2 mins, maxs;
-};
-
 struct Node
 {
-  AABB boundaries;
+  BoundingBox boundaries;
   int children[2]; // non-leaf node
   std::vector<int> triangles; // leaf node
 };
