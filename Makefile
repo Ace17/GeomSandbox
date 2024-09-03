@@ -72,6 +72,7 @@ SRCS+=\
 # Common stuff
 SRCS+=\
 			src/random.cpp\
+			src/bvh.cpp\
 			src/bsp.cpp\
 
 $(BIN)/GeomSandbox.exe: $(SRCS:%=$(BIN)/%.o)
