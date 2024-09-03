@@ -40,6 +40,7 @@ SRCS+=\
 			src/collide2d.cpp\
 			src/app_example.cpp\
 			src/app_bvh.cpp\
+			src/app_bvh_raycast.cpp\
 			src/app_line_distance.cpp\
 			src/app_portals_2d.cpp\
 			src/app_frustum_clusters.cpp\
