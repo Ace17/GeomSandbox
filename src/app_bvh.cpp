@@ -42,7 +42,6 @@ struct AABB
 struct Triangle
 {
   Vec2 a, b, c;
-  Vec2 center;
 };
 
 struct Input
@@ -117,6 +116,8 @@ void subdivide(int nodeIdx, span<const Triangle> allTriangles, std::vector<Node>
   auto& child1 = nodes.back();
   child1.triangles.assign(node->triangles.begin() + middle, node->triangles.end());
   child1.boundaries = computeBoundingBox(allTriangles, child1.triangles);
+
+  node->triangles.clear();
 
   {
     auto a = &nodes[node->children[0]];
