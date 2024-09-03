@@ -53,7 +53,7 @@ struct Input
 struct Node
 {
   AABB boundaries;
-  std::shared_ptr<Node> children[2]; // non-leaf node
+  int children[2]; // non-leaf node
   std::vector<int> triangles; // leaf node
 };
 
@@ -80,8 +80,9 @@ AABB computeBoundingBox(span<const Triangle> allTriangles, span<const int> trian
   return r;
 }
 
-void subdivide(Node* node, span<const Triangle> allTriangles)
+void subdivide(int nodeIdx, span<const Triangle> allTriangles, std::vector<Node>& nodes)
 {
+  auto node = &nodes[nodeIdx];
   Vec2 size = node->boundaries.maxs - node->boundaries.mins;
   Vec2 cuttingNormal;
 
@@ -105,17 +106,21 @@ void subdivide(Node* node, span<const Triangle> allTriangles)
     sandbox_breakpoint();
   }
 
-  node->children[0] = std::make_unique<Node>();
-  node->children[0]->triangles.assign(node->triangles.begin(), node->triangles.begin() + middle);
-  node->children[0]->boundaries = computeBoundingBox(allTriangles, node->children[0]->triangles);
+  node->children[0] = nodes.size();
+  nodes.push_back({});
+  auto& child0 = nodes.back();
+  child0.triangles.assign(node->triangles.begin(), node->triangles.begin() + middle);
+  child0.boundaries = computeBoundingBox(allTriangles, child0.triangles);
 
-  node->children[1] = std::make_unique<Node>();
-  node->children[1]->triangles.assign(node->triangles.begin() + middle, node->triangles.end());
-  node->children[1]->boundaries = computeBoundingBox(allTriangles, node->children[1]->triangles);
+  node->children[1] = nodes.size();
+  nodes.push_back({});
+  auto& child1 = nodes.back();
+  child1.triangles.assign(node->triangles.begin() + middle, node->triangles.end());
+  child1.boundaries = computeBoundingBox(allTriangles, child1.triangles);
 
   {
-    auto a = node->children[0].get();
-    auto b = node->children[1].get();
+    auto a = &nodes[node->children[0]];
+    auto b = &nodes[node->children[1]];
     sandbox_rect(a->boundaries.mins, a->boundaries.maxs - a->boundaries.mins, Green);
     sandbox_rect(b->boundaries.mins, b->boundaries.maxs - b->boundaries.mins, Green);
     sandbox_breakpoint();
@@ -124,20 +129,21 @@ void subdivide(Node* node, span<const Triangle> allTriangles)
 
 struct Output
 {
-  std::shared_ptr<Node> rootNode;
+  std::vector<Node> nodes;
 };
 
 float det2d(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
 
-void drawNode(const Node* node, int depth = 0)
+void drawNode(int curr, span<const Node> allNodes, int depth = 0)
 {
+  auto* node = &allNodes[curr];
   sandbox_rect(node->boundaries.mins, node->boundaries.maxs - node->boundaries.mins, colors[depth % 11]);
 
   if(node->children[0])
-    drawNode(node->children[0].get(), depth + 1);
+    drawNode(node->children[0], allNodes, depth + 1);
 
   if(node->children[1])
-    drawNode(node->children[1].get(), depth + 1);
+    drawNode(node->children[1], allNodes, depth + 1);
 }
 
 struct BoundingVolumeHierarchy
@@ -167,28 +173,32 @@ struct BoundingVolumeHierarchy
   {
     Output r;
 
-    r.rootNode = std::make_unique<Node>();
-    for(int i = 0; i < (int)input.shapes.size(); ++i)
-      r.rootNode->triangles.push_back(i);
-    r.rootNode->boundaries = computeBoundingBox(input.shapes, r.rootNode->triangles);
+    r.nodes.reserve(input.shapes.size() * 2);
 
-    std::vector<Node*> stack;
-    stack.push_back(r.rootNode.get());
+    r.nodes.push_back({});
+    auto& rootNode = r.nodes.back();
+    for(int i = 0; i < (int)input.shapes.size(); ++i)
+      rootNode.triangles.push_back(i);
+    rootNode.boundaries = computeBoundingBox(input.shapes, rootNode.triangles);
+
+    std::vector<int> stack;
+    stack.push_back(0);
 
     while(stack.size())
     {
-      auto node = stack.back();
+      auto curr = stack.back();
       stack.pop_back();
 
-      if(node->triangles.size() <= 2)
+      if(r.nodes[curr].triangles.size() <= 2)
         continue;
 
-      subdivide(node, input.shapes);
+      subdivide(curr, input.shapes, r.nodes);
 
-      stack.push_back(node->children[1].get());
-      stack.push_back(node->children[0].get());
+      stack.push_back(r.nodes[curr].children[1]);
+      stack.push_back(r.nodes[curr].children[0]);
     }
 
+    r.nodes.shrink_to_fit();
     return r;
   }
 
@@ -201,8 +211,8 @@ struct BoundingVolumeHierarchy
       sandbox_line(tri.c, tri.a, Blue);
     }
 
-    if(output.rootNode)
-      drawNode(output.rootNode.get());
+    if(output.nodes.size())
+      drawNode(0, output.nodes);
   }
 };
 
