@@ -98,5 +98,5 @@ struct BoundingVolumeHierarchy
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<BoundingVolumeHierarchy>>()); }
-const int registered = registerApp("BoundingVolumeHierarchy", &create);
+const int registered = registerApp("Bvh.Build", &create);
 }

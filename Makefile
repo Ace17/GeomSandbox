@@ -39,7 +39,7 @@ SRCS+=\
 			src/app_subtract.cpp\
 			src/collide2d.cpp\
 			src/app_example.cpp\
-			src/app_bvh.cpp\
+			src/app_bvh_build.cpp\
 			src/app_bvh_raycast.cpp\
 			src/app_line_distance.cpp\
 			src/app_portals_2d.cpp\
