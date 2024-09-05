@@ -22,6 +22,11 @@
 namespace
 {
 
+struct Triangle
+{
+  Vec2 a, b, c;
+};
+
 std::vector<short> status_bvh;
 
 bool intersectsAABB(Vec2 a, Vec2 b, BoundingBox aabb)
@@ -98,7 +103,19 @@ struct BvhRaycastApp : IApp
       shapes.push_back(t);
     }
 
-    bvh = computeBoundingVolumeHierarchy(shapes);
+    {
+      std::vector<BoundingBox> boxes;
+      boxes.reserve(shapes.size());
+      for(auto& obj : shapes)
+      {
+        BoundingBox box;
+        box.add(obj.a);
+        box.add(obj.b);
+        box.add(obj.c);
+        boxes.push_back(box);
+      }
+      bvh = computeBoundingVolumeHierarchy(boxes);
+    }
 
     compute();
   }
@@ -123,11 +140,12 @@ struct BvhRaycastApp : IApp
       if(status_bvh[i] != 0)
       {
         auto margin = Vec2(0.1, 0.1);
-        drawer->rect(node.boundaries.min + margin, node.boundaries.max - node.boundaries.min - 2 * margin, status_bvh[i] == 1 ? Yellow : White);
+        drawer->rect(node.boundaries.min + margin, node.boundaries.max - node.boundaries.min - 2 * margin,
+              status_bvh[i] == 1 ? Yellow : White);
 
         if(status_bvh[i] == 1)
         {
-          for(auto& index : node.triangles)
+          for(auto index : node.objects)
           {
             auto& tri = shapes[index];
             drawer->line(tri.a, tri.b, Yellow);

@@ -34,6 +34,11 @@ const Color colors[] = {
       {1, 0.5, 1, 1},
 };
 
+struct Triangle
+{
+  Vec2 a, b, c;
+};
+
 struct Input
 {
   std::vector<Triangle> shapes;
@@ -81,7 +86,20 @@ struct BoundingVolumeHierarchy
     return r;
   }
 
-  static Output execute(Input input) { return {computeBoundingVolumeHierarchy(input.shapes)}; }
+  static Output execute(Input input)
+  {
+    std::vector<BoundingBox> boxes;
+    boxes.reserve(input.shapes.size());
+    for(auto& obj : input.shapes)
+    {
+      BoundingBox box;
+      box.add(obj.a);
+      box.add(obj.b);
+      box.add(obj.c);
+      boxes.push_back(box);
+    }
+    return {computeBoundingVolumeHierarchy(boxes)};
+  }
 
   static void display(const Input& input, Output output)
   {
