@@ -22,9 +22,10 @@
 namespace
 {
 
-struct Triangle
+struct Circle
 {
-  Vec2 a, b, c;
+  Vec2 center;
+  float radius;
 };
 
 std::vector<short> status_bvh;
@@ -87,20 +88,14 @@ struct BvhRaycastApp : IApp
     rayStart = randomPos({-20, -10}, {20, 10});
     rayTarget = randomPos({-20, -10}, {20, 10});
 
-    static auto det2d = [](Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; };
-
     for(int k = 0; k < 20; ++k)
     {
-      Triangle t;
+      Circle c;
 
-      do
-      {
-        t.a = randomPos(Vec2(-20, -10), Vec2(20, 10));
-        t.b = t.a + randomPos(Vec2(0, 0), Vec2(3, 3));
-        t.c = t.a + randomPos(Vec2(0, 0), Vec2(3, 3));
-      } while(det2d(t.b - t.a, t.c - t.a) < 0.5);
+      c.center = randomPos(Vec2(-20, -10), Vec2(20, 10));
+      c.radius = randomFloat(0.5, 3);
 
-      shapes.push_back(t);
+      shapes.push_back(c);
     }
 
     {
@@ -109,9 +104,8 @@ struct BvhRaycastApp : IApp
       for(auto& obj : shapes)
       {
         BoundingBox box;
-        box.add(obj.a);
-        box.add(obj.b);
-        box.add(obj.c);
+        box.add(obj.center - Vec2(obj.radius, obj.radius));
+        box.add(obj.center + Vec2(obj.radius, obj.radius));
         boxes.push_back(box);
       }
       bvh = computeBoundingVolumeHierarchy(boxes);
@@ -122,13 +116,9 @@ struct BvhRaycastApp : IApp
 
   void draw(IDrawer* drawer) override
   {
-    // draw triangles
-    for(auto& tri : shapes)
-    {
-      drawer->line(tri.a, tri.b, Blue);
-      drawer->line(tri.b, tri.c, Blue);
-      drawer->line(tri.c, tri.a, Blue);
-    }
+    // draw shapes
+    for(auto& c : shapes)
+      drawer->circle(c.center, c.radius, Blue);
 
     // draw BVH
     for(auto& node : bvh)
@@ -148,9 +138,7 @@ struct BvhRaycastApp : IApp
           for(auto index : node.objects)
           {
             auto& tri = shapes[index];
-            drawer->line(tri.a, tri.b, Yellow);
-            drawer->line(tri.b, tri.c, Yellow);
-            drawer->line(tri.c, tri.a, Yellow);
+            drawer->circle(tri.center, tri.radius, Yellow);
           }
         }
       }
@@ -216,7 +204,7 @@ struct BvhRaycastApp : IApp
 
   void compute() { rayRatio = raycast(rayStart, rayTarget, bvh); }
 
-  std::vector<Triangle> shapes;
+  std::vector<Circle> shapes;
   std::vector<BvhNode> bvh;
 
   Vec2 rayStart; // the starting position
