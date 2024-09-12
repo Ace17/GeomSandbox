@@ -1,0 +1,158 @@
+// Copyright (C) 2024 - Sebastien Alaiwan
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+///////////////////////////////////////////////////////////////////////////////
+// Raycast against an AABB
+
+#include "core/algorithm_app.h"
+#include "core/drawer.h"
+#include "core/geom.h"
+
+#include <cassert>
+#include <cmath>
+#include <cstdio>
+#include <vector>
+
+#include "bounding_box.h"
+#include "random.h"
+
+namespace
+{
+
+float g_enter = 0;
+float g_leave = 1;
+
+float raycast(Vec2 start, Vec2 target, BoundingBox aabb)
+{
+  const float t0 = (aabb.min.x - start.x) / (target.x - start.x);
+  const float t1 = (aabb.max.x - start.x) / (target.x - start.x);
+  const float t2 = (aabb.min.y - start.y) / (target.y - start.y);
+  const float t3 = (aabb.max.y - start.y) / (target.y - start.y);
+
+  const auto min = std::max(std::min(t0, t1), std::min(t2, t3));
+  const auto max = std::min(std::max(t0, t1), std::max(t2, t3));
+
+  g_enter = min;
+  g_leave = max;
+
+  if(min > max)
+    return 1;
+
+  if(max < 0)
+    return 1;
+
+  if(min < 0)
+    return max;
+
+  return min;
+}
+
+struct RaycastAgainstAABB : IApp
+{
+  RaycastAgainstAABB()
+  {
+    rayStart = randomPos({-20, -10}, {20, 10});
+    rayTarget = randomPos({-20, -10}, {20, 10});
+
+    aabb.min = randomPos({-10, -10}, {10, 10});
+    aabb.max = aabb.min + randomPos({10, 5}, {10, 5});
+
+    compute();
+  }
+
+  void draw(IDrawer* drawer) override
+  {
+    // draw shapes
+    drawer->rect(aabb.min, aabb.max - aabb.min, White);
+
+    // draw selection
+    {
+      const auto hs = Vec2(0.3, 0.3);
+      auto& box = currentSelection == 0 ? rayStart : rayTarget;
+      drawer->rect(box - hs, hs * 2, White);
+    }
+
+    // draw trajectory
+    drawer->line(rayStart, rayTarget, rayRatio == 1 ? White : Red);
+    drawer->line(rayStart, rayFinish, Green);
+
+    auto delta = rayTarget - rayStart;
+
+    drawer->text(rayStart + delta * g_enter + Vec2{0, 0.5f}, "enter", Yellow);
+    drawCross(drawer, rayStart + delta * g_enter, Yellow);
+
+    drawer->text(rayStart + delta * g_leave + Vec2{0, 0.5f}, "leave", Yellow);
+    drawCross(drawer, rayStart + delta * g_leave, Yellow);
+
+    // draw start, target, and finish positions
+    drawer->text(rayStart, "start", Green);
+    drawCross(drawer, rayStart, Green);
+
+    drawer->text(rayTarget, "target", Green);
+    drawCross(drawer, rayTarget, Green);
+
+    drawer->text(rayFinish, "finish", Green);
+    drawCross(drawer, rayFinish, Green);
+  }
+
+  void drawCross(IDrawer* drawer, Vec2 pos, Color color)
+  {
+    drawer->line(pos - Vec2{1, 0}, pos + Vec2{1, 0}, color);
+    drawer->line(pos - Vec2{0, 1}, pos + Vec2{0, 1}, color);
+  }
+
+  void processEvent(InputEvent inputEvent) override
+  {
+    if(inputEvent.pressed)
+      keydown(inputEvent.key);
+  }
+
+  void keydown(Key key)
+  {
+    auto& point = currentSelection == 0 ? rayStart : rayTarget;
+
+    switch(key)
+    {
+    case Key::Left:
+      point.x -= 1;
+      break;
+    case Key::Right:
+      point.x += 1;
+      break;
+    case Key::Up:
+      point.y += 1;
+      break;
+    case Key::Down:
+      point.y -= 1;
+      break;
+    case Key::Space:
+      currentSelection = 1 - currentSelection;
+      break;
+    default:
+      break;
+    }
+
+    compute();
+  }
+
+  void compute()
+  {
+    rayRatio = raycast(rayStart, rayTarget, aabb);
+    rayFinish = rayStart * (1 - rayRatio) + rayTarget * rayRatio;
+  }
+
+  BoundingBox aabb;
+  Vec2 rayStart; // the starting position
+  Vec2 rayTarget; // the target position
+  Vec2 rayFinish; // the finish position
+  float rayRatio; // the amount of move we can do
+
+  int currentSelection = 0;
+};
+
+IApp* create() { return new RaycastAgainstAABB; }
+const int registered = registerApp("RaycastAgainstAABB", &create);
+}
