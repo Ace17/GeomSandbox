@@ -27,27 +27,34 @@ float g_leave = 1;
 
 float raycast(Vec2 start, Vec2 target, BoundingBox aabb)
 {
-  const float t0 = (aabb.min.x - start.x) / (target.x - start.x);
-  const float t1 = (aabb.max.x - start.x) / (target.x - start.x);
-  const float t2 = (aabb.min.y - start.y) / (target.y - start.y);
-  const float t3 = (aabb.max.y - start.y) / (target.y - start.y);
+  const float tx0 = (aabb.min.x - start.x) / (target.x - start.x);
+  const float tx1 = (aabb.max.x - start.x) / (target.x - start.x);
 
-  const auto min = std::max(std::min(t0, t1), std::min(t2, t3));
-  const auto max = std::min(std::max(t0, t1), std::max(t2, t3));
+  const float tx_min = std::min(tx0, tx1);
+  const float tx_max = std::max(tx0, tx1);
 
-  g_enter = min;
-  g_leave = max;
+  const float ty0 = (aabb.min.y - start.y) / (target.y - start.y);
+  const float ty1 = (aabb.max.y - start.y) / (target.y - start.y);
 
-  if(min > max)
+  const float ty_min = std::min(ty0, ty1);
+  const float ty_max = std::max(ty0, ty1);
+
+  const auto enter = std::max(tx_min, ty_min);
+  const auto leave = std::min(tx_max, ty_max);
+
+  g_enter = enter;
+  g_leave = leave;
+
+  if(enter > leave)
     return 1;
 
-  if(max < 0)
+  if(leave < 0)
     return 1;
 
-  if(min < 0)
-    return max;
+  if(enter < 0)
+    return leave;
 
-  return min;
+  return enter;
 }
 
 struct RaycastAgainstAABB : IApp
