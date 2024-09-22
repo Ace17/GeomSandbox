@@ -11,11 +11,6 @@
 #include "core/drawer.h"
 #include "core/geom.h"
 
-#include <cassert>
-#include <cmath>
-#include <cstdio>
-#include <vector>
-
 #include "bounding_box.h"
 #include "random.h"
 
