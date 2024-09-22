@@ -45,16 +45,22 @@ float raycast(Vec2 start, Vec2 target, BoundingBox aabb)
   g_enter = enter;
   g_leave = leave;
 
-  if(enter > leave)
-    return 1;
+  if(enter < 0 && leave < 0)
+    return 1; // the box is completely behind the ray
 
-  if(leave < 0)
-    return 1;
+  if(enter > 1 && leave > 1)
+    return 1; // the box is completely ahead of the ray
+
+  if(enter < 0 && leave > 1)
+    return 1; // the ray is completely inside the box
+
+  if(enter > leave)
+    return 1; // the line doesn't cross the box
 
   if(enter < 0)
-    return leave;
+    return leave; // the ray starts inside the box, and ends outside
 
-  return enter;
+  return enter; // the ray starts outside the box, and ends inside
 }
 
 struct RaycastAgainstAABB : IApp
