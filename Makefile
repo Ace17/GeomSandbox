@@ -46,6 +46,7 @@ SRCS+=\
 			src/app_portals_2d.cpp\
 			src/app_frustum_clusters.cpp\
 			src/app_raycast_aabb.cpp\
+			src/app_sound_sources.cpp\
 			src/app_main.cpp\
 
 # Algos
