@@ -36,6 +36,7 @@ SRCS+=\
 			src/app_cube.cpp\
 			src/app_polycut.cpp\
 			src/app_sat_continuous.cpp\
+			src/app_sat_discrete.cpp\
 			src/app_subtract.cpp\
 			src/collide2d.cpp\
 			src/app_example.cpp\
