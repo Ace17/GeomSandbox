@@ -19,21 +19,42 @@
 
 namespace
 {
+Vec2 rotateRight(Vec2 v) { return Vec2(v.y, -v.x); }
+
+struct Face
+{
+  Vec2 points[2]; // local ref
+  Vec2 normal;
+};
 
 struct ConvexPolygon
 {
-  std::vector<Vec2> vertices; // local ref
+  std::vector<Face> faces;
   Vec2 pos; // world ref
 };
 
+void addFace(ConvexPolygon& polygon, Vec2 a, Vec2 b)
+{
+  Face f;
+  f.points[0] = a;
+  f.points[1] = b;
+  f.normal = rotateRight(normalize(b - a));
+  polygon.faces.push_back(f);
+}
+
 ConvexPolygon createSquare()
 {
+  const Vec2 a = {-1.5, -1.5};
+  const Vec2 b = {+1.5, -1.5};
+  const Vec2 c = {+1.5, +1.5};
+  const Vec2 d = {-1.5, +1.5};
+
   ConvexPolygon r{};
 
-  r.vertices.push_back({-1.5, -1.5});
-  r.vertices.push_back({+1.5, -1.5});
-  r.vertices.push_back({+1.5, +1.5});
-  r.vertices.push_back({-1.5, +1.5});
+  addFace(r, a, b);
+  addFace(r, b, c);
+  addFace(r, c, d);
+  addFace(r, d, a);
 
   return r;
 }
@@ -48,10 +69,15 @@ ConvexPolygon randomConvexPolygon()
   const float phase = randomFloat(0, 2 * M_PI);
   for(int i = 0; i < N; ++i)
   {
-    Vec2 v;
-    v.x = cos(i * M_PI * 2 / N + phase) * radiusX;
-    v.y = sin(i * M_PI * 2 / N + phase) * radiusY;
-    r.vertices.push_back(v);
+    Vec2 a;
+    a.x = cos((i + 0) * M_PI * 2 / N + phase) * radiusX;
+    a.y = sin((i + 0) * M_PI * 2 / N + phase) * radiusY;
+
+    Vec2 b;
+    b.x = cos((i + 1) * M_PI * 2 / N + phase) * radiusX;
+    b.y = sin((i + 1) * M_PI * 2 / N + phase) * radiusY;
+
+    addFace(r, a, b);
   }
 
   r.pos = randomPos({-10, -5}, {+10, 5});
@@ -63,7 +89,7 @@ struct Collision
 {
   float depth;
   Vec2 normal;
-  Vec2 deepestPoints[2];
+  Vec2 contactPoint;
 };
 
 struct Interval
@@ -74,14 +100,70 @@ struct Interval
 Interval projectPolygon(const ConvexPolygon& polygon, Vec2 axis)
 {
   Interval r;
-  r.max = r.min = dotProduct(polygon.pos + polygon.vertices[0], axis);
-  for(auto& v : polygon.vertices)
+  r.max = r.min = dotProduct(polygon.pos + polygon.faces[0].points[0], axis);
+  for(auto& face : polygon.faces)
   {
-    const float projV = dotProduct(polygon.pos + v, axis);
-    r.min = std::min(r.min, projV);
-    r.max = std::max(r.max, projV);
+    for(auto& v : face.points)
+    {
+      const float projV = dotProduct(polygon.pos + v, axis);
+      r.min = std::min(r.min, projV);
+      r.max = std::max(r.max, projV);
+    }
   }
   return r;
+}
+
+Vec2 findContactPoint(const ConvexPolygon& a, const ConvexPolygon& b, Vec2 normal)
+{
+  const ConvexPolygon* referent = &a;
+  const ConvexPolygon* incident = &b;
+
+  float best = 0;
+  float sign = 1;
+
+  // find the face most parallel to the normal: this is the "reference face"
+  for(auto& face : a.faces)
+  {
+    const float value = dotProduct(face.normal, normal);
+    if(value > best)
+    {
+      best = value;
+    }
+  }
+
+  {
+    for(auto& face : b.faces)
+    {
+      const float value = dotProduct(face.normal, -normal);
+      if(value > best)
+      {
+        best = value;
+        sign = -1;
+        referent = &b;
+        incident = &a;
+      }
+    }
+  }
+
+  (void)referent;
+
+  Vec2 pos;
+  // find the deepest point of 'incident' which is inside 'referent'.
+  float maxDepth = -1.0 / 0.0;
+  for(auto& face : incident->faces)
+  {
+    for(auto& v : face.points)
+    {
+      float depth = dotProduct(-normal, incident->pos + v) * sign;
+      if(depth > maxDepth)
+      {
+        maxDepth = depth;
+        pos = incident->pos + v;
+      }
+    }
+  }
+
+  return pos;
 }
 
 Collision collidePolygons(const ConvexPolygon& a, const ConvexPolygon& b)
@@ -92,20 +174,11 @@ Collision collidePolygons(const ConvexPolygon& a, const ConvexPolygon& b)
 
   std::vector<Vec2> axisToTest;
 
-  auto addAxisForPolygon = [&axisToTest](const ConvexPolygon& polygon)
-  {
-    const int N = (int)polygon.vertices.size();
-    for(int i = 0; i < N; ++i)
-    {
-      auto v0 = polygon.vertices[(i + 0) % N];
-      auto v1 = polygon.vertices[(i + 1) % N];
-      auto axis = rotateLeft(normalize(v1 - v0));
-      axisToTest.push_back(axis);
-    }
-  };
+  for(auto& face : a.faces)
+    axisToTest.push_back(face.normal);
 
-  addAxisForPolygon(a);
-  addAxisForPolygon(b);
+  for(auto& face : b.faces)
+    axisToTest.push_back(face.normal);
 
   for(auto axis : axisToTest)
   {
@@ -132,20 +205,7 @@ Collision collidePolygons(const ConvexPolygon& a, const ConvexPolygon& b)
       r = c;
   }
 
-  r.deepestPoints[0] = a.vertices[0];
-  for(auto p : a.vertices)
-  {
-    const auto depth = dotProduct(p, r.normal);
-    if(depth > dotProduct(r.deepestPoints[0], r.normal))
-      r.deepestPoints[0] = p;
-  }
-  r.deepestPoints[1] = b.vertices[0];
-  for(auto p : b.vertices)
-  {
-    const auto depth = dotProduct(p, r.normal);
-    if(depth < dotProduct(r.deepestPoints[1], r.normal))
-      r.deepestPoints[1] = p;
-  }
+  r.contactPoint = findContactPoint(a, b, r.normal);
   return r;
 }
 
@@ -169,14 +229,11 @@ struct DiscreteSatApp : IApp
     drawPolygon(drawer, colliderA, White, "A");
     drawPolygon(drawer, colliderB, White, "B");
 
-    const auto deepestPointA = colliderA.pos + collision.deepestPoints[0];
-    drawer->line(deepestPointA, deepestPointA - collision.depth * collision.normal, Red);
-
-    const auto deepestPointB = colliderB.pos + collision.deepestPoints[1];
-    drawer->line(deepestPointB, deepestPointB + collision.depth * collision.normal, Red);
+    const auto contactPoint = collision.contactPoint;
+    drawer->line(contactPoint, contactPoint + collision.depth * collision.normal, Red);
 
     {
-      Vec2 pos { -10, -10 };
+      Vec2 pos{-10, -10};
       drawCross(drawer, pos, Red);
       drawer->line(pos, pos + collision.normal, Red);
 
@@ -184,18 +241,26 @@ struct DiscreteSatApp : IApp
       sprintf(buf, "depth=%.3f", collision.depth);
       drawer->text(pos + Vec2{0, -1}, buf);
     }
+
+    const auto separatingPlaneP0 = collision.contactPoint - rotateRight(collision.normal) * 100;
+    const auto separatingPlaneP1 = collision.contactPoint + rotateRight(collision.normal) * 100;
+    drawer->line(separatingPlaneP0, separatingPlaneP1, Yellow);
   }
 
   void drawPolygon(IDrawer* drawer, const ConvexPolygon& polygon, Color color, const char* name)
   {
     drawCross(drawer, polygon.pos, color);
     drawer->text(polygon.pos + Vec2{.7, .7}, name, color);
-    const int N = (int)polygon.vertices.size();
-    for(int i = 0; i < N; ++i)
+
+    for(auto& face : polygon.faces)
     {
-      auto v0 = polygon.vertices[(i + 0) % N];
-      auto v1 = polygon.vertices[(i + 1) % N];
+      auto v0 = face.points[0];
+      auto v1 = face.points[1];
       drawer->line(polygon.pos + v0, polygon.pos + v1, color);
+
+      auto p0 = (polygon.pos + v0 + polygon.pos + v1) * 0.5;
+      auto p1 = p0 + face.normal * 0.5;
+      drawer->line(p0, p1, Red);
     }
   }
 
