@@ -11,6 +11,7 @@
 #include "core/sandbox.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <sstream>
 #include <string>
@@ -174,7 +175,7 @@ Segment clipEar(Polygon2f& polygon)
     }
   }
 
-  // Should never be reached : a polygon with 4 or more vertices should have at least 2 ears.
+  assert(false && "a polygon with 4 or more vertices should have at least 2 ears");
   return {};
 }
 
