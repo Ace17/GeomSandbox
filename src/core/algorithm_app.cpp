@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <chrono>
+#include <stdexcept>
 #include <string>
 
 #include "fiber.h"
@@ -101,6 +102,29 @@ struct Visualizer : IVisualizer
   }
 };
 
+std::vector<uint8_t> loadFile(const char* path)
+{
+  FILE* fp = fopen(path, "rb");
+
+  if(!fp)
+  {
+    char buf[256];
+    sprintf(buf, "Can't read '%s'", path);
+    throw std::runtime_error(buf);
+  }
+
+  fseek(fp, 0, SEEK_END);
+  const int size = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+
+  std::vector<uint8_t> r(size);
+  fread(r.data(), 1, r.size(), fp);
+
+  fclose(fp);
+
+  return r;
+}
+
 struct AlgorithmApp : IApp
 {
   AlgorithmApp(std::unique_ptr<AbstractAlgorithm> algo)
@@ -152,6 +176,11 @@ struct AlgorithmApp : IApp
     {
       runProfiling();
     }
+    else if(key == Key::F4)
+    {
+      if(!m_visuForAlgo.m_insideAlgorithmExecute)
+        loadInput();
+    }
     else if(key == Key::Space || key == Key::Return)
     {
       gVisualizer = &m_visuForAlgo;
@@ -198,6 +227,12 @@ struct AlgorithmApp : IApp
     printf("Processed %d instances in %.2fs (%.2f ms/instance)\n", N, (t1 - t0) / 1000.0, (t1 - t0) / (N * 1.0));
     printf("Input generation: %.3f ms/instance\n", ((t1 - t0) - processingTotalUs / 1000.0) / N);
     printf("      Processing: %.3f ms/instance\n", processingTotalUs / 1000.0 / N);
+  }
+
+  void loadInput()
+  {
+    auto data = loadFile("algo.in");
+    m_algo->loadInput(data);
   }
 
   std::unique_ptr<Fiber> m_fiber;

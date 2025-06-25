@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <memory>
 
 #include "app.h"
@@ -40,7 +41,14 @@ struct AbstractAlgorithm
   virtual void display() = 0;
   virtual void init() = 0;
   virtual void execute() = 0;
+  virtual void loadInput(span<const uint8_t> data) = 0;
 };
+
+template<typename T>
+T deserialize(span<const uint8_t> /*data*/)
+{
+  assert(false && "not implemented for this algorithm");
+}
 
 template<typename AlgoDef>
 struct ConcreteAlgorithm : public AbstractAlgorithm
@@ -55,6 +63,7 @@ struct ConcreteAlgorithm : public AbstractAlgorithm
   void display() override { AlgoDef::display(m_input, m_output); }
   void init() override { m_input = AlgoDef::generateInput(); }
   void execute() override { m_output = AlgoDef::execute(m_input); }
+  void loadInput(span<const uint8_t> data) override { m_input = deserialize<InputType>(data); }
 };
 
 IApp* createAlgorithmApp(std::unique_ptr<AbstractAlgorithm> algo);

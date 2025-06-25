@@ -15,6 +15,10 @@ enum class Key
   End,
   PageUp,
   PageDown,
+  F1,
+  F2,
+  F3,
+  F4,
 };
 
 struct InputEvent

@@ -12,11 +12,62 @@
 
 #include <algorithm>
 #include <cmath>
+#include <sstream>
+#include <string>
 #include <vector>
 
 #include "bounding_box.h"
 #include "random.h"
 #include "random_polygon.h"
+
+template<>
+Polygon2f deserialize<Polygon2f>(span<const uint8_t> data)
+{
+  Polygon2f r;
+
+  std::string s;
+  for(auto& c : data)
+    s += c;
+  std::istringstream ss(s);
+  std::string line;
+  while(std::getline(ss, line))
+  {
+    std::istringstream lineSS(line);
+    Vec2 v;
+    lineSS >> v.x;
+    char comma;
+    lineSS >> comma;
+    lineSS >> v.y;
+
+    r.vertices.push_back(v);
+  }
+
+  const int N = r.vertices.size();
+
+  for(int i = 0; i < N; ++i)
+    r.faces.push_back({i, (i + 1) % N});
+
+  // recenter polygon
+  {
+    BoundingBox box;
+    for(auto& v : r.vertices)
+      box.add(v);
+
+    Vec2 translate = -(box.min + box.max) * 0.5;
+    Vec2 scale;
+    scale.x = 30.0 / (box.max.x - box.min.x);
+    scale.y = 30.0 / (box.max.y - box.min.y);
+
+    for(auto& v : r.vertices)
+    {
+      v = (v + translate);
+      v.x *= scale.x;
+      v.y *= scale.y;
+    }
+  }
+
+  return r;
+}
 
 namespace
 {

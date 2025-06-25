@@ -538,6 +538,14 @@ Key fromSdlKey(int key)
     return Key::End;
   case SDLK_RETURN:
     return Key::Return;
+  case SDLK_F1:
+    return Key::F1;
+  case SDLK_F2:
+    return Key::F2;
+  case SDLK_F3:
+    return Key::F3;
+  case SDLK_F4:
+    return Key::F4;
   }
 
   return Key::Unknown;
