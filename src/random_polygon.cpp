@@ -154,7 +154,7 @@ Polygon2f createRegularPolygon2f(int N, float radius1, float radius2)
 
   for(int i = 0; i < N; ++i)
   {
-    float angle = -i * (M_PI * 2.0 / N);
+    float angle = i * (M_PI * 2.0 / N);
 
     Vec2 v;
     v.x = cos(angle) * radius1;
@@ -323,7 +323,7 @@ Vec2 Polygon2f::normal(int faceIdx) const
   const auto face = faces[faceIdx];
   const auto a = vertices[face.a];
   const auto b = vertices[face.b];
-  return normalize(rotateLeft(b - a));
+  return -normalize(rotateLeft(b - a));
 }
 
 float Polygon2f::faceLength(int faceIdx) const

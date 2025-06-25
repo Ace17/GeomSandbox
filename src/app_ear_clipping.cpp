@@ -124,7 +124,7 @@ bool isInsideTriangle(Vec2 a, Vec2 b, Vec2 c, Vec2 point)
     const Vec2 a = point - segmentStart;
     const Vec2 b = segmentEnd - point;
     const float epsilon = 0.0001;
-    return cross(a, b) > -epsilon;
+    return cross(a, b) < epsilon;
   };
 
   return isOnTheRightOfSegment(a, b, point) && isOnTheRightOfSegment(b, c, point) && isOnTheRightOfSegment(c, a, point);
@@ -141,7 +141,7 @@ bool isValidEar(const Polygon2f& polygon, Ear& ear)
   const Vec2 segmentA = tip - a;
   const Vec2 segmentB = b - tip;
   const float epsilon = 0.0001; // In order to ignore "flat" corners.
-  const bool convexAngle = cross(segmentA, segmentB) < -epsilon;
+  const bool convexAngle = cross(segmentA, segmentB) > epsilon;
   if(!convexAngle)
     return false;
 
