@@ -42,6 +42,9 @@ Polygon2f deserialize<Polygon2f>(span<const uint8_t> data)
     r.vertices.push_back(v);
   }
 
+  if(r.vertices.back() == r.vertices.front())
+    r.vertices.pop_back();
+
   const int N = r.vertices.size();
 
   for(int i = 0; i < N; ++i)
@@ -90,8 +93,8 @@ void drawPolygon(const Polygon2f& input, Color color)
   {
     auto a = input.vertices[face.a];
     auto b = input.vertices[face.b];
-    auto middle = (a+b)*0.5;
-    auto normalTip = middle + rotateLeft(normalize(b-a)) * 0.3;
+    auto middle = (a + b) * 0.5;
+    auto normalTip = middle + rotateLeft(normalize(b - a)) * 0.3;
     sandbox_line(a, b, color);
     sandbox_line(middle, normalTip, {0.3, 0, 0, 1});
   }
