@@ -7,6 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Entry point
 
+#include <csignal>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -668,6 +669,9 @@ struct SdlMainFrame
   {
     if(SDL_Init(SDL_INIT_VIDEO) != 0)
       throw std::runtime_error("Can't init SDL");
+
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
 
     g_ScreenSize = {1280, 720};
 
