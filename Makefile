@@ -47,6 +47,7 @@ SRCS+=\
 			src/app_frustum_clusters.cpp\
 			src/app_raycast_aabb.cpp\
 			src/app_sound_sources.cpp\
+			src/app_triangulate_ear_clipping.cpp\
 			src/app_main.cpp\
 
 # Algos
