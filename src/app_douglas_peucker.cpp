@@ -16,6 +16,9 @@
 
 #include "random.h"
 
+template<>
+std::vector<Vec2> deserialize<std::vector<Vec2>>(span<const uint8_t> data);
+
 namespace
 {
 struct Segment
