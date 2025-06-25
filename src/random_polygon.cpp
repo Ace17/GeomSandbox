@@ -154,14 +154,16 @@ Polygon2f createRegularPolygon2f(int N, float radius1, float radius2)
 
   for(int i = 0; i < N; ++i)
   {
-    float angle = i * (M_PI * 2.0 / N);
+    const float angle = 2 * M_PI * i / N;
+    Vec2 u(cos(angle), sin(angle));
 
-    Vec2 v;
-    v.x = cos(angle) * radius1;
-    v.y = sin(angle) * radius2;
-    r.vertices.push_back(v);
-    r.faces.push_back({i, (i + 1) % N});
+    const auto alpha = sin(angle * 8) * 0.5 + 0.5;
+    const auto radius = alpha * radius1 + (1 - alpha) * radius2;
+    r.vertices.push_back(u * radius);
   }
+
+  for(int i = 0; i < N; ++i)
+    r.faces.push_back({i, (i + 1) % N});
 
   return r;
 }
@@ -311,8 +313,15 @@ void recenterPolygon(Polygon2f& polygon)
 
   const Vec2 polygonCenter = (bbox.min + bbox.max) / 2.0f;
   for(Vec2& vertex : polygon.vertices)
-  {
     vertex -= polygonCenter;
+
+  Vec2 scale;
+  scale.x = 25.0f / (bbox.max.x - bbox.min.x);
+  scale.y = 25.0f / (bbox.max.y - bbox.min.y);
+  for(Vec2& vertex : polygon.vertices)
+  {
+    vertex.x *= scale.x;
+    vertex.y *= scale.y;
   }
 }
 
@@ -337,8 +346,8 @@ float Polygon2f::faceLength(int faceIdx) const
 Polygon2f createRandomPolygon2f()
 {
   const auto radius1 = randomFloat(5, 10) * OneMeter;
-  const auto radius2 = randomFloat(5, 10) * OneMeter;
-  const auto N = randomInt(3, 8);
+  const auto radius2 = radius1 + randomFloat(5, 10) * OneMeter;
+  const auto N = randomInt(3, 36);
   Polygon2f r = createRegularPolygon2f(N, radius1, radius2);
 
   auto drawAndStep = [&]()
