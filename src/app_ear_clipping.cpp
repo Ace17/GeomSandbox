@@ -87,7 +87,14 @@ struct Ear
 void drawPolygon(const Polygon2f& input, Color color)
 {
   for(Face face : input.faces)
-    sandbox_line(input.vertices[face.a], input.vertices[face.b], color);
+  {
+    auto a = input.vertices[face.a];
+    auto b = input.vertices[face.b];
+    auto middle = (a+b)*0.5;
+    auto normalTip = middle + rotateLeft(normalize(b-a)) * 0.3;
+    sandbox_line(a, b, color);
+    sandbox_line(middle, normalTip, {0.3, 0, 0, 1});
+  }
 }
 
 Ear polygonEarFromIndex(const Polygon2f& polygon, int index)
