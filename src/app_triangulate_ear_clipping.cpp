@@ -182,16 +182,6 @@ struct FastEarClippingAlgorithm
 
     while(n > 3)
     {
-      // display status
-      if(enableDisplay)
-      {
-        for(int i = 0, curr = first; i < n; ++i, curr = next[curr])
-          sandbox_line(polygon[curr], polygon[next[curr]], Yellow);
-
-        for(auto& segment : result)
-          sandbox_line(polygon[segment.a], polygon[segment.b], Gray);
-      }
-
       // find best ear to cut
       float minAngle = M_PI;
       int earIndex = -1;
@@ -206,15 +196,6 @@ struct FastEarClippingAlgorithm
 
       assert(earIndex >= 0);
 
-      // display the cutting line
-      if(enableDisplay)
-      {
-        const auto A = polygon[prev[earIndex]];
-        const auto C = polygon[next[earIndex]];
-        sandbox_line(A, C, Red);
-        sandbox_breakpoint();
-      }
-
       // remove ear
       first = next[earIndex];
       next[prev[earIndex]] = next[earIndex];
@@ -226,6 +207,20 @@ struct FastEarClippingAlgorithm
       computeAngleAtVertex(prev[earIndex]);
 
       result.push_back({next[earIndex], prev[earIndex]});
+
+      if(enableDisplay)
+      {
+        for(auto& segment : result)
+          sandbox_line(polygon[segment.a], polygon[segment.b], Gray);
+
+        for(int i = 0, curr = first; i < n; ++i, curr = next[curr])
+          sandbox_line(polygon[curr], polygon[next[curr]], Yellow);
+
+        const auto A = polygon[prev[earIndex]];
+        const auto C = polygon[next[earIndex]];
+        sandbox_line(A, C, Red);
+        sandbox_breakpoint();
+      }
     }
 
     return result;
