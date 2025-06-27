@@ -48,7 +48,6 @@ SRCS+=\
 			src/app_frustum_clusters.cpp\
 			src/app_raycast_aabb.cpp\
 			src/app_sound_sources.cpp\
-			src/app_triangulate_ear_clipping.cpp\
 			src/app_main.cpp\
 
 # Algos
@@ -65,8 +64,8 @@ SRCS+=\
 			src/app_random_polygon.cpp\
 			src/app_spline_catmullrom.cpp\
 			src/app_thickline.cpp\
-			src/app_triangulate2.cpp\
 			src/app_triangulate_bowyerwatson.cpp\
+			src/app_triangulate_ear_clipping.cpp\
 			src/app_triangulate_flip.cpp\
 			src/app_visvalingam.cpp\
 			src/app_voronoi_fortune.cpp\
