@@ -235,5 +235,5 @@ struct FastEarClippingAlgorithm
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<FastEarClippingAlgorithm>>()); }
-const int reg = registerApp("Triangulation.Polygon.FastEarClipping", &create);
+const int reg = registerApp("Triangulation/Polygon/FastEarClipping", &create);
 }

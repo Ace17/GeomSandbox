@@ -56,5 +56,5 @@ struct FlipTriangulationAlgorithm
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<FlipTriangulationAlgorithm>>()); }
-const int reg = registerApp("Triangulation.Flip", &create);
+const int reg = registerApp("Triangulation/Points/Flip", &create);
 } // namespace
