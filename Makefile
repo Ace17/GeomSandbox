@@ -59,13 +59,13 @@ SRCS+=\
 			src/app_contour_tracing.cpp\
 			src/app_dijkstra.cpp\
 			src/app_douglas_peucker.cpp\
-			src/app_ear_clipping.cpp\
 			src/app_fastconvexsplit.cpp\
 			src/app_random_polygon.cpp\
 			src/app_spline_catmullrom.cpp\
 			src/app_triangulate_bowyerwatson.cpp\
-			src/app_triangulate_ear_clipping.cpp\
 			src/app_triangulate_flip.cpp\
+			src/app_triangulate_fast_ear_clipping.cpp\
+			src/app_triangulate_simple_ear_clipping.cpp\
 			src/app_visvalingam.cpp\
 			src/app_voronoi_fortune.cpp\
 			src/random_polygon.cpp\

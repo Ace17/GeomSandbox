@@ -204,5 +204,5 @@ struct VisvalingamAlgorithm
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<VisvalingamAlgorithm>>()); }
-const int reg = registerApp("Visvalingam", &create);
+const int reg = registerApp("Simplification/Polyline/Visvalingam", &create);
 }
