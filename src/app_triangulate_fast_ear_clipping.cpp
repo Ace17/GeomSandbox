@@ -164,6 +164,9 @@ struct FastEarClippingAlgorithm
       // test all other vertices, they must not be in the ABC triangle
       for(int i = 0, curr = next[next[tip]]; i + 3 < n; ++i, curr = next[curr])
       {
+        if(polygon[curr] == A || polygon[curr] == B || polygon[curr] == C)
+          continue;
+
         if(det2d(B - A, polygon[curr] - A) > 0 && det2d(C - B, polygon[curr] - B) > 0 &&
               det2d(A - C, polygon[curr] - C) > 0)
           return false; // point 'curr' is inside ABC.
