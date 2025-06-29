@@ -26,6 +26,24 @@ struct Matrix4f
 
   row& operator[](int i) { return data[i]; }
 
+  Matrix4f operator*(float f)
+  {
+    Matrix4f r = *this;
+    for(auto& row : r.data)
+      for(auto& val : row.elements)
+        val *= f;
+    return r;
+  }
+
+  Matrix4f operator+(const Matrix4f& other)
+  {
+    Matrix4f r = *this;
+    for(int row = 0; row < 4; ++row)
+      for(int col = 0; col < 4; ++col)
+        r.data[row].elements[col] += other.data[row].elements[col];
+    return r;
+  }
+
   row data[4]{};
 };
 

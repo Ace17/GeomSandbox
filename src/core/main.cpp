@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "app.h"
+#include "camera.h"
 #include "drawer.h"
 #include "font.h"
 #include "geom.h"
@@ -25,19 +26,13 @@
 #include <SDL_opengl.h>
 #undef main
 
-struct Camera
-{
-  Vec3 pos{0, 0, +24};
-  float scale = 0.06f;
-  bool perspective = false;
-};
-
 const float CAMERA_UPDATE_RATIO = 0.8;
-const float SCALE_SPEED = 1.05;
-const float SCROLL_SPEED = 1.0;
 
-Camera g_Camera;
-Camera g_TargetCamera;
+OrthoCamera g_OrthoCamera;
+PerspectiveCamera g_PerspectiveCamera;
+ICamera* g_CurrCamera = &g_OrthoCamera;
+
+Matrix4f g_CameraTransform = translate({});
 
 Vec2 g_ScreenSize{};
 
@@ -57,19 +52,10 @@ Vec2 screenCoordsToViewportCoords(SDL_Point p)
   Vec2 v;
   v.x = +(float(p.x) - halfScreenSize.x) / halfScreenSize.x;
   v.y = -(float(p.y) - halfScreenSize.y) / halfScreenSize.y;
-  return v;
-}
-
-// 'screen' to 'logical' coordinates
-Vec2 reverseTransform(SDL_Point p)
-{
-  Vec2 v = screenCoordsToViewportCoords(p);
 
   const auto aspectRatio = g_ScreenSize.x / g_ScreenSize.y;
   v.x *= aspectRatio;
 
-  v.x = v.x / g_Camera.scale + g_Camera.pos.x;
-  v.y = v.y / g_Camera.scale + g_Camera.pos.y;
   return v;
 }
 
@@ -304,8 +290,10 @@ struct OpenGlDrawer : IDrawer
 
   void text(Vec2 pos, const char* text, Color color) override
   {
-    const auto W = fontSize / g_Camera.scale;
-    const auto H = fontSize / g_Camera.scale;
+    Vec3 vX = {g_CameraTransform.data[0].elements[0], g_CameraTransform.data[1].elements[0],
+          g_CameraTransform.data[2].elements[0]};
+    const auto W = fontSize / magnitude(vX);
+    const auto H = fontSize / magnitude(vX);
 
     while(*text)
     {
@@ -361,24 +349,9 @@ struct OpenGlDrawer : IDrawer
     {
       // setup transform
       {
-        Matrix4f M;
-        if(g_Camera.perspective)
-        {
-          const auto zNear = 0.1;
-          const auto zFar = 100;
-
-          const auto V = translate(-1 * g_Camera.pos);
-          const auto P = perspective(M_PI * 0.5, aspectRatio, zNear, zFar);
-
-          M = P * V;
-        }
-        else
-        {
-          const auto scaleX = g_Camera.scale / aspectRatio;
-          const auto scaleY = g_Camera.scale;
-          M = scale(Vec3{scaleX, scaleY, 0}) * translate(-1 * g_Camera.pos);
-        }
-        M = transpose(M); // make the matrix column-major
+        Matrix4f M = g_CurrCamera->getTransform(aspectRatio);
+        g_CameraTransform = lerp(M, g_CameraTransform, CAMERA_UPDATE_RATIO);
+        M = transpose(g_CameraTransform); // make the matrix column-major
         glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, &M[0][0]);
       }
 
@@ -547,6 +520,30 @@ Key fromSdlKey(int key)
     return Key::F3;
   case SDLK_F4:
     return Key::F4;
+  case SDLK_KP_PLUS:
+    return Key::KeyPad_Plus;
+  case SDLK_KP_MINUS:
+    return Key::KeyPad_Minus;
+  case SDLK_KP_1:
+    return Key::KeyPad_1;
+  case SDLK_KP_2:
+    return Key::KeyPad_2;
+  case SDLK_KP_3:
+    return Key::KeyPad_3;
+  case SDLK_KP_4:
+    return Key::KeyPad_4;
+  case SDLK_KP_5:
+    return Key::KeyPad_5;
+  case SDLK_KP_6:
+    return Key::KeyPad_6;
+  case SDLK_KP_7:
+    return Key::KeyPad_7;
+  case SDLK_KP_8:
+    return Key::KeyPad_8;
+  case SDLK_KP_9:
+    return Key::KeyPad_9;
+  case SDLK_KP_0:
+    return Key::KeyPad_0;
   }
 
   return Key::Unknown;
@@ -568,48 +565,28 @@ void processOneInputEvent(IApp* app, SDL_Event event)
     case SDLK_ESCAPE:
       gMustQuit = true;
       break;
-    case SDLK_KP_PLUS:
-      g_TargetCamera.scale = g_Camera.scale * SCALE_SPEED;
-      break;
-    case SDLK_KP_MINUS:
-      g_TargetCamera.scale = g_Camera.scale / SCALE_SPEED;
-      break;
-    case SDLK_KP_3:
-      g_TargetCamera.pos = {0, 0, +24};
-      break;
-    case SDLK_KP_4:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(-SCROLL_SPEED, 0, 0);
-      break;
-    case SDLK_KP_5:
-      g_Camera.perspective = !g_Camera.perspective;
-      break;
-    case SDLK_KP_6:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(+SCROLL_SPEED, 0, 0);
-      break;
-    case SDLK_KP_2:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, -SCROLL_SPEED, 0);
-      break;
-    case SDLK_KP_8:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, +SCROLL_SPEED, 0);
-      break;
-    case SDLK_KP_1:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, +SCROLL_SPEED);
-      break;
-    case SDLK_KP_7:
-      g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, -SCROLL_SPEED);
-      break;
     case SDLK_F2:
       gMustReset = true;
       break;
     case SDLK_F12:
       gMustScreenShot = true;
       break;
+    case SDLK_KP_5:
+    {
+      // switch camera
+      ICamera* a = &g_PerspectiveCamera;
+      ICamera* b = &g_OrthoCamera;
+      g_CurrCamera = (g_CurrCamera != a ? a : b);
+      break;
+    }
     }
 
     InputEvent inputEvent;
     inputEvent.pressed = true;
     inputEvent.key = fromSdlKey(event.key.keysym.sym);
-    app->processEvent(inputEvent);
+
+    if(!g_CurrCamera->processEvent(inputEvent))
+      app->processEvent(inputEvent);
     break;
   }
   case SDL_KEYUP:
@@ -631,18 +608,15 @@ void processOneInputEvent(IApp* app, SDL_Event event)
   }
   case SDL_MOUSEWHEEL:
   {
-    int mouseX, mouseY;
-    SDL_GetMouseState(&mouseX, &mouseY);
-    const Vec2 mousePos2d = reverseTransform(SDL_Point{mouseX, mouseY});
-    const Vec3 mousePos = {mousePos2d.x, mousePos2d.y, 0};
-
     if(event.wheel.y)
     {
-      const auto scaleFactor = event.wheel.y > 0 ? (SCALE_SPEED * 1.1) : 1.0 / (SCALE_SPEED * 1.1);
-      const auto newScale = g_Camera.scale * scaleFactor;
-      auto relativePos = mousePos - g_Camera.pos;
-      g_TargetCamera.pos = mousePos - relativePos * (g_Camera.scale / newScale);
-      g_TargetCamera.scale = newScale;
+      int mouseX, mouseY;
+      SDL_GetMouseState(&mouseX, &mouseY);
+
+      InputEvent inputEvent{};
+      inputEvent.mousePos = screenCoordsToViewportCoords(SDL_Point{mouseX, mouseY});
+      inputEvent.wheel = event.wheel.y > 0 ? 1 : -1;
+      g_CurrCamera->processEvent(inputEvent);
     }
     break;
   }
@@ -733,12 +707,6 @@ struct SdlMainFrame
   GLuint vao{};
 };
 
-void updateCamera()
-{
-  g_Camera.pos = lerp(g_TargetCamera.pos, g_Camera.pos, CAMERA_UPDATE_RATIO);
-  g_Camera.scale = lerp(g_TargetCamera.scale, g_Camera.scale, CAMERA_UPDATE_RATIO);
-}
-
 void safeMain(span<const char*> args)
 {
   std::string appName = "MainMenu";
@@ -777,8 +745,6 @@ void safeMain(span<const char*> args)
       app.reset(func());
       gMustReset = false;
     }
-
-    updateCamera();
 
     app->tick();
     drawScreen(drawer, app.get(), appName.c_str());

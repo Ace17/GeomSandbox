@@ -19,11 +19,25 @@ enum class Key
   F2,
   F3,
   F4,
+  KeyPad_Plus,
+  KeyPad_Minus,
+  KeyPad_0,
+  KeyPad_1,
+  KeyPad_2,
+  KeyPad_3,
+  KeyPad_4,
+  KeyPad_5,
+  KeyPad_6,
+  KeyPad_7,
+  KeyPad_8,
+  KeyPad_9,
 };
 
 struct InputEvent
 {
   bool pressed;
+  Vec2 mousePos;
+  int wheel;
   Key key;
 };
 
