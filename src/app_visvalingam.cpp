@@ -12,10 +12,12 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdio> // snprintf
 #include <vector>
 
 #include "random.h"
+#include "random_polygon.h"
 
 template<>
 std::vector<Vec2> deserialize<std::vector<Vec2>>(span<const uint8_t> data);
@@ -113,21 +115,55 @@ void drawAreas(const std::vector<Vertex>& vertices)
 
 struct VisvalingamAlgorithm
 {
-  static std::vector<Vec2> generateInput()
+  static std::vector<Vec2> generateRandomHorizontalLine()
   {
     std::vector<Vec2> points;
-    const int N = int(randomFloat(3, 15));
+    const int N = int(randomFloat(100, 150));
+    const float F = randomFloat(0.5, 3);
     const float length = 40.0f;
 
     for(int i = 0; i < N; ++i)
     {
       Vec2 pos;
       pos.x = -length / 2 + length * i / N;
-      pos.y = randomFloat(-10, 10);
+      pos.y = sin(i * 2 * M_PI * F / N) * 10;
+
+      pos.x += randomFloat(-0.2, +0.2);
+      pos.y += randomFloat(-0.2, +0.2);
+
       points.push_back(pos);
     }
 
     return points;
+  }
+
+  static std::vector<Vec2> generateNoisySpiral()
+  {
+    std::vector<Vec2> points;
+    const int N = int(randomFloat(15, 150));
+    const float length = 40.0f;
+
+    for(int i = 0; i < N; ++i)
+    {
+      const float t = (length * i) / N;
+      Vec2 pos;
+      pos.x = sin(t * 2 * M_PI * 0.05) * (t * 0.4);
+      pos.y = cos(t * 2 * M_PI * 0.05) * (t * 0.4);
+
+      pos.x += randomFloat(-0.2, 0.2);
+      pos.y += randomFloat(-0.2, 0.2);
+      points.push_back(pos);
+    }
+
+    return points;
+  }
+
+  static std::vector<Vec2> generateInput()
+  {
+    if(rand() % 2)
+      return generateNoisySpiral();
+    else
+      return generateRandomHorizontalLine();
   }
 
   static std::vector<Segment> execute(std::vector<Vec2> input)
@@ -153,7 +189,7 @@ struct VisvalingamAlgorithm
       }
     }
 
-    const float minAreaToKeep = 15.f;
+    const float minAreaToKeep = 0.5f;
 
     auto CompareAreas = [](Vertex a, Vertex b) { return a.area < b.area; };
     auto minAreaIt = std::min_element(vertices.begin() + 1, vertices.end() - 1, CompareAreas);
