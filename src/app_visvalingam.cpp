@@ -227,11 +227,11 @@ struct VisvalingamAlgorithm
   {
     for(int idx = 0; idx < (int)input.len; ++idx)
     {
-      sandbox_rect(input[idx] - Vec2(0.2, 0.2), Vec2(0.4, 0.4), White);
+      sandbox_rect(input[idx] - Vec2(0.1, 0.1), Vec2(0.2, 0.2), Gray);
 
       const int next_idx = (idx + 1);
       if(next_idx < (int)input.len)
-        sandbox_line(input[idx], input[next_idx], White);
+        sandbox_line(input[idx], input[next_idx], Gray);
     }
 
     for(auto& segment : output)
