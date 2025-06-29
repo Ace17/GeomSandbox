@@ -102,6 +102,29 @@ inline Matrix4f transpose(const Matrix4f& m)
   return r;
 }
 
+inline Matrix4f lookAt(Vec3 eye, Vec3 center, Vec3 up)
+{
+  auto f = normalize(center - eye);
+  auto s = normalize(crossProduct(f, up));
+  auto u = crossProduct(s, f);
+
+  Matrix4f r{};
+  r[0][0] = s.x;
+  r[0][1] = s.y;
+  r[0][2] = s.z;
+  r[1][0] = u.x;
+  r[1][1] = u.y;
+  r[1][2] = u.z;
+  r[2][0] = -f.x;
+  r[2][1] = -f.y;
+  r[2][2] = -f.z;
+  r[0][3] = -dotProduct(s, eye);
+  r[1][3] = -dotProduct(u, eye);
+  r[2][3] = dotProduct(f, eye);
+  r[3][3] = 1;
+  return r;
+}
+
 inline Matrix4f perspective(float fovy, float aspect, float zNear, float zFar)
 {
   assert(aspect != 0.0);

@@ -14,6 +14,7 @@ struct ICamera
 
 const float SCALE_SPEED = 1.05;
 const float SCROLL_SPEED = 1.0;
+const float ROTATE_SPEED = 0.02;
 
 struct OrthoCamera : ICamera
 {
@@ -93,25 +94,26 @@ struct PerspectiveCamera : ICamera
     switch(evt.key)
     {
     case Key::KeyPad_3:
-      pos = {0, 0, +24};
+      azimuth = site = 0;
+      distance = 24;
       return true;
     case Key::KeyPad_4:
-      pos = pos + Vec3(-SCROLL_SPEED, 0, 0);
+      azimuth += ROTATE_SPEED;
       return true;
     case Key::KeyPad_6:
-      pos = pos + Vec3(+SCROLL_SPEED, 0, 0);
+      azimuth -= ROTATE_SPEED;
       return true;
     case Key::KeyPad_2:
-      pos = pos + Vec3(0, -SCROLL_SPEED, 0);
+      site += ROTATE_SPEED;
       return true;
     case Key::KeyPad_8:
-      pos = pos + Vec3(0, +SCROLL_SPEED, 0);
+      site -= ROTATE_SPEED;
       return true;
     case Key::KeyPad_1:
-      pos = pos + Vec3(0, 0, +SCROLL_SPEED);
+      distance -= SCROLL_SPEED;
       return true;
     case Key::KeyPad_7:
-      pos = pos + Vec3(0, 0, -SCROLL_SPEED);
+      distance += SCROLL_SPEED;
       return true;
     default:
       return false;
@@ -123,11 +125,18 @@ struct PerspectiveCamera : ICamera
     const auto zNear = 0.1;
     const auto zFar = 100;
 
-    const auto V = translate(-1 * pos);
+    Vec3 pos;
+    pos.x = cos(site) * cos(azimuth);
+    pos.y = cos(site) * sin(azimuth);
+    pos.z = sin(site);
+
+    const auto V = lookAt(pos * distance, {}, Vec3(0, 0, 1));
     const auto P = perspective(M_PI * 0.5, aspectRatio, zNear, zFar);
 
     return P * V;
   }
 
-  Vec3 pos{0, 0, 24};
+  float azimuth = 0;
+  float site = 0;
+  float distance = 24;
 };
