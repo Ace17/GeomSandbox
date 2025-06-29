@@ -60,6 +60,7 @@ SRCS+=\
 			src/app_dijkstra.cpp\
 			src/app_douglas_peucker.cpp\
 			src/app_fastconvexsplit.cpp\
+			src/app_random_polyhedron.cpp\
 			src/app_random_polygon.cpp\
 			src/app_spline_catmullrom.cpp\
 			src/app_triangulate_bowyerwatson.cpp\
@@ -68,6 +69,7 @@ SRCS+=\
 			src/app_triangulate_simple_ear_clipping.cpp\
 			src/app_visvalingam.cpp\
 			src/app_voronoi_fortune.cpp\
+			src/random_polyhedron.cpp\
 			src/random_polygon.cpp\
 			src/split_polygon.cpp\
 			src/triangulate_bowyerwatson.cpp\

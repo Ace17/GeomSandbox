@@ -72,6 +72,7 @@ inline Vec3 operator/(Vec3 v, float f) { return {v.x / f, v.y / f, v.z / f}; }
 
 inline void operator+=(Vec3& a, Vec3 b) { a = a + b; }
 inline void operator-=(Vec3& a, Vec3 b) { a = a - b; }
+inline void operator*=(Vec3& a, float f) { a = a * f; }
 
 inline float dotProduct(Vec3 a, Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 inline float operator*(Vec3 a, Vec3 b) { return dotProduct(a, b); }

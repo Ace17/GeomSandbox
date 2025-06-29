@@ -19,6 +19,7 @@ extern IVisualizer* const gNullVisualizer;
 
 void sandbox_breakpoint();
 void sandbox_line(Vec2 a, Vec2 b, Color color = White);
+void sandbox_line(Vec3 a, Vec3 b, Color color = White);
 void sandbox_rect(Vec2 a, Vec2 b, Color color = White);
 void sandbox_circle(Vec2 center, float radius, Color color = White);
 void sandbox_text(Vec2 pos, const char* text, Color color = White);

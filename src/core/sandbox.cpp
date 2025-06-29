@@ -21,6 +21,7 @@ IVisualizer* gVisualizer = &nullVisualizer;
 
 void sandbox_breakpoint() { gVisualizer->step(); }
 void sandbox_line(Vec2 a, Vec2 b, Color color) { gVisualizer->line(a, b, color); }
+void sandbox_line(Vec3 a, Vec3 b, Color color) { gVisualizer->line(a, b, color); }
 void sandbox_rect(Vec2 a, Vec2 b, Color color) { gVisualizer->rect(a, b, color); }
 void sandbox_circle(Vec2 center, float radius, Color color) { gVisualizer->circle(center, radius, color); }
 void sandbox_text(Vec2 pos, const char* text, Color color) { gVisualizer->text(pos, text, color); }
