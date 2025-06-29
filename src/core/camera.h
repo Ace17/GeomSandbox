@@ -122,15 +122,14 @@ struct PerspectiveCamera : ICamera
 
   Matrix4f getTransform(float aspectRatio) const override
   {
-    const auto zNear = 0.1;
-    const auto zFar = 100;
-
     Vec3 pos;
     pos.x = cos(site) * cos(azimuth);
     pos.y = cos(site) * sin(azimuth);
     pos.z = sin(site);
-
     const auto V = lookAt(pos * distance, {}, Vec3(0, 0, 1));
+
+    const auto zNear = 0.1;
+    const auto zFar = 100;
     const auto P = perspective(M_PI * 0.5, aspectRatio, zNear, zFar);
 
     return P * V;
