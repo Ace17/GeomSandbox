@@ -554,78 +554,82 @@ Key fromSdlKey(int key)
 
 void processOneInputEvent(IApp* app, SDL_Event event)
 {
-  if(event.type == SDL_QUIT)
+  switch(event.type)
+  {
+  case SDL_QUIT:
   {
     gMustQuit = true;
-    return;
+    break;
   }
-
-  if(event.type == SDL_KEYDOWN)
+  case SDL_KEYDOWN:
   {
     switch(event.key.keysym.sym)
     {
     case SDLK_ESCAPE:
       gMustQuit = true;
-      return;
+      break;
     case SDLK_KP_PLUS:
       g_TargetCamera.scale = g_Camera.scale * SCALE_SPEED;
-      return;
+      break;
     case SDLK_KP_MINUS:
       g_TargetCamera.scale = g_Camera.scale / SCALE_SPEED;
-      return;
+      break;
     case SDLK_KP_3:
       g_TargetCamera.pos = {0, 0, +24};
-      return;
+      break;
     case SDLK_KP_4:
       g_TargetCamera.pos = g_Camera.pos + Vec3(-SCROLL_SPEED, 0, 0);
-      return;
+      break;
     case SDLK_KP_5:
       g_Camera.perspective = !g_Camera.perspective;
-      return;
+      break;
     case SDLK_KP_6:
       g_TargetCamera.pos = g_Camera.pos + Vec3(+SCROLL_SPEED, 0, 0);
-      return;
+      break;
     case SDLK_KP_2:
       g_TargetCamera.pos = g_Camera.pos + Vec3(0, -SCROLL_SPEED, 0);
-      return;
+      break;
     case SDLK_KP_8:
       g_TargetCamera.pos = g_Camera.pos + Vec3(0, +SCROLL_SPEED, 0);
-      return;
+      break;
     case SDLK_KP_1:
       g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, +SCROLL_SPEED);
-      return;
+      break;
     case SDLK_KP_7:
       g_TargetCamera.pos = g_Camera.pos + Vec3(0, 0, -SCROLL_SPEED);
-      return;
+      break;
     case SDLK_F2:
       gMustReset = true;
-      return;
+      break;
     case SDLK_F12:
       gMustScreenShot = true;
-      return;
+      break;
     }
 
     InputEvent inputEvent;
     inputEvent.pressed = true;
     inputEvent.key = fromSdlKey(event.key.keysym.sym);
     app->processEvent(inputEvent);
+    break;
   }
-  else if(event.type == SDL_KEYUP)
+  case SDL_KEYUP:
   {
     InputEvent inputEvent;
     inputEvent.pressed = false;
     inputEvent.key = fromSdlKey(event.key.keysym.sym);
     app->processEvent(inputEvent);
+    break;
   }
-  else if(event.type == SDL_WINDOWEVENT)
+  case SDL_WINDOWEVENT:
   {
     if(event.window.event == SDL_WINDOWEVENT_RESIZED)
     {
       g_ScreenSize = {(float)event.window.data1, (float)event.window.data2};
       glViewport(0, 0, g_ScreenSize.x, g_ScreenSize.y);
     }
+    break;
   }
-  else if(event.type == SDL_MOUSEWHEEL)
+  case SDL_MOUSEWHEEL:
   {
     int mouseX, mouseY;
     SDL_GetMouseState(&mouseX, &mouseY);
@@ -640,6 +644,8 @@ void processOneInputEvent(IApp* app, SDL_Event event)
       g_TargetCamera.pos = mousePos - relativePos * (g_Camera.scale / newScale);
       g_TargetCamera.scale = newScale;
     }
+    break;
+  }
   }
 }
 
