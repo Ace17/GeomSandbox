@@ -48,6 +48,7 @@ SRCS+=\
 			src/app_frustum_clusters.cpp\
 			src/app_raycast_aabb.cpp\
 			src/app_sound_sources.cpp\
+			src/app_split_polyhedron.cpp\
 			src/app_main.cpp\
 
 # Algos
@@ -72,6 +73,7 @@ SRCS+=\
 			src/random_polyhedron.cpp\
 			src/random_polygon.cpp\
 			src/split_polygon.cpp\
+			src/split_polyhedron.cpp\
 			src/triangulate_bowyerwatson.cpp\
 			src/triangulate_flip.cpp\
 
