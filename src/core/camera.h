@@ -129,7 +129,7 @@ struct PerspectiveCamera : ICamera
     const auto V = lookAt(pos * distance, {}, Vec3(0, 0, 1));
 
     const auto zNear = 0.1;
-    const auto zFar = 100;
+    const auto zFar = 1000;
     const auto P = perspective(M_PI * 0.5, aspectRatio, zNear, zFar);
 
     return P * V;
