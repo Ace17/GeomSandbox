@@ -82,13 +82,13 @@ struct SplitPolyhedronApp : IApp
       for(int i = -10; i <= 10; ++i)
       {
         auto q = p + tangent1 * i * 4;
-        drawer->line(q + tangent2 * 40, q - tangent2 * 40, Red);
+        drawer->line(q + tangent2 * 40, q - tangent2 * 40, {0.2, 0, 0, 1});
       }
 
       for(int i = -10; i <= 10; ++i)
       {
         auto q = p + tangent2 * i * 4;
-        drawer->line(q + tangent1 * 40, q - tangent1 * 40, Red);
+        drawer->line(q + tangent1 * 40, q - tangent1 * 40, {0.2, 0, 0, 1});
       }
     }
 
