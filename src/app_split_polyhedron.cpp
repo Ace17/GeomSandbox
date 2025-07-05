@@ -92,10 +92,14 @@ struct SplitPolyhedronApp : IApp
       }
     }
 
-    if(0)
+    if(!m_frontVisible && !m_backVisible)
       drawPolygon(drawer, m_poly, White);
-    drawPolygon(drawer, m_front, Yellow);
-    drawPolygon(drawer, m_back, Green);
+
+    if(m_frontVisible)
+      drawPolygon(drawer, m_front, Yellow);
+
+    if(m_backVisible)
+      drawPolygon(drawer, m_back, Green);
   }
 
   void processEvent(InputEvent inputEvent) override
@@ -141,6 +145,12 @@ struct SplitPolyhedronApp : IApp
     case Key::Space:
       m_selection = (m_selection + 1) % 3;
       break;
+    case Key::Home:
+      m_frontVisible = !m_frontVisible;
+      break;
+    case Key::End:
+      m_backVisible = !m_backVisible;
+      break;
     default:
       break;
     }
@@ -180,6 +190,8 @@ struct SplitPolyhedronApp : IApp
   Vec3 m_abc[3];
   int m_selection = 0;
   int m_selectedFace = 0;
+  bool m_frontVisible = true;
+  bool m_backVisible = true;
   Polyhedron3f m_poly;
   Polyhedron3f m_front, m_back;
 };
