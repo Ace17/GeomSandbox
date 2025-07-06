@@ -43,8 +43,43 @@ void opExtrudeFace(Polyhedron3f& poly, int faceIdx, float amount)
   }
 }
 
+Polyhedron3f createSpiralPolyhedron()
+{
+  Polyhedron3f r;
+
+  {
+    r.faces.push_back({});
+    auto& face = r.faces.back();
+    for(int k = 0; k < 48; ++k)
+    {
+      const float rInt = 2 + k * 0.2;
+      const float rExt = rInt + 1.5;
+
+      const float angle = 2 * M_PI * k * 0.05;
+
+      const Vec3 ray = {(float)cos(angle), (float)sin(angle), 0};
+
+      const auto iInt = (int)r.vertices.size();
+      r.vertices.push_back(ray * rInt);
+
+      const auto iExt = (int)r.vertices.size();
+      r.vertices.push_back(ray * rExt);
+
+      face.indices.push_back(iInt);
+      face.indices.insert(face.indices.begin(), iExt);
+    }
+  }
+
+  opExtrudeFace(r, 0, 10);
+
+  return r;
+}
+
 Polyhedron3f createRandomPolyhedron3f()
 {
+  if(randomInt(0, 10) == 0)
+    return createSpiralPolyhedron();
+
   Polyhedron3f r;
 
   const int N = randomInt(3, 14);
