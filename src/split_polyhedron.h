@@ -10,4 +10,4 @@ struct Plane3
   float dist;
 };
 
-void splitPolyhedronAgainstPlane(const PolyhedronFL& poly, Plane3 plane, PolyhedronFL& front, PolyhedronFL& back);
+void splitPolyhedronAgainstPlane(PolyhedronFL poly, Plane3 plane, PolyhedronFL& front, PolyhedronFL& back);

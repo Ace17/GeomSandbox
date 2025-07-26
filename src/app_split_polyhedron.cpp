@@ -60,7 +60,20 @@ struct SplitPolyhedronApp : IApp
 {
   SplitPolyhedronApp()
   {
-    m_poly = createRandomPolyhedronFL();
+    if(1)
+    {
+      m_poly = createRandomPolyhedronFL();
+    }
+    else
+    {
+      m_poly.vertices.push_back({5, 0, 0});
+      m_poly.vertices.push_back({5, 0, 10});
+      m_poly.vertices.push_back({5, 10, 10});
+      m_poly.vertices.push_back({5, 10, 0});
+      m_poly.faces.push_back({});
+      auto& face = m_poly.faces.back();
+      face.indices = {0, 1, 2, 3};
+    }
 
     m_abc[0] = {-20, -20, 0};
     m_abc[1] = {+14, 0, 0};
