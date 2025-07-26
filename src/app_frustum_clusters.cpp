@@ -113,10 +113,13 @@ struct FrustumClusters : IApp
           clusters[z][y][x] = true;
   }
 
-  void keydown(Key key)
+  void processEvent(InputEvent inputEvent) override
   {
+    if(!inputEvent.pressed)
+      return;
+
     const float speed = 0.5f;
-    switch(key)
+    switch(inputEvent.key)
     {
     case Key::Left:
       sphereCenter.x -= speed;
