@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cassert>
 #include <memory>
+#include <stdexcept>
 
 #include "app.h"
 // Example algorithm :
@@ -47,7 +47,7 @@ struct AbstractAlgorithm
 template<typename T>
 T deserialize(span<const uint8_t> /*data*/)
 {
-  assert(false && "not implemented for this algorithm");
+  throw std::runtime_error("Loading is not implemented for this algorithm");
 }
 
 template<typename AlgoDef>

@@ -231,8 +231,15 @@ struct AlgorithmApp : IApp
 
   void loadInput()
   {
-    auto data = loadFile("algo.in");
-    m_algo->loadInput(data);
+    try
+    {
+      auto data = loadFile("algo.in");
+      m_algo->loadInput(data);
+    }
+    catch(const std::exception& err)
+    {
+      fprintf(stderr, "Error: %s\n", err.what());
+    }
   }
 
   std::unique_ptr<Fiber> m_fiber;
