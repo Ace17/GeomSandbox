@@ -17,7 +17,7 @@
 namespace
 {
 
-void drawPolygon(IDrawer* drawer, const Polyhedron3f& poly, Color color)
+void drawPolygon(IDrawer* drawer, const PolyhedronFL& poly, Color color)
 {
   for(auto& face : poly.faces)
   {
@@ -50,7 +50,7 @@ struct SplitPolyhedronApp : IApp
 {
   SplitPolyhedronApp()
   {
-    m_poly = createRandomPolyhedron3f();
+    m_poly = createRandomPolyhedronFL();
 
     m_abc[0] = {-20, -20, 0};
     m_abc[1] = {+14, 0, 0};
@@ -190,8 +190,8 @@ struct SplitPolyhedronApp : IApp
   int m_selectedFace = 0;
   bool m_frontVisible = true;
   bool m_backVisible = true;
-  Polyhedron3f m_poly;
-  Polyhedron3f m_front, m_back;
+  PolyhedronFL m_poly;
+  PolyhedronFL m_front, m_back;
 };
 
 const int registered = registerApp("Split/Polyhedron", []() -> IApp* { return new SplitPolyhedronApp; });

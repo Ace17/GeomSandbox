@@ -19,9 +19,9 @@ struct RandomPolygon
 {
   static int generateInput() { return 0; }
 
-  static Polyhedron3f execute(int /*seed*/) { return createRandomPolyhedron3f(); }
+  static PolyhedronFL execute(int /*seed*/) { return createRandomPolyhedronFL(); }
 
-  static void display(int /*input*/, const Polyhedron3f& output)
+  static void display(int /*input*/, const PolyhedronFL& output)
   {
     sandbox_line({0, 0, 0}, {1, 0, 0}, Red);
     sandbox_line({0, 0, 0}, {0, 1, 0}, Green);

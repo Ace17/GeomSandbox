@@ -4,15 +4,15 @@
 
 #include <vector>
 
-struct Face3
+struct PolyhedronFacet
 {
   std::vector<int> indices;
 };
 
-struct Polyhedron3f
+struct PolyhedronFL
 {
   std::vector<Vec3> vertices;
-  std::vector<Face3> faces;
+  std::vector<PolyhedronFacet> faces;
 
   Vec2 normal(int faceIdx) const;
 

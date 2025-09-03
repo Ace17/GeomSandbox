@@ -11,18 +11,18 @@
 
 #include "random.h"
 
-void opExtrudeFace(Polyhedron3f& poly, int faceIdx, float amount)
+void opExtrudeFace(PolyhedronFL& poly, int faceIdx, float amount)
 {
   const auto A = poly.vertices[poly.faces[faceIdx].indices[0]];
   const auto B = poly.vertices[poly.faces[faceIdx].indices[1]];
   const auto C = poly.vertices[poly.faces[faceIdx].indices[2]];
   const auto N = normalize(crossProduct(B - A, C - A));
 
-  Face3 oldFace = std::move(poly.faces[faceIdx]);
+  PolyhedronFacet oldFace = std::move(poly.faces[faceIdx]);
 
   // build translated face
   const int baseVertex = poly.vertices.size();
-  Face3& newFace = poly.faces[faceIdx];
+  PolyhedronFacet& newFace = poly.faces[faceIdx];
   for(auto index : oldFace.indices)
   {
     const int vertexId = poly.vertices.size();
@@ -43,9 +43,9 @@ void opExtrudeFace(Polyhedron3f& poly, int faceIdx, float amount)
   }
 }
 
-Polyhedron3f createSpiralPolyhedron()
+PolyhedronFL createSpiralPolyhedron()
 {
-  Polyhedron3f r;
+  PolyhedronFL r;
 
   {
     r.faces.push_back({});
@@ -75,19 +75,19 @@ Polyhedron3f createSpiralPolyhedron()
   return r;
 }
 
-Polyhedron3f createRandomPolyhedron3f()
+PolyhedronFL createRandomPolyhedronFL()
 {
   if(randomInt(0, 10) == 0)
     return createSpiralPolyhedron();
 
-  Polyhedron3f r;
+  PolyhedronFL r;
 
   const int N = randomInt(3, 14);
   const float radius = randomFloat(7, 15);
   const float halfLength = randomFloat(0.1, 2.0);
   const float phase = randomFloat(0, M_PI);
 
-  Face3 botCap, topCap;
+  PolyhedronFacet botCap, topCap;
 
   for(int i = 0; i < N; ++i)
   {

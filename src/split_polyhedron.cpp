@@ -17,7 +17,7 @@ struct hash<Vec3>
 
 namespace
 {
-int getVertex(Vec3 pos, Polyhedron3f& poly, std::unordered_map<Vec3, int>& cache)
+int getVertex(Vec3 pos, PolyhedronFL& poly, std::unordered_map<Vec3, int>& cache)
 {
   if(cache.empty())
   {
@@ -45,7 +45,7 @@ int rollover(int value, int period)
 
 }
 
-void splitPolyhedronAgainstPlane(const Polyhedron3f& poly, Plane3 plane, Polyhedron3f& front, Polyhedron3f& back)
+void splitPolyhedronAgainstPlane(const PolyhedronFL& poly, Plane3 plane, PolyhedronFL& front, PolyhedronFL& back)
 {
   front = {};
   back = {};
