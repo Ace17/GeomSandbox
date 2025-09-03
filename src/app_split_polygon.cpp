@@ -52,7 +52,7 @@ struct Hyperplane
   float dist;
 };
 
-static std::vector<std::vector<Vec2>> cutAlongDiagonals(span<PointWithSide> polygon, span<Diagonal> diagonals)
+std::vector<std::vector<Vec2>> cutAlongDiagonals(span<const PointWithSide> polygon, span<Diagonal> diagonals)
 {
   const int N = polygon.len;
 
@@ -123,7 +123,7 @@ static std::vector<std::vector<Vec2>> cutAlongDiagonals(span<PointWithSide> poly
   return result;
 }
 
-static std::vector<std::vector<Vec2>> splitPolygonAlongLine(span<const Vec2> inputPolygon, const Hyperplane& plane)
+std::vector<std::vector<Vec2>> splitPolygonAlongLine(span<const Vec2> inputPolygon, const Hyperplane& plane)
 {
   std::vector<PointWithSide> polygon;
 
@@ -297,6 +297,8 @@ static std::vector<std::vector<Vec2>> splitPolygonAlongLine(span<const Vec2> inp
 
   return cutAlongDiagonals(polygon, diagonals);
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 void drawPolygon(span<const Vec2> input, Color color)
 {
