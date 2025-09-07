@@ -11,8 +11,6 @@
 #include "core/drawer.h"
 #include "core/geom.h"
 
-#include <cmath>
-
 #include "random_polyhedron.h"
 #include "split_polyhedron.h"
 
