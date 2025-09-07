@@ -17,7 +17,7 @@
 namespace
 {
 
-void drawPolygon(IDrawer* drawer, const PolyhedronFL& poly, Color color)
+void drawPolyhedron(IDrawer* drawer, const PolyhedronFL& poly, Color color)
 {
   for(auto& face : poly.faces)
   {
@@ -91,13 +91,13 @@ struct SplitPolyhedronApp : IApp
     }
 
     if(!m_frontVisible && !m_backVisible)
-      drawPolygon(drawer, m_poly, White);
+      drawPolyhedron(drawer, m_poly, White);
 
     if(m_frontVisible)
-      drawPolygon(drawer, m_front, Yellow);
+      drawPolyhedron(drawer, m_front, Yellow);
 
     if(m_backVisible)
-      drawPolygon(drawer, m_back, Green);
+      drawPolyhedron(drawer, m_back, Green);
   }
 
   void processEvent(InputEvent inputEvent) override
