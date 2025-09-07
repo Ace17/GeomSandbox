@@ -38,6 +38,14 @@ void drawPolyhedron(IDrawer* drawer, const PolyhedronFL& poly, Color color)
       auto a = poly.vertices[face.indices[i]];
       auto b = poly.vertices[face.indices[(i + 1) % N]];
       drawer->line(a, b, color);
+
+      // draw the edge arrow
+      const Vec3 edgeTangent = normalize(b - a);
+      const Vec3 edgeBiTangent = crossProduct(faceNormal, edgeTangent);
+      const Vec3 m = (a * 0.25 + b * 0.75);
+
+      drawer->line(m, m - edgeTangent * 0.5 + edgeBiTangent * 0.5, color);
+      drawer->line(m, m - edgeTangent * 0.5 - edgeBiTangent * 0.5, color);
     }
 
     // draw normal vector
