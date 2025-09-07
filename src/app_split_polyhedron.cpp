@@ -23,23 +23,25 @@ void drawPolyhedron(IDrawer* drawer, const PolyhedronFL& poly, Color color)
   {
     const int N = face.indices.size();
 
+    const auto A = poly.vertices[face.indices[0]];
+    const auto B = poly.vertices[face.indices[1]];
+    const auto C = poly.vertices[face.indices[2]];
+    const Vec3 faceNormal = normalize(crossProduct(B - A, C - A));
+
     Vec3 faceCenter{};
+    for(int i = 0; i < N; ++i)
+      faceCenter += poly.vertices[face.indices[i]] / float(N);
+
+    // draw edges
     for(int i = 0; i < N; ++i)
     {
       auto a = poly.vertices[face.indices[i]];
       auto b = poly.vertices[face.indices[(i + 1) % N]];
       drawer->line(a, b, color);
-      faceCenter += a;
     }
 
+    // draw normal vector
     {
-      faceCenter *= (1.0f / N);
-
-      const auto A = poly.vertices[face.indices[0]];
-      const auto B = poly.vertices[face.indices[1]];
-      const auto C = poly.vertices[face.indices[2]];
-      Vec3 faceNormal = normalize(crossProduct(B - A, C - A));
-
       drawer->line(faceCenter + faceNormal * 0.5, faceCenter + faceNormal * 1.0f, {0.4f, 0, 0, 1});
       drawer->line(faceCenter, faceCenter + faceNormal * 0.5f, {0.7f, 0, 0, 1});
     }
