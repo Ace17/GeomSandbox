@@ -27,6 +27,13 @@ specific algorithm implementations.
 Gallery
 -------
 
+Arbitrary polyhedron clipping:
+
+<p align="center">
+   <img src="doc/splitpolyhedron.png">
+   <img src="doc/splitpolyhedron.gif">
+</p>
+
 Triangulation using the Bowyer-Watson algorithm:
 
 <p align="center">
