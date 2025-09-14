@@ -28,6 +28,7 @@ struct Circle
 };
 
 std::vector<short> status_bvh;
+int status_counter;
 
 bool intersectsAABB(Vec2 a, Vec2 b, BoundingBox aabb)
 {
@@ -49,15 +50,47 @@ bool intersectsAABB(Vec2 a, Vec2 b, BoundingBox aabb)
   return tmax >= tmin;
 }
 
-float raycast(Vec2 a, Vec2 b, span<const BvhNode> bvh)
+float raycastThroughOneCircle(Vec2 A, Vec2 B, Circle circle)
+{
+  const auto C = circle.center;
+  const auto r = circle.radius;
+
+  const auto a = dotProduct(B - A, B - A);
+  const auto b = -2 * dotProduct(B - A, C - A);
+  const auto c = dotProduct(C - A, C - A) - r * r;
+
+  const auto delta = b * b - 4 * a * c;
+
+  if(delta < 0)
+    return 1;
+
+  const auto sqrtDelta = sqrt(delta);
+
+  float ratio = 1;
+
+  const auto t0 = (-b - sqrtDelta) / (2 * a);
+  if(t0 >= 0 && t0 < 1)
+    ratio = min(ratio, t0);
+
+  const auto t1 = (-b + sqrtDelta) / (2 * a);
+  if(t1 >= 0 && t1 < 1)
+    ratio = min(ratio, t1);
+
+  return ratio;
+}
+
+float raycast(Vec2 a, Vec2 b, span<const BvhNode> bvh, span<const Circle> shapes)
 {
   status_bvh.clear();
   status_bvh.resize(bvh.len);
+  status_counter = 0;
 
   std::vector<int> stack;
   stack.reserve(bvh.len);
 
   stack.push_back(0);
+
+  float minRatio = 1.0f;
 
   while(stack.size())
   {
@@ -68,6 +101,14 @@ float raycast(Vec2 a, Vec2 b, span<const BvhNode> bvh)
     if(!intersectsAABB(a, b, bvh[curr].boundaries))
       continue;
 
+    for(auto obj : bvh[curr].objects)
+    {
+      float ratio = raycastThroughOneCircle(a, b, shapes[obj]);
+      if(ratio < minRatio)
+        minRatio = ratio;
+      ++status_counter;
+    }
+
     status_bvh[curr] = 1; // tested, intersection found
 
     if(bvh[curr].children[0])
@@ -77,7 +118,7 @@ float raycast(Vec2 a, Vec2 b, span<const BvhNode> bvh)
       stack.push_back(bvh[curr].children[1]);
   }
 
-  return 1;
+  return minRatio;
 }
 
 struct BvhRaycastApp : IApp
@@ -157,8 +198,24 @@ struct BvhRaycastApp : IApp
     drawer->text(rayStart, "start", Green);
     drawCross(drawer, rayStart, Green);
 
-    drawer->text(rayTarget, "target", Green);
-    drawCross(drawer, rayTarget, Green);
+    {
+      auto targetColor = rayRatio != 1.0 ? Red : Green;
+      drawer->text(rayTarget, "target", targetColor);
+      drawCross(drawer, rayTarget, targetColor);
+    }
+
+    if(rayRatio != 1.0)
+    {
+      const auto rayFinish = rayStart + rayRatio * (rayTarget - rayStart);
+      drawer->text(rayFinish, "finish", Green);
+      drawCross(drawer, rayFinish, Green);
+    }
+
+    {
+      char buf[256];
+      sprintf(buf, "%d intersection tests", status_counter);
+      drawer->text({}, buf, White);
+    }
   }
 
   void drawCross(IDrawer* drawer, Vec2 pos, Color color)
@@ -201,7 +258,7 @@ struct BvhRaycastApp : IApp
     compute();
   }
 
-  void compute() { rayRatio = raycast(rayStart, rayTarget, bvh); }
+  void compute() { rayRatio = raycast(rayStart, rayTarget, bvh, shapes); }
 
   std::vector<Circle> shapes;
   std::vector<BvhNode> bvh;
