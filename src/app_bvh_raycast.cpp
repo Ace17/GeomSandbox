@@ -30,24 +30,34 @@ struct Circle
 std::vector<short> status_bvh;
 int status_counter;
 
+void order(float& a, float& b)
+{
+  if(a > b)
+    std::swap(a, b);
+}
+
 bool intersectsAABB(Vec2 a, Vec2 b, BoundingBox aabb)
 {
   auto delta = b - a;
 
-  float tmin = 0;
-  float tmax = 1;
+  float enter = 0;
+  float leave = 1;
 
-  float tx1 = (aabb.min.x - a.x) / delta.x;
-  float tx2 = (aabb.max.x - a.x) / delta.x;
-  tmin = max(tmin, min(tx1, tx2));
-  tmax = min(tmax, max(tx1, tx2));
+  float timeEnterOnX = (aabb.min.x - a.x) / delta.x;
+  float timeLeaveOnX = (aabb.max.x - a.x) / delta.x;
+  order(timeEnterOnX, timeLeaveOnX);
 
-  float ty1 = (aabb.min.y - a.y) / delta.y;
-  float ty2 = (aabb.max.y - a.y) / delta.y;
-  tmin = max(tmin, min(ty1, ty2));
-  tmax = min(tmax, max(ty1, ty2));
+  enter = max(enter, timeEnterOnX);
+  leave = min(leave, timeLeaveOnX);
 
-  return tmax >= tmin;
+  float timeEnterOnY = (aabb.min.y - a.y) / delta.y;
+  float timeLeaveOnY = (aabb.max.y - a.y) / delta.y;
+  order(timeEnterOnY,timeLeaveOnY);
+
+  enter = max(enter, timeEnterOnY);
+  leave = min(leave, timeLeaveOnY);
+
+  return leave >= enter;
 }
 
 float raycastThroughOneCircle(Vec2 A, Vec2 B, Circle circle)
