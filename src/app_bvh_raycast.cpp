@@ -110,8 +110,6 @@ float raycast(Vec2 a, Vec2 b, span<const BvhNode> bvh, span<const Circle> shapes
     const int curr = stack.back();
     stack.pop_back();
 
-    status_bvh[curr] = 2; // tested
-
     for(auto obj : bvh[curr].objects)
     {
       float ratio = raycastThroughOneCircle(a, b, shapes[obj]);
@@ -123,9 +121,21 @@ float raycast(Vec2 a, Vec2 b, span<const BvhNode> bvh, span<const Circle> shapes
     status_bvh[curr] = 1; // tested, intersection found
 
     const int child0 = bvh[curr].children[0];
-    const float t0 = child0 ? raytraceThroughAABB(a, b, bvh[child0].boundaries) : 1;
     const int child1 = bvh[curr].children[1];
-    const float t1 = child1 ? raytraceThroughAABB(a, b, bvh[child1].boundaries) : 1;
+
+    float t0 = 1;
+    if(child0)
+    {
+      status_bvh[child0] = 2; // tested
+      t0 = raytraceThroughAABB(a, b, bvh[child0].boundaries);
+    }
+
+    float t1 = 1;
+    if(child1)
+    {
+      status_bvh[child1] = 2; // tested
+      t1 = raytraceThroughAABB(a, b, bvh[child1].boundaries);
+    }
 
     if(t0 < minRatio)
       stack.push_back(child0);
