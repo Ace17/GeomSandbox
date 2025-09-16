@@ -36,7 +36,7 @@ void order(float& a, float& b)
     std::swap(a, b);
 }
 
-bool intersectsAABB(Vec2 a, Vec2 b, BoundingBox aabb)
+float raytraceThroughAABB(Vec2 a, Vec2 b, BoundingBox aabb)
 {
   auto delta = b - a;
 
@@ -52,12 +52,15 @@ bool intersectsAABB(Vec2 a, Vec2 b, BoundingBox aabb)
 
   float timeEnterOnY = (aabb.min.y - a.y) / delta.y;
   float timeLeaveOnY = (aabb.max.y - a.y) / delta.y;
-  order(timeEnterOnY,timeLeaveOnY);
+  order(timeEnterOnY, timeLeaveOnY);
 
   enter = max(enter, timeEnterOnY);
   leave = min(leave, timeLeaveOnY);
 
-  return leave >= enter;
+  if(leave < enter)
+    return 1; // not hit
+
+  return enter;
 }
 
 float raycastThroughOneCircle(Vec2 A, Vec2 B, Circle circle)
@@ -108,8 +111,6 @@ float raycast(Vec2 a, Vec2 b, span<const BvhNode> bvh, span<const Circle> shapes
     stack.pop_back();
 
     status_bvh[curr] = 2; // tested
-    if(!intersectsAABB(a, b, bvh[curr].boundaries))
-      continue;
 
     for(auto obj : bvh[curr].objects)
     {
@@ -121,11 +122,24 @@ float raycast(Vec2 a, Vec2 b, span<const BvhNode> bvh, span<const Circle> shapes
 
     status_bvh[curr] = 1; // tested, intersection found
 
-    if(bvh[curr].children[0])
-      stack.push_back(bvh[curr].children[0]);
+    if(minRatio < 1)
+      break;
 
-    if(bvh[curr].children[1])
-      stack.push_back(bvh[curr].children[1]);
+    const int child0 = bvh[curr].children[0];
+    const float t0 = child0 ? raytraceThroughAABB(a, b, bvh[child0].boundaries) : 1;
+    const int child1 = bvh[curr].children[1];
+    const float t1 = child1 ? raytraceThroughAABB(a, b, bvh[child1].boundaries) : 1;
+
+    if(t0 < 1)
+      stack.push_back(child0);
+
+    if(t1 < 1)
+      stack.push_back(child1);
+
+    // reorder children, so the one with the lower hit time gets explored first
+    if(t0 < 1 && t1 < 1)
+      if(t0 < t1)
+        std::swap(stack[stack.size() - 1], stack[stack.size() - 2]);
   }
 
   return minRatio;
