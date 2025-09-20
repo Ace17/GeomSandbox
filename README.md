@@ -101,9 +101,11 @@ For example:
 $ bin/GeomSandbox.exe Example
 ```
 
-Keys:
+Controls:
 * F2 : reset the algorithm with new input data.
 * Space: single-step the current algorithm.
 * Return: finish the current algorithm.
+* Mouse scroll: zoom/dezoom
 * Keypad +/- : zoom/dezoom
 * Keypad arrows : scroll
+* Keypad 5: toggle the 3D view.
