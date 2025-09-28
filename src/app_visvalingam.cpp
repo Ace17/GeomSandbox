@@ -235,7 +235,11 @@ struct VisvalingamAlgorithm
     }
 
     for(auto& segment : output)
+    {
+      sandbox_rect(input[segment.a] - Vec2(0.1, 0.1), Vec2(0.2, 0.2), Green);
+      sandbox_rect(input[segment.b] - Vec2(0.1, 0.1), Vec2(0.2, 0.2), Green);
       sandbox_line(input[segment.a], input[segment.b], Green);
+    }
   }
 };
 
