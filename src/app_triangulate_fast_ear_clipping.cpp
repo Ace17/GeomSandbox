@@ -147,6 +147,14 @@ struct FastEarClippingAlgorithm
       const auto lenBC = magnitude(B - C);
       const auto mag = lenAB * lenBC;
 
+      // degenerated angles are considered to be of zero value:
+      // thus, they will be removed first from the polygon.
+      if(lenAB <= 0.0001 || lenBC <= 0.00001)
+      {
+        angles[i] = 0;
+        return;
+      }
+
       const auto det = det2d(B - A, C - B) / mag;
       const auto dot = dotProduct(A - B, C - B) / mag;
 
