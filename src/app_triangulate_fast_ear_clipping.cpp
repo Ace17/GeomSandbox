@@ -69,9 +69,9 @@ std::vector<Vec2> deserialize<std::vector<Vec2>>(span<const uint8_t> data)
 namespace
 {
 
-struct Segment
+struct Triangle
 {
-  int a, b;
+  int a, b, c;
 };
 
 struct Ear
@@ -120,7 +120,7 @@ struct FastEarClippingAlgorithm
     return r;
   }
 
-  static std::vector<Segment> execute(std::vector<Vec2> input)
+  static std::vector<Triangle> execute(std::vector<Vec2> input)
   {
     span<const Vec2> polygon = input;
     const int N = polygon.len;
@@ -175,8 +175,8 @@ struct FastEarClippingAlgorithm
         if(polygon[curr] == A || polygon[curr] == B || polygon[curr] == C)
           continue;
 
-        if(det2d(B - A, polygon[curr] - A) > 0 && det2d(C - B, polygon[curr] - B) > 0 &&
-              det2d(A - C, polygon[curr] - C) > 0)
+        if(det2d(B - A, polygon[curr] - A) >= 0 && det2d(C - B, polygon[curr] - B) >= 0 &&
+              det2d(A - C, polygon[curr] - C) >= 0)
           return false; // point 'curr' is inside ABC.
       }
 
@@ -186,7 +186,7 @@ struct FastEarClippingAlgorithm
     for(int i = 0; i < N; ++i)
       computeAngleAtVertex(i);
 
-    std::vector<Segment> result;
+    std::vector<Triangle> result;
 
     int first = 0;
     int n = N;
@@ -217,12 +217,16 @@ struct FastEarClippingAlgorithm
       computeAngleAtVertex(next[earIndex]);
       computeAngleAtVertex(prev[earIndex]);
 
-      result.push_back({next[earIndex], prev[earIndex]});
+      result.push_back({earIndex, next[earIndex], prev[earIndex]});
 
       if(enableDisplay)
       {
         for(auto& segment : result)
+        {
           sandbox_line(polygon[segment.a], polygon[segment.b], Gray);
+          sandbox_line(polygon[segment.b], polygon[segment.c], Gray);
+          sandbox_line(polygon[segment.c], polygon[segment.a], Gray);
+        }
 
         for(int i = 0, curr = first; i < n; ++i, curr = next[curr])
           sandbox_line(polygon[curr], polygon[next[curr]], Yellow);
@@ -234,15 +238,52 @@ struct FastEarClippingAlgorithm
       }
     }
 
+    result.push_back({first, next[first], prev[first]});
+
     return result;
   }
 
-  static void display(const std::vector<Vec2>& input, span<const Segment> output)
+  static void display(const std::vector<Vec2>& input, span<const Triangle> output)
   {
     drawPolygon(input, White);
     for(auto segment : output)
+    {
       sandbox_line(input[segment.a], input[segment.b], Green);
+      sandbox_line(input[segment.b], input[segment.c], Green);
+      sandbox_line(input[segment.c], input[segment.a], Green);
+    }
+
+    char buf[256];
+    sprintf(buf, "polygon area: %.2f\n", computeArea(input));
+    sandbox_text({0, 0}, buf);
+    sprintf(buf, "triangulated area: %.2f\n", computeTriangulatedArea(input, output));
+    sandbox_text({0, -2}, buf);
   }
+
+  static float computeArea(span<const Vec2> polygon)
+  {
+    float r = 0;
+    for(int i = 0; i < (int)polygon.len; ++i)
+    {
+      const Vec2 p0 = polygon[i];
+      const Vec2 p1 = polygon[(i + 1) % polygon.len];
+      r += det2d(p0, p1);
+    }
+    return r * 0.5f;
+  }
+
+  static float computeTriangulatedArea(span<const Vec2> polygon, span<const Triangle> triangles)
+  {
+    float r = 0;
+    for(auto& t : triangles)
+    {
+      const Vec2 a(polygon[t.a]);
+      const Vec2 b(polygon[t.b]);
+      const Vec2 c(polygon[t.c]);
+      r += fabs(det2d(a - c, b - c));
+    }
+    return r * 0.5f;
+  };
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<FastEarClippingAlgorithm>>()); }
