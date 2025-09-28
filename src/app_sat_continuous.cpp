@@ -107,6 +107,7 @@ struct AffineTransformShape : IShape
     {
       v.x /= scale.x;
       v.y /= scale.y;
+      v = normalize(v);
     }
     return r;
   }
