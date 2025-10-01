@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <stdexcept>
+#include <stdint.h>
 
 #include "app.h"
 // Example algorithm :
