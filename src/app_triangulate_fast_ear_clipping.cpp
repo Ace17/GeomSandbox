@@ -25,6 +25,8 @@
 
 const bool enableDisplay = true;
 
+float clamp(float value, float min, float max) { return std::min(max, std::max(min, value)); }
+
 template<>
 std::vector<Vec2> deserialize<std::vector<Vec2>>(span<const uint8_t> data)
 {
@@ -158,7 +160,7 @@ struct FastEarClippingAlgorithm
       }
 
       const auto det = det2d(B - A, C - B) / mag;
-      const auto dot = dotProduct(A - B, C - B) / mag;
+      const auto dot = clamp(dotProduct(A - B, C - B) / mag, -1, +1);
 
       angles[i] = acos(dot);
       if(det < 0)
