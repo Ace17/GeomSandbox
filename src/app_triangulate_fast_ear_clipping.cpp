@@ -55,6 +55,8 @@ std::vector<Vec2> deserialize<std::vector<Vec2>>(span<const uint8_t> data)
     scale.x = 30.0 / (box.max.x - box.min.x);
     scale.y = 30.0 / (box.max.y - box.min.y);
 
+    scale.x = scale.y = std::min(scale.x, scale.y);
+
     for(auto& v : r)
     {
       v = (v + translate);
