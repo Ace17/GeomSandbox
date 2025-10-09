@@ -264,6 +264,16 @@ struct FastEarClippingAlgorithm
     sandbox_text({0, -2}, buf);
   }
 
+  inline static const TestCase<std::vector<Vec2>> AllTestCases[] = {
+        {"bridge",
+              {
+                    {-10, -10},
+                    {+10, +10},
+                    {-10, +10},
+                    {+10, -10},
+              }},
+  };
+
   static float computeArea(span<const Vec2> polygon)
   {
     float r = 0;

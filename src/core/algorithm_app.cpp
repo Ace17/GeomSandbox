@@ -176,6 +176,11 @@ struct AlgorithmApp : IApp
     {
       runProfiling();
     }
+    else if(key == Key::F3)
+    {
+      if(!m_visuForAlgo.m_insideAlgorithmExecute)
+        loadTestCase(m_testCaseCounter++);
+    }
     else if(key == Key::F4)
     {
       if(!m_visuForAlgo.m_insideAlgorithmExecute)
@@ -229,6 +234,8 @@ struct AlgorithmApp : IApp
     printf("      Processing: %.3f ms/instance\n", processingTotalUs / 1000.0 / N);
   }
 
+  void loadTestCase(int which) { m_algo->loadTestCase(which); }
+
   void loadInput()
   {
     try
@@ -246,6 +253,7 @@ struct AlgorithmApp : IApp
 
   Visualizer m_visuForAlgo;
   Visualizer m_visuForFrame;
+  int m_testCaseCounter = 0;
 };
 
 }
