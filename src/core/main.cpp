@@ -381,7 +381,7 @@ struct OpenGlDrawer : IDrawer
   }
 
   private:
-  static constexpr float fontSize = 0.032;
+  static constexpr float fontSize = 0.018;
 
   void rawLine(PrimitiveBuffer& buf, Vec2 A, Vec2 B, Color color)
   {
