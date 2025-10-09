@@ -41,7 +41,35 @@ bool segmentsIntersect(Vec2 u0, Vec2 u1, Vec2 v0, Vec2 v1, float toleranceRadius
   if(pos0 < posWall - toleranceRadius && pos1 < posWall - toleranceRadius)
     return false;
 
-  const float fraction = (posWall - pos0) / (pos1 - pos0);
+  float fraction;
+
+  // parallel segments
+  if(fabs(pos1 - pos0) < toleranceRadius)
+  {
+    if(fabs(pos0 - posWall) > toleranceRadius)
+      return false; // not colinear enough
+
+    const float uMin = std::min(dotProduct(tangent, u0), dotProduct(tangent, u1));
+    const float uMax = std::max(dotProduct(tangent, u0), dotProduct(tangent, u1));
+
+    const float vMin = std::min(dotProduct(tangent, v0), dotProduct(tangent, v1));
+    const float vMax = std::max(dotProduct(tangent, v0), dotProduct(tangent, v1));
+
+    if(uMax + toleranceRadius < vMin || vMax < uMin - toleranceRadius)
+      return false; // colinear, but no common point
+
+    if(uMin - toleranceRadius < vMin)
+      fraction = (vMin - uMin) / (uMax - uMin);
+    else
+      fraction = (vMax - uMin) / (uMax - uMin);
+
+    if(dotProduct(u1 - u0, tangent) < 0)
+      fraction = 1 - fraction;
+  }
+  else
+  {
+    fraction = (posWall - pos0) / (pos1 - pos0);
+  }
 
   if(fraction < -toleranceRadius || fraction > 1 + toleranceRadius)
     return false;
@@ -54,6 +82,10 @@ bool segmentsIntersect(Vec2 u0, Vec2 u1, Vec2 v0, Vec2 v1, float toleranceRadius
     return false;
 
   if(dotProduct(where - v1, tangent) > +toleranceRadius)
+    return false;
+
+  // we exclude the circle centered on u1, with a radius of toleranceRadius.
+  if(sqrMagnitude(where - u1) < sqr(toleranceRadius))
     return false;
 
   // we exclude the circle centered on v1, with a radius of toleranceRadius.
@@ -115,6 +147,7 @@ struct PolygonSelfIntersectionAlgorithm
         char buf[256];
         sprintf(buf, "I%d", idx);
         sandbox_text(point.pos - Vec2(1, 0), buf, Red);
+        fprintf(stderr, "Contact at %.2f,%.2f [%d, %d]\n", point.pos.x, point.pos.y, point.i, point.j);
         ++idx;
       }
 
@@ -132,7 +165,7 @@ struct PolygonSelfIntersectionAlgorithm
       const bool isOnVertexI = sqrMagnitude(point.pos - input[point.i]) < sqr(toleranceRadius);
       const bool isOnVertexJ = sqrMagnitude(point.pos - input[point.j]) < sqr(toleranceRadius);
 
-      fprintf(stderr, "isOnVertexI=%d isOnVertexJ=%d\n", (int)isOnVertexI, (int)isOnVertexJ);
+      fprintf(stderr, "i=%d j=%d isOnVertexI=%d isOnVertexJ=%d\n", point.i, point.j, isOnVertexI, isOnVertexJ);
 
       if(!isOnVertexI && !isOnVertexJ)
         return false; // segment/segment crossing in the middle
@@ -185,7 +218,7 @@ struct PolygonSelfIntersectionAlgorithm
         {"vertex/vertex contact",
               {
                     {-10, -10},
-                    {0, 0},
+                    {0, -0.0005},
                     {+10, -10},
                     {+10, 10},
                     {0, 0},
