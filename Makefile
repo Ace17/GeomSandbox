@@ -62,6 +62,7 @@ SRCS+=\
 			src/app_dijkstra.cpp\
 			src/app_douglas_peucker.cpp\
 			src/app_fastconvexsplit.cpp\
+			src/app_polygon_self_intersections.cpp\
 			src/app_random_polyhedron.cpp\
 			src/app_random_polygon.cpp\
 			src/app_spline_catmullrom.cpp\
