@@ -170,6 +170,16 @@ struct AlgorithmApp : IApp
       keydown(inputEvent.key);
   }
 
+  void finishExecutionIfNeeded()
+  {
+    if(!m_fiber)
+      return;
+
+    while(!m_fiber->finished())
+      m_fiber->resume();
+    m_fiber.reset();
+  }
+
   void keydown(Key key)
   {
     if(key == Key::Home)
@@ -178,13 +188,13 @@ struct AlgorithmApp : IApp
     }
     else if(key == Key::F3)
     {
-      if(!m_visuForAlgo.m_insideAlgorithmExecute)
-        loadTestCase(m_testCaseCounter++);
+      finishExecutionIfNeeded();
+      loadTestCase(m_testCaseCounter++);
     }
     else if(key == Key::F4)
     {
-      if(!m_visuForAlgo.m_insideAlgorithmExecute)
-        loadInput();
+      finishExecutionIfNeeded();
+      loadInput();
     }
     else if(key == Key::Space || key == Key::Return)
     {

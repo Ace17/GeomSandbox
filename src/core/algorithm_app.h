@@ -95,11 +95,18 @@ struct ConcreteAlgorithm : public AbstractAlgorithm
   void display() override { AlgoDef::display(m_input, m_output); }
   void init() override { m_input = AlgoDef::generateInput(); }
   void execute() override { m_output = AlgoDef::execute(m_input); }
-  void loadInput(span<const uint8_t> data) override { m_input = deserialize<InputType>(data); }
+  void loadInput(span<const uint8_t> data) override
+  {
+    m_input = deserialize<InputType>(data);
+    m_output = {};
+  }
   void loadTestCase(int which) override
   {
     if(getAllTestCases().len)
+    {
       m_input = getAllTestCases()[which % getAllTestCases().len].input;
+      m_output = {};
+    }
   }
 };
 
