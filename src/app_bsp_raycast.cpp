@@ -148,7 +148,6 @@ struct BspRaycast
   struct AlgoInput
   {
     Polygon2f polygon;
-    std::unique_ptr<BspNode> bspRoot;
     Vec2 rayPos;
     Vec2 rayDir;
   };
@@ -181,7 +180,6 @@ struct BspRaycast
 
     AlgoInput input;
     input.polygon = poly;
-    input.bspRoot = createBspTree(poly);
     input.rayPos = randomPos({-20, -2}, {-15, +2});
     input.rayDir = randomPos({+10, -10}, {+10, +10}) - input.rayPos;
     return input;
@@ -189,7 +187,8 @@ struct BspRaycast
 
   static float execute(const AlgoInput& input)
   {
-    return raycast(input.rayPos, input.rayPos + input.rayDir, input.bspRoot.get());
+    std::unique_ptr<const BspNode> bspRoot = createBspTree(input.polygon);
+    return raycast(input.rayPos, input.rayPos + input.rayDir, bspRoot.get());
   }
 
   static void display(const AlgoInput& input, float fraction)
