@@ -95,6 +95,55 @@ bool segmentsIntersect(Vec2 u0, Vec2 u1, Vec2 v0, Vec2 v1, float toleranceRadius
   return true;
 }
 
+float det2d(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
+
+// get the side of P relative to the oriented segment A-B
+int classifySide(Vec2 a, Vec2 b, Vec2 p, float segmentThickness)
+{
+  const Vec2 n = rotateLeft(normalize(b - a));
+
+  const float y = dotProduct(p - a, n);
+
+  if(y < -segmentThickness)
+    return -1;
+
+  if(y > +segmentThickness)
+    return +1;
+
+  return 0;
+}
+
+// get the side of P relative to the oriented polyline A-B-C
+// +1 for 'on the left'
+//  0 for 'on A-B-C'
+// -1 for 'on the right'
+int classifySide(Vec2 a, Vec2 b, Vec2 c, Vec2 p, float segmentThickness)
+{
+  const int P_Side_AB = classifySide(a, b, p, segmentThickness);
+  const int P_Side_BC = classifySide(b, c, p, segmentThickness);
+
+  if(det2d(b - a, c - b) >= 0) // ABC makes a left-turn
+  {
+    if(P_Side_AB == -1 || P_Side_BC == -1)
+      return -1; // we're on the right of ABC
+
+    if(P_Side_AB == 0 || P_Side_BC == 0)
+      return 0; // we're on ABC
+
+    return 1; // we're on the left of ABC
+  }
+  else // ABC makes a right-turn
+  {
+    if(P_Side_AB == 1 || P_Side_BC == 1)
+      return +1; // we're on the left of ABC
+                 //
+    if(P_Side_AB == 0 || P_Side_BC == 0)
+      return 0; // we're on ABC
+
+    return -1; // we're on the right of ABC
+  }
+}
+
 struct PolygonSelfIntersectionAlgorithm
 {
   static std::vector<Vec2> generateInput()
@@ -121,7 +170,14 @@ struct PolygonSelfIntersectionAlgorithm
 
   static std::vector<Intersection> execute(std::vector<Vec2> input)
   {
-    std::vector<Intersection> r;
+    struct Crossing
+    {
+      Vec2 pos;
+      int i, j; // segment start indices.
+      float ti, tj; // positions on segment i and segment j
+    };
+
+    std::vector<Crossing> crossings;
 
     const float toleranceRadius = 0.001;
 
@@ -131,54 +187,74 @@ struct PolygonSelfIntersectionAlgorithm
       {
         Vec2 where;
         if(segmentsIntersect(input[i], input[i + 1], input[j], input[j + 1], toleranceRadius, where))
-          r.push_back({where, i, j});
+        {
+          const Vec2 segmentI = input[i + 1] - input[i];
+          const float fractionI = dotProduct(where - input[i], segmentI);
+
+          const Vec2 segmentJ = input[j + 1] - input[j];
+          const float fractionJ = dotProduct(where - input[j], segmentJ);
+
+          crossings.push_back({where, i, j, fractionI, fractionJ});
+          crossings.push_back({where, j, i, fractionJ, fractionI});
+        }
       }
     }
 
     {
-      int idx = 0;
-      for(auto& point : r)
+      auto byTime = [](const Crossing& a, const Crossing& b)
       {
-        sandbox_circle(input[point.i], 0.1, Orange);
-        sandbox_circle(input[point.j], 0.1, Orange);
+        if(a.i != b.i)
+          return a.i < b.i;
 
-        sandbox_circle(point.pos, 0.2, Red);
-
-        char buf[256];
-        sprintf(buf, "I%d", idx);
-        sandbox_text(point.pos - Vec2(1, 0), buf, Red);
-        fprintf(stderr, "Contact at %.2f,%.2f [%d, %d]\n", point.pos.x, point.pos.y, point.i, point.j);
-        ++idx;
-      }
-
-      {
-        char buf[256];
-        sprintf(buf, "%d contacts", (int)r.size());
-        sandbox_text({0, 10}, buf, White);
-      }
-      sandbox_breakpoint();
+        return a.ti < b.ti;
+      };
+      std::sort(crossings.begin(), crossings.end(), byTime);
     }
 
-    // remove simple contacts
-    auto isSimpleContact = [&](Intersection point)
+    // traverse all crossings, determine real intersections
+    std::vector<Intersection> r;
+
     {
-      const bool isOnVertexI = sqrMagnitude(point.pos - input[point.i]) < sqr(toleranceRadius);
-      const bool isOnVertexJ = sqrMagnitude(point.pos - input[point.j]) < sqr(toleranceRadius);
+      const int N = input.size();
 
-      fprintf(stderr, "i=%d j=%d isOnVertexI=%d isOnVertexJ=%d\n", point.i, point.j, isOnVertexI, isOnVertexJ);
+      int lastRealSide = 0;
+      int side = 0;
+      for(auto c : crossings)
+      {
+        const auto X = c.pos;
 
-      if(!isOnVertexI && !isOnVertexJ)
-        return false; // segment/segment crossing in the middle
-                      //
-      if(isOnVertexI != isOnVertexJ)
-        return false; // vertex/edge contact : always count as an intersection
+        // compute prevPosI, nextPosI
+        const bool isOnVertexI = sqrMagnitude(X - input[c.i]) < sqr(toleranceRadius);
+        const Vec2 prevPosI = isOnVertexI ? input[(c.i - 1 + N) % N] : input[c.i];
+        const Vec2 nextPosI = input[(c.i + 1) % N];
 
-      // vertex/vertex contact
-      return true;
-    };
+        // compute prevPosJ, nextPosJ
+        const bool isOnVertexJ = sqrMagnitude(X - input[c.j]) < sqr(toleranceRadius);
+        const Vec2 prevPosJ = isOnVertexJ ? input[(c.j - 1 + N) % N] : input[c.j];
+        const Vec2 nextPosJ = input[(c.j + 1) % N];
 
-    auto it = std::remove_if(r.begin(), r.end(), isSimpleContact);
-    r.erase(it, r.end());
+        const int sideBefore = classifySide(prevPosJ, X, nextPosJ, prevPosI, toleranceRadius);
+        const int sideAfter = classifySide(prevPosJ, X, nextPosJ, nextPosI, toleranceRadius);
+        side += (sideAfter - sideBefore);
+
+        if((side % 2 == 0) && side != lastRealSide)
+        {
+          if(c.i < c.j)
+            r.push_back({X, c.i, c.j});
+          lastRealSide = side;
+        }
+
+        sandbox_circle(X, 0.1, Red);
+        sandbox_line(prevPosI, X, Green);
+        sandbox_line(X, nextPosI, Green);
+        sandbox_line(prevPosJ, X, Yellow);
+        sandbox_line(X, nextPosJ, Yellow);
+        char buf[256];
+        sprintf(buf, "sideBefore=%d sideAfter=%d side=%d", sideBefore, sideAfter, side);
+        sandbox_text({0, 11}, buf);
+        sandbox_breakpoint();
+      }
+    }
 
     return r;
   }
@@ -209,13 +285,58 @@ struct PolygonSelfIntersectionAlgorithm
 
       char buf[256];
       sprintf(buf, "I%d", idx);
-      sandbox_text(point.pos - Vec2(1, 0), buf, Red);
+      sandbox_text(point.pos, buf, Red);
       ++idx;
+    }
+
+    {
+      char buf[256];
+      sprintf(buf, "%d intersection(s)", (int)output.len);
+      sandbox_text({0, 9}, buf, White);
     }
   }
 
   inline static const TestCase<std::vector<Vec2>> AllTestCases[] = {
-        {"vertex/vertex contact",
+        {"saw, multiple intersections",
+              {
+                    {0, 0},
+                    {10, 0},
+                    {10, 2},
+                    {1, 2},
+                    {1, 3},
+                    {1.5, 3},
+                    {2, 2},
+                    {2.5, 2},
+                    {3, 3},
+                    {4, 1},
+                    {5, 3},
+                    {5.8, 2},
+                    {6.2, 2},
+                    {6.5, 1},
+                    {7, 2},
+                    {7.3, 2},
+                    {8, 3},
+                    {8.5, 2},
+                    {9, 3},
+                    {10, 3},
+                    {10, 4},
+                    {0, 4},
+                    {0, 0.1},
+              }},
+
+        {"vertex/vertex contact, intersection",
+              {
+                    {-10, -10},
+                    {0, -10},
+                    {0, 0},
+                    {0, +10},
+                    {+10, +10},
+                    {+10, 0},
+                    {0, 0},
+                    {-10, 0},
+                    {-10, -10 + 0.1},
+              }},
+        {"vertex/vertex contact, no intersection",
               {
                     {-10, -10},
                     {0, -0.0005},
@@ -230,11 +351,13 @@ struct PolygonSelfIntersectionAlgorithm
                     {-20, 0},
                     {-15, -5},
                     {-10, 0},
+                    {0, 0},
                     {+10, 0},
                     {+15, 5},
                     {+20, 0},
                     {+15, -5},
                     {+10, 0},
+                    {0, 0},
                     {-10, 0},
                     {-15, 5},
                     {-20.1, 0.1},
