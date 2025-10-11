@@ -144,6 +144,103 @@ int classifySide(Vec2 a, Vec2 b, Vec2 c, Vec2 p, float segmentThickness)
   }
 }
 
+struct Intersection
+{
+  Vec2 pos;
+  int i, j; // segment start indices. By construction, we always have i<j.
+};
+
+struct Crossing
+{
+  Vec2 pos;
+  int i, j; // segment start indices.
+  float ti, tj; // positions on segment i and segment j
+};
+
+std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
+{
+  std::vector<Crossing> crossings;
+
+  const float toleranceRadius = 0.001;
+
+  const int N = input.len;
+
+  for(int i = 0; i < N - 1; ++i)
+  {
+    for(int j = i + 2; j < N - 1; ++j)
+    {
+      Vec2 where;
+      if(segmentsIntersect(input[i], input[i + 1], input[j], input[j + 1], toleranceRadius, where))
+      {
+        const Vec2 segmentI = input[i + 1] - input[i];
+        const float fractionI = dotProduct(where - input[i], segmentI);
+
+        const Vec2 segmentJ = input[j + 1] - input[j];
+        const float fractionJ = dotProduct(where - input[j], segmentJ);
+
+        crossings.push_back({where, i, j, fractionI, fractionJ});
+        crossings.push_back({where, j, i, fractionJ, fractionI});
+      }
+    }
+  }
+
+  {
+    auto byTime = [](const Crossing& a, const Crossing& b)
+    {
+      if(a.i != b.i)
+        return a.i < b.i;
+
+      return a.ti < b.ti;
+    };
+    std::sort(crossings.begin(), crossings.end(), byTime);
+  }
+
+  // traverse all crossings, determine real intersections
+  std::vector<Intersection> r;
+
+  {
+    int lastRealSide = 0;
+    int side = 0;
+    for(auto c : crossings)
+    {
+      const auto X = c.pos;
+
+      // compute prevPosI, nextPosI
+      const bool isOnVertexI = sqrMagnitude(X - input[c.i]) < sqr(toleranceRadius);
+      const Vec2 prevPosI = isOnVertexI ? input[(c.i - 1 + N) % N] : input[c.i];
+      const Vec2 nextPosI = input[(c.i + 1) % N];
+
+      // compute prevPosJ, nextPosJ
+      const bool isOnVertexJ = sqrMagnitude(X - input[c.j]) < sqr(toleranceRadius);
+      const Vec2 prevPosJ = isOnVertexJ ? input[(c.j - 1 + N) % N] : input[c.j];
+      const Vec2 nextPosJ = input[(c.j + 1) % N];
+
+      const int sideBefore = classifySide(prevPosJ, X, nextPosJ, prevPosI, toleranceRadius);
+      const int sideAfter = classifySide(prevPosJ, X, nextPosJ, nextPosI, toleranceRadius);
+      side += (sideAfter - sideBefore);
+
+      if((side % 2 == 0) && side != lastRealSide)
+      {
+        if(c.i < c.j)
+          r.push_back({X, c.i, c.j});
+        lastRealSide = side;
+      }
+
+      sandbox_circle(X, 0.1, Red);
+      sandbox_line(prevPosI, X, Green);
+      sandbox_line(X, nextPosI, Green);
+      sandbox_line(prevPosJ, X, Yellow);
+      sandbox_line(X, nextPosJ, Yellow);
+      char buf[256];
+      sprintf(buf, "sideBefore=%d sideAfter=%d side=%d", sideBefore, sideAfter, side);
+      sandbox_text({0, 11}, buf);
+      sandbox_breakpoint();
+    }
+  }
+
+  return r;
+}
+
 struct PolygonSelfIntersectionAlgorithm
 {
   static std::vector<Vec2> generateInput()
@@ -162,102 +259,7 @@ struct PolygonSelfIntersectionAlgorithm
     return points;
   }
 
-  struct Intersection
-  {
-    Vec2 pos;
-    int i, j; // segment start indices. By construction, we always have i<j.
-  };
-
-  static std::vector<Intersection> execute(std::vector<Vec2> input)
-  {
-    struct Crossing
-    {
-      Vec2 pos;
-      int i, j; // segment start indices.
-      float ti, tj; // positions on segment i and segment j
-    };
-
-    std::vector<Crossing> crossings;
-
-    const float toleranceRadius = 0.001;
-
-    for(int i = 0; i < int(input.size()) - 1; ++i)
-    {
-      for(int j = i + 2; j < int(input.size()) - 1; ++j)
-      {
-        Vec2 where;
-        if(segmentsIntersect(input[i], input[i + 1], input[j], input[j + 1], toleranceRadius, where))
-        {
-          const Vec2 segmentI = input[i + 1] - input[i];
-          const float fractionI = dotProduct(where - input[i], segmentI);
-
-          const Vec2 segmentJ = input[j + 1] - input[j];
-          const float fractionJ = dotProduct(where - input[j], segmentJ);
-
-          crossings.push_back({where, i, j, fractionI, fractionJ});
-          crossings.push_back({where, j, i, fractionJ, fractionI});
-        }
-      }
-    }
-
-    {
-      auto byTime = [](const Crossing& a, const Crossing& b)
-      {
-        if(a.i != b.i)
-          return a.i < b.i;
-
-        return a.ti < b.ti;
-      };
-      std::sort(crossings.begin(), crossings.end(), byTime);
-    }
-
-    // traverse all crossings, determine real intersections
-    std::vector<Intersection> r;
-
-    {
-      const int N = input.size();
-
-      int lastRealSide = 0;
-      int side = 0;
-      for(auto c : crossings)
-      {
-        const auto X = c.pos;
-
-        // compute prevPosI, nextPosI
-        const bool isOnVertexI = sqrMagnitude(X - input[c.i]) < sqr(toleranceRadius);
-        const Vec2 prevPosI = isOnVertexI ? input[(c.i - 1 + N) % N] : input[c.i];
-        const Vec2 nextPosI = input[(c.i + 1) % N];
-
-        // compute prevPosJ, nextPosJ
-        const bool isOnVertexJ = sqrMagnitude(X - input[c.j]) < sqr(toleranceRadius);
-        const Vec2 prevPosJ = isOnVertexJ ? input[(c.j - 1 + N) % N] : input[c.j];
-        const Vec2 nextPosJ = input[(c.j + 1) % N];
-
-        const int sideBefore = classifySide(prevPosJ, X, nextPosJ, prevPosI, toleranceRadius);
-        const int sideAfter = classifySide(prevPosJ, X, nextPosJ, nextPosI, toleranceRadius);
-        side += (sideAfter - sideBefore);
-
-        if((side % 2 == 0) && side != lastRealSide)
-        {
-          if(c.i < c.j)
-            r.push_back({X, c.i, c.j});
-          lastRealSide = side;
-        }
-
-        sandbox_circle(X, 0.1, Red);
-        sandbox_line(prevPosI, X, Green);
-        sandbox_line(X, nextPosI, Green);
-        sandbox_line(prevPosJ, X, Yellow);
-        sandbox_line(X, nextPosJ, Yellow);
-        char buf[256];
-        sprintf(buf, "sideBefore=%d sideAfter=%d side=%d", sideBefore, sideAfter, side);
-        sandbox_text({0, 11}, buf);
-        sandbox_breakpoint();
-      }
-    }
-
-    return r;
-  }
+  static std::vector<Intersection> execute(std::vector<Vec2> input) { return computeSelfIntersections(input); }
 
   static void display(span<const Vec2> input, span<const Intersection> output)
   {
