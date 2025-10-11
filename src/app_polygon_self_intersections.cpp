@@ -267,11 +267,8 @@ struct PolygonSelfIntersectionAlgorithm
     {
       char buf[256];
       sprintf(buf, "%d", i);
-      sandbox_text(input[i] + Vec2(0.2, 0.2), buf);
-      sandbox_line(input[i] + Vec2(-0.1, -0.1), input[i] + Vec2(0.1, -0.1));
-      sandbox_line(input[i] + Vec2(-0.1, +0.1), input[i] + Vec2(0.1, +0.1));
-      sandbox_line(input[i] + Vec2(-0.1, -0.1), input[i] + Vec2(-0.1, 0.1));
-      sandbox_line(input[i] + Vec2(+0.1, -0.1), input[i] + Vec2(+0.1, 0.1));
+      sandbox_text(input[i], buf);
+      sandbox_rect(input[i] + Vec2(-0.1, -0.1), Vec2(+0.2, +0.2));
     }
 
     for(int i = 0; i + 1 < (int)input.len; ++i)
