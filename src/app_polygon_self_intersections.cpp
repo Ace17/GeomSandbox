@@ -169,14 +169,20 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
   {
     for(int j = i + 2; j < N - 1; ++j)
     {
-      Vec2 where;
-      if(segmentsIntersect(input[i], input[i + 1], input[j], input[j + 1], toleranceRadius, where))
-      {
-        const Vec2 segmentI = input[i + 1] - input[i];
-        const float fractionI = dotProduct(where - input[i], segmentI);
+      const Vec2 I0 = input[i + 0];
+      const Vec2 I1 = input[i + 1];
+      const Vec2 J0 = input[j + 0];
+      const Vec2 J1 = input[j + 1];
 
-        const Vec2 segmentJ = input[j + 1] - input[j];
-        const float fractionJ = dotProduct(where - input[j], segmentJ);
+      Vec2 where;
+
+      if(segmentsIntersect(I0, I1, J0, J1, toleranceRadius, where))
+      {
+        const Vec2 segmentI = I1 - I0;
+        const float fractionI = dotProduct(where - I0, segmentI);
+
+        const Vec2 segmentJ = J1 - J0;
+        const float fractionJ = dotProduct(where - J0, segmentJ);
 
         crossings.push_back({where, i, j, fractionI, fractionJ});
         crossings.push_back({where, j, i, fractionJ, fractionI});
