@@ -127,6 +127,8 @@ struct Vertex
   float x, y, z;
   float u, v;
   float r, g, b, a;
+  float x_offset = 0;
+  float y_offset = 0;
 };
 
 enum
@@ -134,13 +136,16 @@ enum
   attrib_position,
   attrib_color,
   attrib_uv,
+  attrib_offset,
 };
 
 static const char* vertex_shader = R"(#version 130
 uniform mat4x4 mvp;
+uniform mat2x2 offsetTransform;
 in vec3 pos;
 in vec2 uv;
 in vec4 color;
+in vec2 offset;
 out vec4 v_color;
 out vec2 v_uv;
 void main()
@@ -148,6 +153,7 @@ void main()
     v_color = color;
     v_uv = uv;
     gl_Position = mvp * vec4(pos, 1);
+    gl_Position.xy += offsetTransform * offset;
 }
 )";
 
@@ -216,6 +222,9 @@ struct PrimitiveBuffer
     glEnableVertexAttribArray(attrib_uv);
     glVertexAttribPointer(attrib_uv, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u));
 
+    glEnableVertexAttribArray(attrib_offset);
+    glVertexAttribPointer(attrib_offset, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x_offset));
+
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * cpuVbo.size(), cpuVbo.data(), GL_DYNAMIC_DRAW);
     glDrawArrays(type, 0, cpuVbo.size());
 
@@ -225,6 +234,18 @@ struct PrimitiveBuffer
   GLuint type;
   GLuint gpuVbo;
   std::vector<Vertex> cpuVbo;
+};
+
+struct Point2
+{
+  Vec2 pos; // position in world space
+  Vec2 offset = {}; // offset in screen space
+};
+
+struct Point3
+{
+  Vec3 pos; // position in world space
+  Vec2 offset = {}; // offset in screen space
 };
 
 struct OpenGlDrawer : IDrawer
@@ -252,43 +273,64 @@ struct OpenGlDrawer : IDrawer
   /////////////////////////////////////////////////////////////////////////////
   // IDrawer implementation
 
-  void line(Vec2 a, Vec2 b, Color color) override { rawLine(m_bufLines, a, b, color); }
-  void line(Vec3 a, Vec3 b, Color color) override { rawLine(m_bufLines, a, b, color); }
+  void line(Vec2 a, Vec2 b, Color color) override { rawLine(m_bufLines, Point2{a}, Point2{b}, color); }
+  void line(Vec3 a, Vec3 b, Color color) override { rawLine(m_bufLines, Point3{a}, Point3{b}, color); }
 
-  void rect(Vec2 a, Vec2 b, Color color) override
+  void rect(Vec2 a, Vec2 size, Color color, Vec2 invariantSize) override
   {
-    const auto A = a;
-    const auto B = a + b;
+    if(invariantSize.x != 0 || invariantSize.y != 0)
+    {
+      const auto A = a - size * 0.5;
+      const auto B = a + size * 0.5;
 
-    const auto P0 = Vec2(A.x, A.y);
-    const auto P1 = Vec2(B.x, A.y);
-    const auto P2 = Vec2(B.x, B.y);
-    const auto P3 = Vec2(A.x, B.y);
+      const auto P0 = Point2{{A.x, A.y}, {-invariantSize.x * 0.5f, -invariantSize.y * 0.5f}};
+      const auto P1 = Point2{{B.x, A.y}, {+invariantSize.x * 0.5f, -invariantSize.y * 0.5f}};
+      const auto P2 = Point2{{B.x, B.y}, {+invariantSize.x * 0.5f, +invariantSize.y * 0.5f}};
+      const auto P3 = Point2{{A.x, B.y}, {-invariantSize.x * 0.5f, +invariantSize.y * 0.5f}};
 
-    rawLine(m_bufLines, P0, P1, color);
-    rawLine(m_bufLines, P1, P2, color);
-    rawLine(m_bufLines, P2, P3, color);
-    rawLine(m_bufLines, P3, P0, color);
+      rawLine(m_bufLines, P0, P1, color);
+      rawLine(m_bufLines, P1, P2, color);
+      rawLine(m_bufLines, P2, P3, color);
+      rawLine(m_bufLines, P3, P0, color);
+    }
+    else
+    {
+      const auto A = a;
+      const auto B = a + size;
+
+      const auto P0 = Point2{{A.x, A.y}};
+      const auto P1 = Point2{{B.x, A.y}, {invariantSize.x, 0}};
+      const auto P2 = Point2{{B.x, B.y}, {invariantSize.x, invariantSize.y}};
+      const auto P3 = Point2{{A.x, B.y}, {0, invariantSize.y}};
+
+      rawLine(m_bufLines, P0, P1, color);
+      rawLine(m_bufLines, P1, P2, color);
+      rawLine(m_bufLines, P2, P3, color);
+      rawLine(m_bufLines, P3, P0, color);
+    }
   }
 
-  void circle(Vec2 center, float radius, Color color) override
+  void circle(Vec2 center, float radius, Color color, float invariantRadius) override
   {
     auto const N = 20;
-    Vec2 PREV{};
+    Point2 PREV{};
 
     for(int i = 0; i <= N; ++i)
     {
       const auto angle = i * 2 * M_PI / N;
-      auto A = center + Vec2(cos(angle), sin(angle)) * radius;
+      const auto dir = Vec2(cos(angle), sin(angle));
+      Point2 A = {center + dir * radius, dir * invariantRadius};
 
       if(i > 0)
+      {
         rawLine(m_bufLines, PREV, A, color);
+      }
 
       PREV = A;
     }
   }
 
-  void text(Vec2 pos, const char* text, Color color) override
+  void text(Vec2 pos, const char* text, Color color, Vec2 offset) override
   {
     Vec3 vX = {g_CameraTransform.data[0].elements[0], g_CameraTransform.data[1].elements[0],
           g_CameraTransform.data[2].elements[0]};
@@ -297,7 +339,7 @@ struct OpenGlDrawer : IDrawer
 
     while(*text)
     {
-      rawChar(m_bufTris, pos, *text, color, W, H);
+      rawChar(m_bufTris, {pos, offset}, *text, color, W, H);
       pos.x += W;
       ++text;
     }
@@ -313,7 +355,7 @@ struct OpenGlDrawer : IDrawer
 
     while(*text)
     {
-      rawChar(m_bufTrisUI, pos, *text, color, W, H);
+      rawChar(m_bufTrisUI, {pos}, *text, color, W, H);
       pos.x += W;
       ++text;
     }
@@ -324,10 +366,10 @@ struct OpenGlDrawer : IDrawer
     const auto A = a;
     const auto B = a + b;
 
-    const auto P0 = Vec2(A.x, A.y);
-    const auto P1 = Vec2(B.x, A.y);
-    const auto P2 = Vec2(B.x, B.y);
-    const auto P3 = Vec2(A.x, B.y);
+    const auto P0 = Point2{{A.x, A.y}};
+    const auto P1 = Point2{{B.x, A.y}};
+    const auto P2 = Point2{{B.x, B.y}};
+    const auto P3 = Point2{{A.x, B.y}};
 
     rawLine(m_bufLinesUI, P0, P1, color);
     rawLine(m_bufLinesUI, P1, P2, color);
@@ -338,6 +380,7 @@ struct OpenGlDrawer : IDrawer
   void flush()
   {
     const int mvpLoc = glGetUniformLocation(shaderProgram, "mvp");
+    const int offsetTransformLoc = glGetUniformLocation(shaderProgram, "offsetTransform");
     const auto aspectRatio = g_ScreenSize.x / g_ScreenSize.y;
 
     glEnable(GL_BLEND);
@@ -345,9 +388,19 @@ struct OpenGlDrawer : IDrawer
 
     glUseProgram(shaderProgram);
 
+    // setup UI transform
+    {
+      float offsetTransform[2][2];
+      offsetTransform[0][0] = 0.001;
+      offsetTransform[0][1] = 0;
+      offsetTransform[1][0] = 0;
+      offsetTransform[1][1] = aspectRatio * 0.001;
+      glUniformMatrix2fv(offsetTransformLoc, 1, GL_FALSE, &offsetTransform[0][0]);
+    }
+
     // draw world
     {
-      // setup transform
+      // setup world transform
       {
         Matrix4f M = g_CurrCamera->getTransform(aspectRatio);
         g_CameraTransform = lerp(M, g_CameraTransform, CAMERA_UPDATE_RATIO);
@@ -383,19 +436,19 @@ struct OpenGlDrawer : IDrawer
   private:
   static constexpr float fontSize = 0.018;
 
-  void rawLine(PrimitiveBuffer& buf, Vec2 A, Vec2 B, Color color)
+  void rawLine(PrimitiveBuffer& buf, Point2 A, Point2 B, Color color)
   {
-    buf.write({A.x, A.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
-    buf.write({B.x, B.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    buf.write({A.pos.x, A.pos.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a, A.offset.x, A.offset.y});
+    buf.write({B.pos.x, B.pos.y, 0, /* uv */ 0, 0, color.r, color.g, color.b, color.a, B.offset.x, B.offset.y});
   }
 
-  void rawLine(PrimitiveBuffer& buf, Vec3 A, Vec3 B, Color color)
+  void rawLine(PrimitiveBuffer& buf, Point3 A, Point3 B, Color color)
   {
-    buf.write({A.x, A.y, A.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
-    buf.write({B.x, B.y, B.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a});
+    buf.write({A.pos.x, A.pos.y, A.pos.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a, A.offset.x, A.offset.y});
+    buf.write({B.pos.x, B.pos.y, B.pos.z, /* uv */ 0, 0, color.r, color.g, color.b, color.a, B.offset.x, B.offset.y});
   }
 
-  void rawChar(PrimitiveBuffer& buf, Vec2 POS, char c, Color color, float W, float H)
+  void rawChar(PrimitiveBuffer& buf, Point2 p, char c, Color color, float W, float H)
   {
     const int cols = 16;
     const int rows = 8;
@@ -408,15 +461,21 @@ struct OpenGlDrawer : IDrawer
     const float v0 = (row + 1.0f) / rows;
     const float v1 = (row + 0.0f) / rows;
 
-    POS.y -= H;
+    p.pos.y -= H;
 
-    buf.write({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
-    buf.write({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
-    buf.write({POS.x + W, POS.y + 0, 1, /* uv */ u1, v0, color.r, color.g, color.b, color.a});
+    buf.write(
+          {p.pos.x + 0, p.pos.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a, p.offset.x, p.offset.y});
+    buf.write(
+          {p.pos.x + W, p.pos.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a, p.offset.x, p.offset.y});
+    buf.write(
+          {p.pos.x + W, p.pos.y + 0, 1, /* uv */ u1, v0, color.r, color.g, color.b, color.a, p.offset.x, p.offset.y});
 
-    buf.write({POS.x + 0, POS.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a});
-    buf.write({POS.x + 0, POS.y + H, 1, /* uv */ u0, v1, color.r, color.g, color.b, color.a});
-    buf.write({POS.x + W, POS.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a});
+    buf.write(
+          {p.pos.x + 0, p.pos.y + 0, 1, /* uv */ u0, v0, color.r, color.g, color.b, color.a, p.offset.x, p.offset.y});
+    buf.write(
+          {p.pos.x + 0, p.pos.y + H, 1, /* uv */ u0, v1, color.r, color.g, color.b, color.a, p.offset.x, p.offset.y});
+    buf.write(
+          {p.pos.x + W, p.pos.y + H, 1, /* uv */ u1, v1, color.r, color.g, color.b, color.a, p.offset.x, p.offset.y});
   }
 
   GLuint shaderProgram{};

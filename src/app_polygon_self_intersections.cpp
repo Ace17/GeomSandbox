@@ -226,7 +226,7 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
         lastRealSide = side;
       }
 
-      sandbox_circle(X, 0.1, Red);
+      sandbox_circle(X, 0, Red, 5);
       sandbox_line(prevPosI, X, Green);
       sandbox_line(X, nextPosI, Green);
       sandbox_line(prevPosJ, X, Yellow);
@@ -267,8 +267,8 @@ struct PolygonSelfIntersectionAlgorithm
     {
       char buf[256];
       sprintf(buf, "%d", i);
-      sandbox_text(input[i], buf);
-      sandbox_rect(input[i] + Vec2(-0.1, -0.1), Vec2(+0.2, +0.2));
+      sandbox_text(input[i], buf, White, Vec2(6, -6));
+      sandbox_rect(input[i], {}, White, Vec2(6, 6));
     }
 
     for(int i = 0; i + 1 < (int)input.len; ++i)

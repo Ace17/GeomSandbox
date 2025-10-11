@@ -36,8 +36,9 @@ struct Visualizer : IVisualizer
 
   struct VisualRect
   {
-    Vec2 a, b;
+    Vec2 a, size;
     Color color;
+    Vec2 invariantSize;
   };
 
   struct VisualCircle
@@ -45,6 +46,7 @@ struct Visualizer : IVisualizer
     Vec2 center;
     float radius;
     Color color;
+    float invariantRadius;
   };
 
   struct VisualText
@@ -52,6 +54,7 @@ struct Visualizer : IVisualizer
     Vec2 pos;
     std::string text;
     Color color;
+    Vec2 offset;
   };
 
   struct ScreenState
@@ -66,9 +69,15 @@ struct Visualizer : IVisualizer
   ScreenState m_screen; // the frame we're building
   ScreenState m_frontScreen; // the frame we're currently showing
 
-  void rect(Vec2 a, Vec2 b, Color color) { m_screen.rects.push_back({a, b, color}); }
-  void circle(Vec2 center, float radius, Color color) { m_screen.circles.push_back({center, radius, color}); }
-  void text(Vec2 pos, const char* text, Color color) { m_screen.texts.push_back({pos, text, color}); }
+  void rect(Vec2 a, Vec2 b, Color color, Vec2 invariantSize) { m_screen.rects.push_back({a, b, color, invariantSize}); }
+  void circle(Vec2 center, float radius, Color color, float invariantRadius)
+  {
+    m_screen.circles.push_back({center, radius, color, invariantRadius});
+  }
+  void text(Vec2 pos, const char* text, Color color, Vec2 offset)
+  {
+    m_screen.texts.push_back({pos, text, color, offset});
+  }
   void line(Vec2 a, Vec2 b, Color c) override { m_screen.lines.push_back({to3d(a), to3d(b), c}); }
   void line(Vec3 a, Vec3 b, Color c) override { m_screen.lines.push_back({a, b, c}); }
   void printf(const char* fmt, va_list args)
@@ -92,13 +101,13 @@ struct Visualizer : IVisualizer
       drawer->line(line.a, line.b, line.color);
 
     for(auto& rect : m_frontScreen.rects)
-      drawer->rect(rect.a, rect.b, rect.color);
+      drawer->rect(rect.a, rect.size, rect.color, rect.invariantSize);
 
     for(auto& circle : m_frontScreen.circles)
-      drawer->circle(circle.center, circle.radius, circle.color);
+      drawer->circle(circle.center, circle.radius, circle.color, circle.invariantRadius);
 
     for(auto& text : m_frontScreen.texts)
-      drawer->text(text.pos, text.text.c_str(), text.color);
+      drawer->text(text.pos, text.text.c_str(), text.color, text.offset);
   }
 };
 

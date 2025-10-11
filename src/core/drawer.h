@@ -21,9 +21,9 @@ struct IDrawer
   virtual ~IDrawer() = default;
 
   virtual void line(Vec2 a, Vec2 b, Color color = White) = 0;
-  virtual void rect(Vec2 a, Vec2 b, Color color = White) = 0;
-  virtual void circle(Vec2 center, float radius, Color color = White) = 0;
-  virtual void text(Vec2 pos, const char* text, Color color = White) = 0;
+  virtual void rect(Vec2 a, Vec2 b, Color color = White, Vec2 invariantSize = {}) = 0;
+  virtual void circle(Vec2 center, float radius, Color color = White, float invariantRadius = 0) = 0;
+  virtual void text(Vec2 pos, const char* text, Color color = White, Vec2 offset = {}) = 0;
 
   virtual void line(Vec3 a, Vec3 b, Color color = White) = 0;
 };
