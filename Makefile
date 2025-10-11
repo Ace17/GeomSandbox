@@ -33,7 +33,6 @@ SRCS:=\
 # Apps
 SRCS+=\
 			src/app_collide2d.cpp\
-			src/app_clip_polyline.cpp\
 			src/app_cube.cpp\
 			src/app_polycut.cpp\
 			src/app_sat_continuous.cpp\
