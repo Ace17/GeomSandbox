@@ -32,6 +32,7 @@ struct OrthoCamera : ICamera
         return true;
       case Key::KeyPad_3:
         pos = {0, 0};
+        scale = DefaultScale;
         return true;
       case Key::KeyPad_4:
         pos = pos + Vec2(-SCROLL_SPEED, 0);
@@ -80,8 +81,9 @@ struct OrthoCamera : ICamera
     return ::scale(Vec3{scaleX, scaleY, 0}) * translate(-1 * Vec3(pos.x, pos.y, 0));
   }
 
+  static constexpr float DefaultScale = 0.06;
   Vec2 pos{};
-  float scale = 0.06;
+  float scale = DefaultScale;
 };
 
 struct PerspectiveCamera : ICamera
