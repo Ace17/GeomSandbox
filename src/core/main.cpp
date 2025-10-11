@@ -27,6 +27,7 @@
 #undef main
 
 const float CAMERA_UPDATE_RATIO = 0.8;
+const float UI_SCALE = 0.001;
 
 OrthoCamera g_OrthoCamera;
 PerspectiveCamera g_PerspectiveCamera;
@@ -334,13 +335,13 @@ struct OpenGlDrawer : IDrawer
   {
     Vec3 vX = {g_CameraTransform.data[0].elements[0], g_CameraTransform.data[1].elements[0],
           g_CameraTransform.data[2].elements[0]};
-    const auto W = fontSize / magnitude(vX);
-    const auto H = fontSize / magnitude(vX);
+    const auto W = fontSize * UI_SCALE / magnitude(vX);
+    const auto H = fontSize * UI_SCALE / magnitude(vX);
 
     while(*text)
     {
       rawChar(m_bufTris, {pos, offset}, *text, color, W, H);
-      pos.x += W;
+      offset.x += fontSize;
       ++text;
     }
   }
@@ -391,10 +392,10 @@ struct OpenGlDrawer : IDrawer
     // setup UI transform
     {
       float offsetTransform[2][2];
-      offsetTransform[0][0] = 0.001;
+      offsetTransform[0][0] = UI_SCALE;
       offsetTransform[0][1] = 0;
       offsetTransform[1][0] = 0;
-      offsetTransform[1][1] = aspectRatio * 0.001;
+      offsetTransform[1][1] = aspectRatio * UI_SCALE;
       glUniformMatrix2fv(offsetTransformLoc, 1, GL_FALSE, &offsetTransform[0][0]);
     }
 
@@ -434,7 +435,7 @@ struct OpenGlDrawer : IDrawer
   }
 
   private:
-  static constexpr float fontSize = 0.018;
+  static constexpr float fontSize = 18;
 
   void rawLine(PrimitiveBuffer& buf, Point2 A, Point2 B, Color color)
   {
