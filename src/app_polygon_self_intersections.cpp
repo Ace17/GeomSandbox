@@ -277,14 +277,14 @@ struct PolygonSelfIntersectionAlgorithm
     int idx = 0;
     for(auto& point : output)
     {
-      sandbox_circle(input[point.i], 0.1, Orange);
-      sandbox_circle(input[point.j], 0.1, Orange);
+      sandbox_circle(input[point.i], {}, Orange, 6);
+      sandbox_circle(input[point.j], {}, Orange, 6);
 
-      sandbox_circle(point.pos, 0.2, Red);
+      sandbox_circle(point.pos, {}, Red, 5);
 
       char buf[256];
       sprintf(buf, "I%d", idx);
-      sandbox_text(point.pos, buf, Red);
+      sandbox_text(point.pos, buf, Red, Vec2(6, +24));
       ++idx;
     }
 
