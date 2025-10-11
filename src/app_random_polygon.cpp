@@ -33,5 +33,5 @@ struct RandomPolygon
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<RandomPolygon>>()); }
-const int reg = registerApp("RandomPolygon", &create);
+const int reg = registerApp("Random/Polygon", &create);
 }

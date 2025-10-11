@@ -318,5 +318,5 @@ struct DiscreteSatApp : IApp
   ConvexPolygon colliderB;
 };
 
-const int registered = registerApp("App.SAT.Discrete", []() -> IApp* { return new DiscreteSatApp; });
+const int registered = registerApp("CollisionDetection/SAT/Discrete", []() -> IApp* { return new DiscreteSatApp; });
 }

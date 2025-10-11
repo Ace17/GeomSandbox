@@ -205,5 +205,5 @@ struct BspRaycast
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<BspRaycast>>()); }
-const int registered = registerApp("Bsp.Raycast", &create);
+const int registered = registerApp("SpatialPartitioning/Bsp/Raycast", &create);
 }

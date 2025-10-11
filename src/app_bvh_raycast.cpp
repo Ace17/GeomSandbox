@@ -303,5 +303,5 @@ struct BvhRaycastApp : IApp
 };
 
 IApp* create() { return new BvhRaycastApp; }
-const int registered = registerApp("Bvh.Raycast", &create);
+const int registered = registerApp("SpatialPartitioning/Bvh/Raycast", &create);
 }

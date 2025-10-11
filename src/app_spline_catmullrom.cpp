@@ -162,5 +162,5 @@ struct CatmullRomSpline : IApp
   float tension = 1.0;
 };
 
-const int registered = registerApp("App.Spline.CatmullRom", []() -> IApp* { return new CatmullRomSpline; });
+const int registered = registerApp("Curves/Spline/CatmullRom", []() -> IApp* { return new CatmullRomSpline; });
 }

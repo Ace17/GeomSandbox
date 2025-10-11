@@ -206,5 +206,5 @@ struct BresenhamAlgorithm
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<BresenhamAlgorithm>>()); }
-const int reg = registerApp("Bresenham's LineDrawing", &create);
+const int reg = registerApp("DrawLine/Bresenham", &create);
 } // namespace

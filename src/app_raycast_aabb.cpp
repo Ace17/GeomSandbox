@@ -162,5 +162,5 @@ struct RaycastAgainstAABB : IApp
 };
 
 IApp* create() { return new RaycastAgainstAABB; }
-const int registered = registerApp("RaycastAgainstAABB", &create);
+const int registered = registerApp("Raycast/AABB", &create);
 }

@@ -151,5 +151,5 @@ struct BspBuild
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<BspBuild>>()); }
-const int registered = registerApp("Bsp.Build", &create);
+const int registered = registerApp("SpatialPartitioning/Bsp/Build", &create);
 }

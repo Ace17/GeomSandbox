@@ -76,5 +76,5 @@ struct SpinningCube : IApp
   }
 };
 
-const int registered = registerApp("App.Cube", []() -> IApp* { return new SpinningCube; });
+const int registered = registerApp("Demo/Cube", []() -> IApp* { return new SpinningCube; });
 }
