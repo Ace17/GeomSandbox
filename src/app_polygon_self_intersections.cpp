@@ -165,14 +165,15 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
 
   const int N = input.len;
 
-  for(int i = 0; i < N - 1; ++i)
+  for(int i = 0; i < N; ++i)
   {
-    for(int j = i + 2; j < N - 1; ++j)
+    const Vec2 I0 = input[(i + 0) % N];
+    const Vec2 I1 = input[(i + 1) % N];
+
+    for(int j = i + 2; j < N && j < i + N - 1; ++j)
     {
-      const Vec2 I0 = input[i + 0];
-      const Vec2 I1 = input[i + 1];
-      const Vec2 J0 = input[j + 0];
-      const Vec2 J1 = input[j + 1];
+      const Vec2 J0 = input[(j + 0) % N];
+      const Vec2 J1 = input[(j + 1) % N];
 
       Vec2 where;
 
@@ -285,8 +286,8 @@ struct PolygonSelfIntersectionAlgorithm
       sandbox_rect(input[i], {}, White, Vec2(6, 6));
     }
 
-    for(int i = 0; i + 1 < (int)input.len; ++i)
-      sandbox_line(input[i], input[i + 1]);
+    for(int i = 0; i < (int)input.len; ++i)
+      sandbox_line(input[i], input[(i + 1) % input.len]);
 
     int idx = 0;
     for(auto& point : output)
