@@ -161,7 +161,7 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
 {
   std::vector<Crossing> crossings;
 
-  const float toleranceRadius = 0.001;
+  const float toleranceRadius = 0.01;
 
   const int N = input.len;
 
@@ -179,11 +179,8 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
 
       if(segmentsIntersect(I0, I1, J0, J1, toleranceRadius, where))
       {
-        const Vec2 segmentI = I1 - I0;
-        const float fractionI = dotProduct(where - I0, segmentI);
-
-        const Vec2 segmentJ = J1 - J0;
-        const float fractionJ = dotProduct(where - J0, segmentJ);
+        const float fractionI = dotProduct(where - I0, I1 - I0) / sqrMagnitude(I1 - I0);
+        const float fractionJ = dotProduct(where - J0, J1 - J0) / sqrMagnitude(J1 - J0);
 
         crossings.push_back({where, i, j, fractionI, fractionJ});
         crossings.push_back({where, j, i, fractionJ, fractionI});
@@ -200,6 +197,11 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
       return a.ti < b.ti;
     };
     std::sort(crossings.begin(), crossings.end(), byTime);
+  }
+
+  for(auto& c : crossings)
+  {
+    fprintf(stderr, "Crossing: %d (%.8f) vs %d (%.8f)\n", c.i, c.ti, c.j, c.tj);
   }
 
   // traverse all crossings, determine real intersections

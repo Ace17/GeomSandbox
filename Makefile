@@ -47,6 +47,7 @@ SRCS+=\
 			src/app_frustum_clusters.cpp\
 			src/app_raycast_aabb.cpp\
 			src/app_sound_sources.cpp\
+			src/app_segments_intersect.cpp\
 			src/app_split_polyhedron.cpp\
 			src/app_split_polygon.cpp\
 			src/app_main.cpp\
