@@ -225,12 +225,20 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
       const int sideAfter = classifySide(prevPosJ, X, nextPosJ, nextPosI, toleranceRadius);
       side += (sideAfter - sideBefore);
 
+      bool mustPush = false;
+
+      if(isOnVertexI != isOnVertexJ)
+        mustPush = true;
+
       if((side % 2 == 0) && side != lastRealSide)
       {
         if(c.i < c.j)
-          r.push_back({X, c.i, c.j});
+          mustPush = true; // side change
         lastRealSide = side;
       }
+
+      if(mustPush)
+        r.push_back({X, c.i, c.j});
 
       sandbox_circle(X, 0, Red, 5);
       sandbox_line(prevPosI, X, Green);
@@ -302,6 +310,27 @@ struct PolygonSelfIntersectionAlgorithm
   }
 
   inline static const TestCase<std::vector<Vec2>> AllTestCases[] = {
+        {"side change after coinciding border",
+              {
+                    {0, 0},
+                    {4, 0},
+                    {4, 4},
+                    {0, 4},
+                    {0, 2},
+                    {0.5, 2},
+                    {1.5, 2},
+                    {2, 2},
+                    {2, 3},
+                    {3, 3},
+                    {3, 1},
+                    {2, 1},
+                    {2, 2},
+                    {1.5, 2},
+                    {1.0, 2.5},
+                    {0.5, 2},
+                    {0, 2},
+              }},
+
         {"saw, multiple intersections",
               {
                     {0, 0},
