@@ -313,7 +313,46 @@ struct PolygonSelfIntersectionAlgorithm
   }
 
   inline static const TestCase<std::vector<Vec2>> AllTestCases[] = {
-        {"side change after coinciding border",
+        {
+              "Lungs in pyramid",
+              {
+                    {0, -1},
+                    {8, -1},
+                    {4, 5},
+                    {4, 3},
+                    {5, 2},
+                    {6, 0},
+                    {5, 0},
+                    {5, 2},
+                    {4, 3},
+                    {3, 2},
+                    {3, 0},
+                    {2, 0},
+                    {3, 2},
+                    {4, 3},
+                    {4, 5},
+              },
+        },
+
+        {
+              "Two bridges, one lake (Railway)",
+              {
+                    {-3.8, 0.8},
+                    {8.2, -4.8},
+                    {9.4, 1.6},
+                    {6.6, 1.2},
+                    {3.6, -1.0},
+                    {6.6, 1.2},
+                    {3.2, 2},
+                    {6.4, 2.6},
+                    {6.6, 1.2},
+                    {9.4, 1.6},
+                    {9.4, 6.2},
+              },
+        },
+
+        {
+              "side change after coinciding border",
               {
                     {0, 0},
                     {4, 0},
@@ -332,9 +371,11 @@ struct PolygonSelfIntersectionAlgorithm
                     {1.0, 2.5},
                     {0.5, 2},
                     {0, 2},
-              }},
+              },
+        },
 
-        {"saw, multiple intersections",
+        {
+              "saw, multiple intersections",
               {
                     {0, 0},
                     {10, 0},
@@ -358,10 +399,11 @@ struct PolygonSelfIntersectionAlgorithm
                     {10, 3},
                     {10, 4},
                     {0, 4},
-                    {0, 0.1},
-              }},
+              },
+        },
 
-        {"vertex/vertex contact, intersection",
+        {
+              "vertex/vertex contact, intersection",
               {
                     {-10, -10},
                     {0, -10},
@@ -371,19 +413,22 @@ struct PolygonSelfIntersectionAlgorithm
                     {+10, 0},
                     {0, 0},
                     {-10, 0},
-                    {-10, -10 + 0.1},
-              }},
-        {"vertex/vertex contact, no intersection",
+              },
+        },
+        {
+              "vertex/vertex contact, no intersection",
               {
                     {-10, -10},
-                    {0, -0.0005},
+                    {0, 0},
                     {+10, -10},
                     {+10, 10},
                     {0, 0},
                     {-10, 10},
                     {-10, 1},
-              }},
-        {"twisted bridge",
+              },
+        },
+        {
+              "twisted bridge",
               {
                     {-20, 0},
                     {-15, -5},
@@ -397,8 +442,8 @@ struct PolygonSelfIntersectionAlgorithm
                     {0, 0},
                     {-10, 0},
                     {-15, 5},
-                    {-20.1, 0.1},
-              }},
+              },
+        },
         {"bridge",
               {
                     {0, 0},
