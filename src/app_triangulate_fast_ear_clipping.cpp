@@ -269,13 +269,29 @@ struct FastEarClippingAlgorithm
   }
 
   inline static const TestCase<std::vector<Vec2>> AllTestCases[] = {
-        {"bridge",
+        {
+              "bridge",
               {
                     {-10, -10},
                     {+10, +10},
                     {-10, +10},
                     {+10, -10},
-              }},
+              },
+        },
+
+        {
+              "bad ear, bollocks",
+              {
+                    {0, 1},
+                    {1, -3},
+                    {2, -3},
+                    {2, -2},
+                    {0, 1},
+                    {-2, -2},
+                    {-2, -3},
+                    {-1, -3},
+              },
+        },
   };
 
   static float computeArea(span<const Vec2> polygon)
