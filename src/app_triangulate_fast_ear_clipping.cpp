@@ -98,6 +98,8 @@ void drawPolygon(span<const Vec2> input, Color color)
     auto normalTip = crossProduct(Vec3(normal.x, normal.y, 0), Vec3(0, 0, 1)) * 10.0;
     sandbox_line(a, b, color);
     sandbox_line(middle, middle, {0.5, 0, 0, 1}, Vec2{}, {normalTip.x, normalTip.y});
+
+    sandbox_rect(input[i], {}, White, Vec2(4, 4));
   }
 }
 
