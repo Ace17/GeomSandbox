@@ -148,6 +148,7 @@ struct FastEarClippingAlgorithm
       int next;
       float angle;
       bool tipContainsOtherVertices;
+      bool tipIsChokePoint;
 
       // for tie break
       Vec2 pos;
@@ -157,6 +158,8 @@ struct FastEarClippingAlgorithm
     {
       if(a.tipContainsOtherVertices != b.tipContainsOtherVertices)
         return a.tipContainsOtherVertices < b.tipContainsOtherVertices;
+      if(a.tipIsChokePoint != b.tipIsChokePoint)
+        return a.tipIsChokePoint < b.tipIsChokePoint;
       if(a.angle != b.angle)
         return a.angle < b.angle;
       if(a.pos.x != b.pos.x)
@@ -194,6 +197,29 @@ struct FastEarClippingAlgorithm
       return false;
     };
 
+    auto tipIsChokePoint = [&](int tip, int n)
+    {
+      const auto A = polygon[info[tip].prev];
+      const auto B = polygon[tip];
+      const auto C = polygon[info[tip].next];
+
+      // check for other edges starting from the tip
+      for(int i = 0, curr = info[info[tip].next].next; i + 3 < n; ++i, curr = info[curr].next)
+      {
+        const auto Q = polygon[curr];
+        if(!(Q == B))
+          continue;
+
+        const auto P = polygon[info[curr].next];
+
+        // if the edge lies inside the interior of ABC, this is a choke point
+        if(det2d(P - B, A - B) > 0 && det2d(P - B, C - B) < 0)
+          return true;
+      }
+
+      return false;
+    };
+
     auto recomputeInfoAtVertex = [&](int i, int n)
     {
       const auto A = polygon[info[i].prev];
@@ -201,6 +227,7 @@ struct FastEarClippingAlgorithm
       const auto C = polygon[info[i].next];
 
       info[i].tipContainsOtherVertices = tipContainsOtherVertices(i, n);
+      info[i].tipIsChokePoint = tipIsChokePoint(i, n);
 
       const auto lenAB = magnitude(B - A);
       const auto lenBC = magnitude(B - C);
@@ -244,7 +271,7 @@ struct FastEarClippingAlgorithm
           earIndex = curr;
       }
 
-      if(info[earIndex].tipContainsOtherVertices || info[earIndex].angle > M_PI)
+      if(info[earIndex].tipIsChokePoint || info[earIndex].tipContainsOtherVertices || info[earIndex].angle > M_PI)
       {
         FILE* fp = fopen("/tmp/triangulation_failure.txt", "wb");
         for(int i = 0, curr = first; i < n; ++i, curr = info[curr].next)
@@ -281,7 +308,13 @@ struct FastEarClippingAlgorithm
         {
           char buf[256];
           sprintf(buf, "%.1f", info[curr].angle * 180 / M_PI);
-          sandbox_text(polygon[curr], buf, info[curr].tipContainsOtherVertices ? Red : Green);
+
+          Color color = Green;
+          if(info[curr].tipContainsOtherVertices)
+            color = Red;
+          if(info[curr].tipIsChokePoint)
+            color = Orange;
+          sandbox_text(polygon[curr], buf, color);
         }
 
         const auto A = polygon[info[earIndex].prev];
