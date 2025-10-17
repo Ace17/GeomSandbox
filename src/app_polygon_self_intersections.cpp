@@ -9,7 +9,6 @@
 #include "core/algorithm_app.h"
 #include "core/sandbox.h"
 
-#include <algorithm> // remove_if
 #include <cmath>
 #include <vector>
 
@@ -18,82 +17,13 @@
 template<>
 std::vector<Vec2> deserialize<std::vector<Vec2>>(span<const uint8_t> data);
 
+bool segmentsIntersect(Vec2 u0, Vec2 u1, Vec2 v0, Vec2 v1, Vec2& where);
+
 namespace
 {
 float sqr(float v) { return v * v; }
 
 float sqrMagnitude(Vec2 a) { return dotProduct(a, a); }
-
-bool segmentsIntersect(Vec2 u0, Vec2 u1, Vec2 v0, Vec2 v1, float toleranceRadius, Vec2& where)
-{
-  // raycast of u0->u1 against the "wall" v0v1
-  const Vec2 tangent = normalize(v1 - v0);
-  const Vec2 normal = rotateLeft(tangent);
-
-  // project everybody on this normal
-  const float pos0 = dotProduct(normal, u0);
-  const float pos1 = dotProduct(normal, u1);
-  const float posWall = dotProduct(normal, v0);
-
-  if(pos0 > posWall + toleranceRadius && pos1 > posWall + toleranceRadius)
-    return false;
-
-  if(pos0 < posWall - toleranceRadius && pos1 < posWall - toleranceRadius)
-    return false;
-
-  float fraction;
-
-  // parallel segments
-  if(fabs(pos1 - pos0) < toleranceRadius)
-  {
-    if(fabs(pos0 - posWall) > toleranceRadius)
-      return false; // not colinear enough
-
-    const float uMin = std::min(dotProduct(tangent, u0), dotProduct(tangent, u1));
-    const float uMax = std::max(dotProduct(tangent, u0), dotProduct(tangent, u1));
-
-    const float vMin = std::min(dotProduct(tangent, v0), dotProduct(tangent, v1));
-    const float vMax = std::max(dotProduct(tangent, v0), dotProduct(tangent, v1));
-
-    if(uMax + toleranceRadius < vMin || vMax < uMin - toleranceRadius)
-      return false; // colinear, but no common point
-
-    if(uMin - toleranceRadius < vMin)
-      fraction = (vMin - uMin) / (uMax - uMin);
-    else
-      fraction = (vMax - uMin) / (uMax - uMin);
-
-    if(dotProduct(u1 - u0, tangent) < 0)
-      fraction = 1 - fraction;
-  }
-  else
-  {
-    fraction = (posWall - pos0) / (pos1 - pos0);
-  }
-
-  if(fraction < -toleranceRadius || fraction > 1 + toleranceRadius)
-    return false;
-
-  // intersection of u0u1 with the line v0v1
-  where = u0 + fraction * (u1 - u0);
-
-  // check if the intersection belongs to the segment v0v1
-  if(dotProduct(where - v0, tangent) < -toleranceRadius)
-    return false;
-
-  if(dotProduct(where - v1, tangent) > +toleranceRadius)
-    return false;
-
-  // we exclude the circle centered on u1, with a radius of toleranceRadius.
-  if(sqrMagnitude(where - u1) < sqr(toleranceRadius))
-    return false;
-
-  // we exclude the circle centered on v1, with a radius of toleranceRadius.
-  if(sqrMagnitude(where - v1) < sqr(toleranceRadius))
-    return false;
-
-  return true;
-}
 
 float det2d(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
 
@@ -161,7 +91,7 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
 {
   std::vector<Crossing> crossings;
 
-  const float toleranceRadius = 0.01;
+  const float toleranceRadius = 0.001;
 
   const int N = input.len;
 
@@ -177,39 +107,32 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
 
       Vec2 where;
 
-      if(segmentsIntersect(I0, I1, J0, J1, toleranceRadius, where))
+      bool isIntersection = segmentsIntersect(I0, I1, J0, J1, where);
+
+      if(isIntersection && !(where == I1 || where == J1))
       {
         const float fractionI = dotProduct(where - I0, I1 - I0) / sqrMagnitude(I1 - I0);
         const float fractionJ = dotProduct(where - J0, J1 - J0) / sqrMagnitude(J1 - J0);
 
         crossings.push_back({where, i, j, fractionI, fractionJ});
-        crossings.push_back({where, j, i, fractionJ, fractionI});
+      }
+
+      {
+        const auto colorI = isIntersection ? (where == I1 ? Orange : Red) : Green;
+        const auto colorJ = isIntersection ? (where == J1 ? Orange : Red) : Green;
+        sandbox_text(I0, "A", colorI, {-20, 20});
+        sandbox_line(I0, I1, colorI);
+        sandbox_text(J0, "B", colorJ, {-20, 20});
+        sandbox_line(J0, J1, colorJ);
+        sandbox_breakpoint();
       }
     }
-  }
-
-  {
-    auto byTime = [](const Crossing& a, const Crossing& b)
-    {
-      if(a.i != b.i)
-        return a.i < b.i;
-
-      return a.ti < b.ti;
-    };
-    std::sort(crossings.begin(), crossings.end(), byTime);
-  }
-
-  for(auto& c : crossings)
-  {
-    fprintf(stderr, "Crossing: %d (%.8f) vs %d (%.8f)\n", c.i, c.ti, c.j, c.tj);
   }
 
   // traverse all crossings, determine real intersections
   std::vector<Intersection> r;
 
   {
-    int lastRealSide = 0;
-    int side = 0;
     for(auto c : crossings)
     {
       const auto X = c.pos;
@@ -224,21 +147,16 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
       const Vec2 prevPosJ = isOnVertexJ ? input[(c.j - 1 + N) % N] : input[c.j];
       const Vec2 nextPosJ = input[(c.j + 1) % N];
 
-      const int sideBefore = classifySide(prevPosJ, X, nextPosJ, prevPosI, toleranceRadius);
-      const int sideAfter = classifySide(prevPosJ, X, nextPosJ, nextPosI, toleranceRadius);
-      side += (sideAfter - sideBefore);
+      const int sidePrevPosJ = classifySide(prevPosI, X, nextPosI, prevPosJ, toleranceRadius);
+      const int sideNextPosJ = classifySide(prevPosI, X, nextPosI, nextPosJ, toleranceRadius);
 
       bool mustPush = false;
 
       if(isOnVertexI != isOnVertexJ)
         mustPush = true;
 
-      if((side % 2 == 0) && side != lastRealSide)
-      {
-        if(c.i < c.j)
-          mustPush = true; // side change
-        lastRealSide = side;
-      }
+      if(sidePrevPosJ == +1 || sideNextPosJ == +1)
+        mustPush = true;
 
       if(mustPush)
         r.push_back({X, c.i, c.j});
@@ -249,7 +167,7 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
       sandbox_line(prevPosJ, X, Yellow);
       sandbox_line(X, nextPosJ, Yellow);
       char buf[256];
-      sprintf(buf, "sideBefore=%d sideAfter=%d side=%d", sideBefore, sideAfter, side);
+      sprintf(buf, "sidePrevPosJ=%d sideNextPosJ=%d", sidePrevPosJ, sideNextPosJ);
       sandbox_text({0, 11}, buf);
       sandbox_breakpoint();
     }
@@ -270,7 +188,15 @@ struct PolygonSelfIntersectionAlgorithm
       Vec2 pos;
       pos.x = randomFloat(-20, 20);
       pos.y = randomFloat(-20, 20);
-      points.push_back(pos);
+      if(points.size() >= 2 && rand() % 10 == 0)
+      {
+        auto p = points[rand() % points.size() - 1];
+        points.push_back(p);
+      }
+      else
+      {
+        points.push_back(pos);
+      }
     }
 
     return points;
