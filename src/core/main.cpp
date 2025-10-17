@@ -274,8 +274,14 @@ struct OpenGlDrawer : IDrawer
   /////////////////////////////////////////////////////////////////////////////
   // IDrawer implementation
 
-  void line(Vec2 a, Vec2 b, Color color) override { rawLine(m_bufLines, Point2{a}, Point2{b}, color); }
-  void line(Vec3 a, Vec3 b, Color color) override { rawLine(m_bufLines, Point3{a}, Point3{b}, color); }
+  void line(Vec2 a, Vec2 b, Color color, Vec2 offsetA, Vec2 offsetB) override
+  {
+    rawLine(m_bufLines, Point2{a, offsetA}, Point2{b, offsetB}, color);
+  }
+  void line(Vec3 a, Vec3 b, Color color, Vec2 offsetA, Vec2 offsetB) override
+  {
+    rawLine(m_bufLines, Point3{a, offsetA}, Point3{b, offsetB}, color);
+  }
 
   void rect(Vec2 a, Vec2 size, Color color, Vec2 invariantSize) override
   {

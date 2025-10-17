@@ -32,6 +32,7 @@ struct Visualizer : IVisualizer
   {
     Vec3 a, b;
     Color color;
+    Vec2 offsetA, offsetB;
   };
 
   struct VisualRect
@@ -78,8 +79,14 @@ struct Visualizer : IVisualizer
   {
     m_screen.texts.push_back({pos, text, color, offset});
   }
-  void line(Vec2 a, Vec2 b, Color c) override { m_screen.lines.push_back({to3d(a), to3d(b), c}); }
-  void line(Vec3 a, Vec3 b, Color c) override { m_screen.lines.push_back({a, b, c}); }
+  void line(Vec2 a, Vec2 b, Color c, Vec2 offsetA, Vec2 offsetB) override
+  {
+    m_screen.lines.push_back({to3d(a), to3d(b), c, offsetA, offsetB});
+  }
+  void line(Vec3 a, Vec3 b, Color c, Vec2 offsetA, Vec2 offsetB) override
+  {
+    m_screen.lines.push_back({a, b, c, offsetA, offsetB});
+  }
   void printf(const char* fmt, va_list args)
   {
     char buffer[4096]{};
@@ -98,7 +105,7 @@ struct Visualizer : IVisualizer
   void flush(IDrawer* drawer)
   {
     for(auto& line : m_frontScreen.lines)
-      drawer->line(line.a, line.b, line.color);
+      drawer->line(line.a, line.b, line.color, line.offsetA, line.offsetB);
 
     for(auto& rect : m_frontScreen.rects)
       drawer->rect(rect.a, rect.size, rect.color, rect.invariantSize);
