@@ -91,8 +91,8 @@ void drawPolygon(span<const Vec2> input, Color color)
   for(int i = 0; i < N; ++i)
   {
     const int j = (i + 1) % N;
-    auto a = input[i];
-    auto b = input[j];
+    auto a = Vec3(input[i].x, input[i].y, i * 0.1);
+    auto b = Vec3(input[j].x, input[j].y, j * 0.1);
     auto middle = (a + b) * 0.5;
     auto normal = normalize(input[j] - input[i]);
     auto normalTip = crossProduct(Vec3(normal.x, normal.y, 0), Vec3(0, 0, 1)) * 10.0;
@@ -104,6 +104,14 @@ void drawPolygon(span<const Vec2> input, Color color)
 }
 
 float det2d(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
+
+int queryCount;
+
+bool pointInTriangle(Vec2 A, Vec2 B, Vec2 C, Vec2 P)
+{
+  ++queryCount;
+  return det2d(B - A, P - A) >= 0 && det2d(C - B, P - B) >= 0 && det2d(A - C, P - C) >= 0;
+}
 
 struct FastEarClippingAlgorithm
 {
@@ -130,26 +138,69 @@ struct FastEarClippingAlgorithm
 
   static std::vector<Triangle> execute(std::vector<Vec2> input)
   {
+    queryCount = 0;
     span<const Vec2> polygon = input;
     const int N = polygon.len;
 
-    std::vector<int> prev(N);
-    std::vector<int> next(N);
+    struct VertexInfo
+    {
+      int prev;
+      int next;
+      float angle;
+      bool tipContainsOtherVertices;
+
+      // for tie break
+      Vec2 pos;
+    };
+
+    static auto isBetter = [](const VertexInfo& a, const VertexInfo& b)
+    {
+      if(a.tipContainsOtherVertices != b.tipContainsOtherVertices)
+        return a.tipContainsOtherVertices < b.tipContainsOtherVertices;
+      if(a.angle != b.angle)
+        return a.angle < b.angle;
+      if(a.pos.x != b.pos.x)
+        return a.pos.x < b.pos.x;
+      if(a.pos.y != b.pos.y)
+        return a.pos.y < b.pos.y;
+      return false;
+    };
+
+    std::vector<VertexInfo> info(N);
 
     for(int i = 0; i < N; ++i)
     {
-      prev[i] = (i - 1 + N) % N;
-      next[i] = (i + 1 + N) % N;
+      info[i].prev = (i - 1 + N) % N;
+      info[i].next = (i + 1 + N) % N;
+      info[i].pos = input[i];
     }
 
-    // compute angles
-    std::vector<float> angles(N);
-
-    auto computeAngleAtVertex = [&](int i)
+    auto tipContainsOtherVertices = [&](int tip, int n)
     {
-      const auto A = polygon[prev[i]];
+      const auto A = polygon[info[tip].prev];
+      const auto B = polygon[tip];
+      const auto C = polygon[info[tip].next];
+
+      // test all other vertices, they must not be in the ABC triangle
+      for(int i = 0, curr = info[info[tip].next].next; i + 3 < n; ++i, curr = info[curr].next)
+      {
+        if(polygon[curr] == A || polygon[curr] == B || polygon[curr] == C)
+          continue;
+
+        if(pointInTriangle(A, B, C, polygon[curr]))
+          return true;
+      }
+
+      return false;
+    };
+
+    auto recomputeInfoAtVertex = [&](int i, int n)
+    {
+      const auto A = polygon[info[i].prev];
       const auto B = polygon[i];
-      const auto C = polygon[next[i]];
+      const auto C = polygon[info[i].next];
+
+      info[i].tipContainsOtherVertices = tipContainsOtherVertices(i, n);
 
       const auto lenAB = magnitude(B - A);
       const auto lenBC = magnitude(B - C);
@@ -159,40 +210,24 @@ struct FastEarClippingAlgorithm
       // thus, they will be removed first from the polygon.
       if(lenAB <= 0.0001 || lenBC <= 0.00001)
       {
-        angles[i] = 0;
+        info[i].angle = 0;
         return;
       }
 
       const auto det = det2d(B - A, C - B) / mag;
       const auto dot = clamp(dotProduct(A - B, C - B) / mag, -1, +1);
 
-      angles[i] = acos(dot);
-      if(det < 0)
-        angles[i] = 2 * M_PI - angles[i];
-    };
+      const float acuteAngle = acos(dot);
+      info[i].angle = det >= 0 ? acuteAngle : 2 * M_PI - acuteAngle;
 
-    auto isValidEarTip = [&](int tip, int n)
-    {
-      const auto A = polygon[prev[tip]];
-      const auto B = polygon[tip];
-      const auto C = polygon[next[tip]];
-
-      // test all other vertices, they must not be in the ABC triangle
-      for(int i = 0, curr = next[next[tip]]; i + 3 < n; ++i, curr = next[curr])
-      {
-        if(polygon[curr] == A || polygon[curr] == B || polygon[curr] == C)
-          continue;
-
-        if(det2d(B - A, polygon[curr] - A) >= 0 && det2d(C - B, polygon[curr] - B) >= 0 &&
-              det2d(A - C, polygon[curr] - C) >= 0)
-          return false; // point 'curr' is inside ABC.
-      }
-
-      return true;
+      // 360 degrees angles are created when to edges coincide
+      // in this case, the ear will have an area of zero.
+      if(info[i].angle > 2 * M_PI - 0.001)
+        info[i].angle = 0;
     };
 
     for(int i = 0; i < N; ++i)
-      computeAngleAtVertex(i);
+      recomputeInfoAtVertex(i, N);
 
     std::vector<Triangle> result;
 
@@ -202,30 +237,33 @@ struct FastEarClippingAlgorithm
     while(n > 3)
     {
       // find best ear to cut
-      float minAngle = M_PI;
-      int earIndex = -1;
-      for(int i = 0, curr = first; i < n; ++i, curr = next[curr])
+      int earIndex = first;
+      for(int i = 0, curr = first; i < n; ++i, curr = info[curr].next)
       {
-        if(angles[curr] < minAngle && isValidEarTip(curr, n))
-        {
+        if(isBetter(info[curr], info[earIndex]))
           earIndex = curr;
-          minAngle = angles[curr];
-        }
       }
 
-      assert(earIndex >= 0);
+      if(info[earIndex].tipContainsOtherVertices || info[earIndex].angle > M_PI)
+      {
+        FILE* fp = fopen("/tmp/triangulation_failure.txt", "wb");
+        for(int i = 0, curr = first; i < n; ++i, curr = info[curr].next)
+          fprintf(fp, "%.5f, %.5f\n", polygon[curr].x, polygon[curr].y);
+        fclose(fp);
+      }
 
       // remove ear
-      first = next[earIndex];
-      next[prev[earIndex]] = next[earIndex];
-      prev[next[earIndex]] = prev[earIndex];
+      first = info[earIndex].next;
+      info[info[earIndex].prev].next = info[earIndex].next;
+      info[info[earIndex].next].prev = info[earIndex].prev;
       --n;
 
       // recompute the angles at the vertices surrounding the ear tip.
-      computeAngleAtVertex(next[earIndex]);
-      computeAngleAtVertex(prev[earIndex]);
+      recomputeInfoAtVertex(info[earIndex].next, n);
+      recomputeInfoAtVertex(info[earIndex].prev, n);
 
-      result.push_back({earIndex, next[earIndex], prev[earIndex]});
+      if(det2d(polygon[earIndex] - polygon[info[earIndex].prev], polygon[info[earIndex].next] - polygon[earIndex]) > 0)
+        result.push_back({earIndex, info[earIndex].next, info[earIndex].prev});
 
       if(enableDisplay)
       {
@@ -236,18 +274,34 @@ struct FastEarClippingAlgorithm
           sandbox_line(polygon[segment.c], polygon[segment.a], Gray);
         }
 
-        for(int i = 0, curr = first; i < n; ++i, curr = next[curr])
-          sandbox_line(polygon[curr], polygon[next[curr]], Yellow);
+        for(int i = 0, curr = first; i < n; ++i, curr = info[curr].next)
+          sandbox_line(polygon[curr], polygon[info[curr].next], Yellow);
 
-        const auto A = polygon[prev[earIndex]];
-        const auto C = polygon[next[earIndex]];
+        for(int i = 0, curr = first; i < n; ++i, curr = info[curr].next)
+        {
+          char buf[256];
+          sprintf(buf, "%.1f", info[curr].angle * 180 / M_PI);
+          sandbox_text(polygon[curr], buf, info[curr].tipContainsOtherVertices ? Red : Green);
+        }
+
+        const auto A = polygon[info[earIndex].prev];
+        const auto C = polygon[info[earIndex].next];
         sandbox_line(A, C, Red);
+        if(info[earIndex].tipContainsOtherVertices || info[earIndex].angle > M_PI)
+        {
+          char buf[256];
+          sprintf(buf, "Concealed: angle=%.3f, CE2=%d", info[earIndex].angle,
+                int(info[earIndex].tipContainsOtherVertices));
+          sandbox_text({-20, 4}, buf);
+        }
         sandbox_breakpoint();
       }
     }
 
-    result.push_back({first, next[first], prev[first]});
+    if(det2d(polygon[first] - polygon[info[first].prev], polygon[info[first].next] - polygon[first]) > 0)
+      result.push_back({first, info[first].next, info[first].prev});
 
+    fprintf(stderr, "%d triangles, queryCount=%d\n", (int)result.size(), queryCount);
     return result;
   }
 
@@ -314,7 +368,8 @@ struct FastEarClippingAlgorithm
       const Vec2 a(polygon[t.a]);
       const Vec2 b(polygon[t.b]);
       const Vec2 c(polygon[t.c]);
-      r += fabs(det2d(a - c, b - c));
+      assert(det2d(a - c, b - c) > 0);
+      r += det2d(a - c, b - c);
     }
     return r * 0.5f;
   };
