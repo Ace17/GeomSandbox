@@ -314,6 +314,8 @@ struct FastEarClippingAlgorithm
             color = Red;
           if(info[curr].tipIsChokePoint)
             color = Orange;
+          if(info[curr].angle >= M_PI)
+            color = Yellow;
           sandbox_text(polygon[curr], buf, color);
         }
 
