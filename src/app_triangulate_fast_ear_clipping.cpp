@@ -90,12 +90,14 @@ void drawPolygon(span<const Vec2> input, Color color)
   const int N = input.len;
   for(int i = 0; i < N; ++i)
   {
+    const int j = (i + 1) % N;
     auto a = input[i];
-    auto b = input[(i + 1) % N];
+    auto b = input[j];
     auto middle = (a + b) * 0.5;
-    auto normalTip = middle - rotateLeft(normalize(b - a)) * 0.3;
+    auto normal = normalize(input[j] - input[i]);
+    auto normalTip = crossProduct(Vec3(normal.x, normal.y, 0), Vec3(0, 0, 1)) * 10.0;
     sandbox_line(a, b, color);
-    sandbox_line(middle, normalTip, {0.5, 0, 0, 1});
+    sandbox_line(middle, middle, {0.5, 0, 0, 1}, Vec2{}, {normalTip.x, normalTip.y});
   }
 }
 
