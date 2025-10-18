@@ -5,7 +5,7 @@
 // License, or (at your option) any later version.
 
 ///////////////////////////////////////////////////////////////////////////////
-// Segment/Segment intersection
+// Segment/Polyline intersection
 
 #include "core/app.h"
 #include "core/drawer.h"

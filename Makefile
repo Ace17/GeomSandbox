@@ -42,12 +42,12 @@ SRCS+=\
 			src/app_example.cpp\
 			src/app_bvh_build.cpp\
 			src/app_bvh_raycast.cpp\
+			src/app_intersect_segment_vs_polyline.cpp\
 			src/app_line_distance.cpp\
 			src/app_portals_2d.cpp\
 			src/app_frustum_clusters.cpp\
 			src/app_raycast_aabb.cpp\
 			src/app_sound_sources.cpp\
-			src/app_segments_intersect.cpp\
 			src/app_split_polyhedron.cpp\
 			src/app_split_polygon.cpp\
 			src/app_main.cpp\
