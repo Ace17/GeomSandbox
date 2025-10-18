@@ -8,6 +8,7 @@
 // Raycast against a BSP
 
 #include "core/algorithm_app.h"
+#include "core/bounding_box.h"
 #include "core/geom.h"
 #include "core/sandbox.h"
 
@@ -16,7 +17,6 @@
 #include <cstdio>
 #include <vector>
 
-#include "bounding_box.h"
 #include "bsp.h"
 #include "random.h"
 #include "random_polygon.h"

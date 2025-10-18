@@ -8,6 +8,7 @@
 // Create a BSP tree from a random polygon
 
 #include "core/algorithm_app.h"
+#include "core/bounding_box.h"
 #include "core/geom.h"
 #include "core/sandbox.h"
 
@@ -15,7 +16,6 @@
 #include <cmath>
 #include <vector>
 
-#include "bounding_box.h"
 #include "bsp.h"
 #include "random.h"
 #include "random_polygon.h"

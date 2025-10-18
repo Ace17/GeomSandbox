@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/geom.h"
-
 #include <algorithm>
+
+#include "geom.h"
 
 struct BoundingBox
 {

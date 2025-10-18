@@ -8,6 +8,7 @@
 // Split a polygon into convex pieces
 
 #include "core/algorithm_app.h"
+#include "core/bounding_box.h"
 #include "core/geom.h"
 #include "core/sandbox.h"
 
@@ -16,7 +17,6 @@
 #include <deque>
 #include <vector>
 
-#include "bounding_box.h"
 #include "random.h"
 #include "random_polygon.h"
 #include "split_polygon.h"

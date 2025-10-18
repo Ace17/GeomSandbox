@@ -1,10 +1,9 @@
 #pragma once
 
+#include "core/bounding_box.h"
 #include "core/geom.h"
 
 #include <vector>
-
-#include "bounding_box.h"
 
 // output
 struct BvhNode

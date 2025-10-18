@@ -8,10 +8,10 @@
 // Raycast against an AABB
 
 #include "core/algorithm_app.h"
+#include "core/bounding_box.h"
 #include "core/drawer.h"
 #include "core/geom.h"
 
-#include "bounding_box.h"
 #include "random.h"
 
 namespace

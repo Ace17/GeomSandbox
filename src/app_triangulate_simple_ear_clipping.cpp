@@ -8,6 +8,7 @@
 // Polygon Triangulation: Ear-clipping Algorithm.
 
 #include "core/algorithm_app.h"
+#include "core/bounding_box.h"
 #include "core/sandbox.h"
 
 #include <algorithm>
@@ -17,7 +18,6 @@
 #include <string>
 #include <vector>
 
-#include "bounding_box.h"
 #include "random.h"
 #include "random_polygon.h"
 

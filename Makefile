@@ -84,6 +84,7 @@ SRCS+=\
 			src/random.cpp\
 			src/bvh.cpp\
 			src/bsp.cpp\
+			src/core/serialization.cpp\
 
 $(BIN)/GeomSandbox.exe: $(SRCS:%=$(BIN)/%.o)
 
