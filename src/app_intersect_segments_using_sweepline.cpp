@@ -23,6 +23,8 @@ bool segmentsIntersect(Vec2 u0, Vec2 u1, Vec2 v0, Vec2 v1, Vec2& where);
 
 namespace
 {
+int queryCount;
+
 Vec2 randomPosition()
 {
   Vec2 r;
@@ -47,7 +49,7 @@ struct SegmentIntersectionUsingSweepline
 
     std::vector<Vec2> points;
 
-    for(int i=0;i < N;++i)
+    for(int i = 0; i < N; ++i)
     {
       auto a = randomPosition();
       auto b = a + randomDelta();
@@ -68,10 +70,18 @@ struct SegmentIntersectionUsingSweepline
       sandbox_line(intersection - Vec2(0.4, 0), intersection + Vec2(0.4, 0), Green);
       sandbox_line(intersection - Vec2(0, 0.4), intersection + Vec2(0, 0.4), Green);
     }
+
+    {
+      char msg[256];
+      sprintf(msg, "%d intersection tests\n", queryCount);
+      sandbox_text({}, msg);
+    }
   }
 
   static std::vector<Vec2> execute(std::vector<Vec2> points)
   {
+    queryCount = 0;
+
     struct Event
     {
       float t;
@@ -127,6 +137,7 @@ struct SegmentIntersectionUsingSweepline
           const auto v0 = points[other + 0];
           const auto v1 = points[other + 1];
           Vec2 where;
+          queryCount++;
           if(segmentsIntersect(u0, u1, v0, v1, where))
             result.push_back(where);
         }
