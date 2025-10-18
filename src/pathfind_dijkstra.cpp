@@ -222,5 +222,5 @@ struct DijkstraAlgorithm
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<DijkstraAlgorithm>>()); }
-const int reg = registerApp("PathFind/Dijkstra", &create);
+const int reg = registerApp("Pathfind/Dijkstra", &create);
 }

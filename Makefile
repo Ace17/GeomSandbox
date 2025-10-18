@@ -54,12 +54,10 @@ SRCS+=\
 
 # Algos
 SRCS+=\
-			src/app_a_star.cpp\
 			src/app_bresenham.cpp\
 			src/app_bsp_build.cpp\
 			src/app_bsp_raycast.cpp\
 			src/app_contour_tracing.cpp\
-			src/app_dijkstra.cpp\
 			src/app_douglas_peucker.cpp\
 			src/app_fastconvexsplit.cpp\
 			src/app_polygon_self_intersections.cpp\
@@ -72,6 +70,8 @@ SRCS+=\
 			src/app_triangulate_simple_ear_clipping.cpp\
 			src/app_visvalingam.cpp\
 			src/app_voronoi_fortune.cpp\
+			src/pathfind_astar.cpp\
+			src/pathfind_dijkstra.cpp\
 			src/random_polyhedron.cpp\
 			src/random_polygon.cpp\
 			src/split_polygon.cpp\

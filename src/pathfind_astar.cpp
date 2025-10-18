@@ -5,7 +5,7 @@
 // License, or (at your option) any later version.
 
 ///////////////////////////////////////////////////////////////////////////////
-// A* (pronounced "A-Star") algorithm for shortest path
+// A* algorithm for shortest path
 
 #include "core/algorithm_app.h"
 #include "core/sandbox.h"
@@ -264,5 +264,5 @@ struct AStarAlgorithm
 };
 
 IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<AStarAlgorithm>>()); }
-const int reg = registerApp("PathFind/AStar", &create);
+const int reg = registerApp("Pathfind/AStar", &create);
 }
