@@ -232,6 +232,15 @@ struct SegmentIntersectionApp : IApp
       points[3] = {1452157.25000000, 578386.25000000};
     }
 
+    // parallel segments
+    {
+      points.resize(4);
+      points[0] = {0, 0};
+      points[1] = {0, 1};
+      points[2] = {0, 2};
+      points[3] = {0, 3};
+    }
+
     compute();
   }
 
