@@ -43,6 +43,7 @@ SRCS+=\
 			src/app_bvh_build.cpp\
 			src/app_bvh_raycast.cpp\
 			src/app_intersect_segment_vs_polyline.cpp\
+			src/app_intersect_segments_using_sweepline.cpp\
 			src/app_line_distance.cpp\
 			src/app_portals_2d.cpp\
 			src/app_frustum_clusters.cpp\
