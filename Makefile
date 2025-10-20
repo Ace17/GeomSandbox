@@ -29,7 +29,6 @@ SRCS:=\
 			src/core/algorithm_app.cpp\
 			src/core/geom.cpp\
 			src/core/sandbox.cpp\
-			src/core/fiber_$(HOST).cpp\
 
 # Apps
 SRCS+=\
@@ -91,6 +90,7 @@ SRCS+=\
 # Platform glue
 SRCS+=\
 			src/platform/glad.cpp\
+			src/platform/fiber_$(HOST).cpp\
 
 $(BIN)/GeomSandbox.exe: $(SRCS:%=$(BIN)/%.o)
 

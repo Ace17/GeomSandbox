@@ -1,14 +1,15 @@
 #include <cassert>
-#include <ucontext.h>
+#include <windows.h>
+#include <winnt.h>
 
-#include "fiber.h"
+#include "core/fiber.h"
 
 static thread_local Fiber* ThisFiber;
 
 struct Fiber::Priv
 {
-  ucontext_t main;
-  ucontext_t client;
+  CONTEXT client{};
+  CONTEXT main{};
 };
 
 void Fiber::launcherFunc()
@@ -27,11 +28,15 @@ Fiber::Fiber(void (*func)(void*), void* userParam)
   m_stack.resize(1024 * 1024);
   priv = new(privBuffer) Fiber::Priv;
 
-  getcontext(&priv->client);
-  priv->client.uc_stack.ss_sp = m_stack.data();
-  priv->client.uc_stack.ss_size = m_stack.size();
+  priv->client.ContextFlags = CONTEXT_FULL;
+  RtlCaptureContext(&priv->client);
 
-  makecontext(&priv->client, launcherFunc, 0);
+  uint64_t rsp = (uintptr_t)m_stack.back();
+
+  rsp = rsp - rsp % 8;
+
+  priv->client.Rip = (uintptr_t)Fiber::launcherFunc;
+  priv->client.Rsp = rsp;
 }
 
 void Fiber::resume()
@@ -41,12 +46,15 @@ void Fiber::resume()
 
   assert(ThisFiber == nullptr);
   ThisFiber = this;
-  swapcontext(&priv->main, &priv->client);
+
+  RtlCaptureContext(&priv->main);
+  RtlRestoreContext(&priv->client, nullptr);
 }
 
 void Fiber::yield()
 {
   auto pThis = ThisFiber;
   ThisFiber = nullptr;
-  swapcontext(&pThis->priv->client, &pThis->priv->main);
+  RtlCaptureContext(&pThis->priv->client);
+  RtlRestoreContext(&pThis->priv->main, nullptr);
 }
