@@ -7,6 +7,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Entry point
 
+#include "platform/glad.h"
+
+#include <SDL.h>
 #include <csignal>
 #include <map>
 #include <memory>
@@ -19,11 +22,6 @@
 #include "font.h"
 #include "geom.h"
 #include "matrix4.h"
-
-#define GL_GLEXT_PROTOTYPES
-
-#include <SDL.h>
-#include <SDL_opengl.h>
 #undef main
 
 const float CAMERA_UPDATE_RATIO = 0.8;
@@ -742,6 +740,9 @@ struct SdlMainFrame
       SDL_Quit();
       throw std::runtime_error("Can't create OpenGL context");
     }
+
+    if(!gladLoadGLES2Loader(&SDL_GL_GetProcAddress))
+      throw std::runtime_error("Can't load OpenGL functions");
 
     // Enable vsync
     SDL_GL_SetSwapInterval(1);

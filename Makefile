@@ -9,12 +9,13 @@ all: true_all
 TARGETS+=$(BIN)/GeomSandbox.exe
 
 PKGS+=sdl2
-PKGS+=gl
 
 HOST:=$(shell $(CXX) -dumpmachine | sed 's/.*-//')
 
 LDFLAGS+=$(shell pkg-config $(PKGS) --libs)
 $(BIN)/src/core/main.cpp.o: CXXFLAGS+=$(shell pkg-config $(PKGS) --cflags)
+
+CXXFLAGS+=-Isrc
 
 #CXXFLAGS+=-g3
 #LDFLAGS+=-g
@@ -86,6 +87,10 @@ SRCS+=\
 			src/bvh.cpp\
 			src/bsp.cpp\
 			src/core/serialization.cpp\
+
+# Platform glue
+SRCS+=\
+			src/platform/glad.cpp\
 
 $(BIN)/GeomSandbox.exe: $(SRCS:%=$(BIN)/%.o)
 
