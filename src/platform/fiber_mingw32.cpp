@@ -1,8 +1,8 @@
+#include "core/fiber.h"
+
 #include <cassert>
 #include <windows.h>
 #include <winnt.h>
-
-#include "core/fiber.h"
 
 static thread_local Fiber* ThisFiber;
 

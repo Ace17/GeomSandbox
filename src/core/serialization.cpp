@@ -5,11 +5,8 @@
 #include "bounding_box.h"
 #include "geom.h"
 
-template<>
-std::vector<Vec2> deserialize<std::vector<Vec2>>(span<const uint8_t> data)
+void deserialize(std::vector<Vec2>& r, span<const uint8_t> data)
 {
-  std::vector<Vec2> r;
-
   std::istringstream ss(std::string((const char*)data.ptr, data.len));
   std::string line;
   while(std::getline(ss, line))
@@ -44,6 +41,4 @@ std::vector<Vec2> deserialize<std::vector<Vec2>>(span<const uint8_t> data)
       v.y *= scale.y;
     }
   }
-
-  return r;
 }

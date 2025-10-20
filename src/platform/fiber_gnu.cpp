@@ -1,7 +1,7 @@
+#include "core/fiber.h"
+
 #include <cassert>
 #include <ucontext.h>
-
-#include "core/fiber.h"
 
 static thread_local Fiber* ThisFiber;
 

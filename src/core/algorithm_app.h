@@ -47,7 +47,7 @@ struct AbstractAlgorithm
 };
 
 template<typename T>
-T deserialize(span<const uint8_t> /*data*/)
+void deserialize(T&, span<const uint8_t> /*data*/)
 {
   throw std::runtime_error("Loading is not implemented for this algorithm");
 }
@@ -97,7 +97,8 @@ struct ConcreteAlgorithm : public AbstractAlgorithm
   void execute() override { m_output = AlgoDef::execute(m_input); }
   void loadInput(span<const uint8_t> data) override
   {
-    m_input = deserialize<InputType>(data);
+    m_input = {};
+    deserialize(m_input, data);
     m_output = {};
   }
   void loadTestCase(int which) override

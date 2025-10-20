@@ -14,8 +14,7 @@
 
 #include "random.h"
 
-template<>
-std::vector<Vec2> deserialize<std::vector<Vec2>>(span<const uint8_t> data);
+void deserialize(std::vector<Vec2>&, span<const uint8_t> data);
 
 bool segmentsIntersect(Vec2 u0, Vec2 u1, Vec2 v0, Vec2 v1, Vec2& where);
 

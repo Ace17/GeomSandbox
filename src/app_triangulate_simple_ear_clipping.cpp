@@ -21,11 +21,8 @@
 #include "random.h"
 #include "random_polygon.h"
 
-template<>
-Polygon2f deserialize<Polygon2f>(span<const uint8_t> data)
+void deserialize(Polygon2f& r, span<const uint8_t> data)
 {
-  Polygon2f r;
-
   std::string s;
   for(auto& c : data)
     s += c;
@@ -69,8 +66,6 @@ Polygon2f deserialize<Polygon2f>(span<const uint8_t> data)
       v.y *= scale.y;
     }
   }
-
-  return r;
 }
 
 namespace
