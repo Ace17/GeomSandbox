@@ -229,6 +229,12 @@ struct SegmentIntersectionUsingSweepline
 
     while(events.size())
     {
+      {
+        fprintf(stderr, "-----------------\n");
+        for(auto& evt : events)
+          fprintf(stderr, "%d, (%.8f;%.8f)\n", evt.type, evt.pos.x, evt.pos.y);
+      }
+
       const Event evt = *events.begin();
       events.erase(events.begin());
 
@@ -346,9 +352,9 @@ struct SegmentIntersectionUsingSweepline
       {
         {
           const char* msg;
-          if(evt.type == 0)
+          if(evt.type == Begin)
             msg = "begin";
-          else if(evt.type == 1)
+          else if(evt.type == End)
             msg = "end";
           else
             msg = "cross";
@@ -377,9 +383,9 @@ struct SegmentIntersectionUsingSweepline
           {
             sandbox_line({-100, evt.pos.y}, {+100, evt.pos.y}, Gray);
             const char* msg;
-            if(evt.type == 0)
+            if(evt.type == Begin)
               msg = "begin";
-            else if(evt.type == 1)
+            else if(evt.type == End)
               msg = "end";
             else
               msg = "cross";
