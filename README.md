@@ -103,6 +103,8 @@ $ bin/GeomSandbox.exe Example
 
 Controls:
 * F2 : reset the algorithm with new input data.
+* F3 : cycle between predefined test cases (if available).
+* F4 : load 'algo.in' as the algorithm current state (if available).
 * Space: single-step the current algorithm.
 * Return: finish the current algorithm.
 * Mouse scroll: zoom/dezoom
