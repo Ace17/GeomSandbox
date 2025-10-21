@@ -112,8 +112,8 @@ struct SegmentIntersectionUsingSweepline
     enum EventType
     {
       Begin,
-      End,
       Cross,
+      End,
     };
 
     struct Event
