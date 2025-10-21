@@ -425,13 +425,24 @@ struct SegmentIntersectionUsingSweepline
     },
 
     {
-      "Basic 3",
+      "T-junction on start",
       {
-        {-10,10 + 2},
-        {+10,-10 + 2},
+        {-10,12},
+        {+10,-8},
 
         {-10, -10},
-        {0, 0 + 2},
+        {0, 2},
+      },
+    },
+
+    {
+      "T-junction on end",
+      {
+        {-10,-12},
+        {+10,+8},
+
+        {-10, +10},
+        {0, -2},
       },
     },
   };
