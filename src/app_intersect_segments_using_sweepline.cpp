@@ -397,6 +397,17 @@ struct SegmentIntersectionUsingSweepline
   inline static const TestCase<std::vector<Vec2>> AllTestCases[] =
   {
     {
+      "T-junction on end",
+      {
+        {-10,-12},
+        {+10,+8},
+
+        {-10, +10},
+        {0, -2},
+      },
+    },
+
+    {
       "Basic 1",
       {
         {-10, -8},
@@ -432,17 +443,6 @@ struct SegmentIntersectionUsingSweepline
 
         {-10, -10},
         {0, 2},
-      },
-    },
-
-    {
-      "T-junction on end",
-      {
-        {-10,-12},
-        {+10,+8},
-
-        {-10, +10},
-        {0, -2},
       },
     },
   };
