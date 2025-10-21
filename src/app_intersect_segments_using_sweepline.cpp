@@ -62,29 +62,6 @@ struct SegmentIntersectionUsingSweepline
       points.push_back(b);
     }
 
-    if(1)
-    {
-      points.clear();
-      points.push_back({-20, -1});
-      points.push_back({+20, -7});
-
-      points.push_back({-10, -14});
-      points.push_back({1, +10});
-
-      points.push_back({-5, +13});
-      points.push_back({+13, -7});
-    }
-
-    if(0)
-    {
-      points.clear();
-      points.push_back({-10,10 + 2});
-      points.push_back({+10,-10 + 2});
-
-      points.push_back({-10, -10});
-      points.push_back({0, 0 + 2});
-    }
-
     return points;
   }
 
@@ -419,20 +396,44 @@ struct SegmentIntersectionUsingSweepline
 
   inline static const TestCase<std::vector<Vec2>> AllTestCases[] =
   {
-        {
-              "Basic 1",
-              {
-                {-10, -8},
-                {+10, +12},
+    {
+      "Basic 1",
+      {
+        {-10, -8},
+        {+10, +12},
 
-                {+10, -8},
-                {-10, +12},
+        {+10, -8},
+        {-10, +12},
 
-                {+3, -11},
-                {-13, +9},
-              },
-        },
+        {+3, -11},
+        {-13, +9},
+      },
+    },
 
+    {
+      "Basic 2",
+      {
+        {-20, -1},
+        {+20, -7},
+
+        {-10, -14},
+        {1, +10},
+
+        {-5, +13},
+        {+13, -7},
+      },
+    },
+
+    {
+      "Basic 3",
+      {
+        {-10,10 + 2},
+        {+10,-10 + 2},
+
+        {-10, -10},
+        {0, 0 + 2},
+      },
+    },
   };
 };
 
