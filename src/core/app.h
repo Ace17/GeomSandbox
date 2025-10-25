@@ -50,6 +50,7 @@ struct IApp
   virtual void tick(){};
   virtual void draw(IDrawer*){};
   virtual void processEvent(InputEvent){};
+  virtual void selfTest(){};
 };
 
 typedef IApp* CreationFunc();

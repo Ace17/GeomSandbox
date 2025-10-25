@@ -27,6 +27,7 @@ CXXFLAGS+=-Wall -Wextra -Werror
 SRCS:=\
 			src/core/main.cpp\
 			src/core/algorithm_app.cpp\
+			src/core/algorithm_app2.cpp\
 			src/core/geom.cpp\
 			src/core/sandbox.cpp\
 

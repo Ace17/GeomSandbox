@@ -7,6 +7,7 @@ import subprocess
 def main():
     run([sys.executable, os.path.join("scripts", "reformat")]);
     run(['make', '-j8'])
+    run(['bin/GeomSandbox.exe', 'selfTest'])
     print("Kloc: % 2.2f kloc" % (compute_kloc("src")/1000.0))
     return 0
 

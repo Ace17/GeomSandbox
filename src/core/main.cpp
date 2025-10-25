@@ -783,6 +783,16 @@ void safeMain(span<const char*> args)
 
   const auto& registry = Registry();
 
+  if(appName == "selfTest")
+  {
+    for(auto [name, creationFunc] : registry)
+    {
+      auto app = std::unique_ptr<IApp>(creationFunc());
+      app->selfTest();
+    }
+    return;
+  }
+
   auto i_func = registry.find(appName);
 
   if(i_func == registry.end())
