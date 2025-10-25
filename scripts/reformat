@@ -4,6 +4,7 @@ import glob
 import os
 import sys
 import subprocess
+import multiprocessing
 
 def reformat_one_file(filename):
   result = subprocess.run(["clang-format-13", filename], check=True, stdout=subprocess.PIPE)
@@ -18,7 +19,7 @@ def reformat_one_file(filename):
 def list_files(dir):
     return sorted([os.path.join(dp, f) for dp, dn, fn in os.walk(dir) for f in fn])
 
-for x in list_files('src'):
-    if x.endswith('.cpp') or x.endswith('.h'):
-        reformat_one_file(x)
+files_to_reformat = [ x for x in list_files('src') if x.endswith('.cpp') or x.endswith('.h')]
+with multiprocessing.Pool() as pool:
+    pool.map(reformat_one_file, files_to_reformat)
 
