@@ -65,8 +65,8 @@ struct ExampleAlgorithm
     {
       char buffer[16];
       snprintf(buffer, sizeof buffer, "%d", idx);
-      sandbox_rect(input[idx] - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
-      sandbox_text(input[idx] + Vec2(0.3, 0), buffer, Red);
+      sandbox_rect(input[idx], {}, White, Vec2(8, 8));
+      sandbox_text(input[idx], buffer, Red, Vec2(8, 0));
 
       const int next_idx = (idx + 1) % input.len;
       sandbox_line(input[idx], input[next_idx]);
