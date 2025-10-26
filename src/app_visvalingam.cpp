@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Visvalingam–Whyatt algorithm : polyline or polygon simplification.
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/sandbox.h"
 
 #include <algorithm>
@@ -18,8 +18,6 @@
 
 #include "random.h"
 #include "random_polygon.h"
-
-void deserialize(std::vector<Vec2>&, span<const uint8_t> data);
 
 namespace
 {
@@ -112,136 +110,135 @@ void drawAreas(const std::vector<Vertex>& vertices)
   }
 }
 
-struct VisvalingamAlgorithm
+std::vector<Vec2> generateRandomHorizontalLine()
 {
-  static std::vector<Vec2> generateRandomHorizontalLine()
+  std::vector<Vec2> points;
+  const int N = int(randomFloat(100, 150));
+  const float F = randomFloat(0.5, 3);
+  const float length = 40.0f;
+
+  for(int i = 0; i < N; ++i)
   {
-    std::vector<Vec2> points;
-    const int N = int(randomFloat(100, 150));
-    const float F = randomFloat(0.5, 3);
-    const float length = 40.0f;
+    Vec2 pos;
+    pos.x = -length / 2 + length * i / N;
+    pos.y = sin(i * 2 * M_PI * F / N) * 10;
 
-    for(int i = 0; i < N; ++i)
-    {
-      Vec2 pos;
-      pos.x = -length / 2 + length * i / N;
-      pos.y = sin(i * 2 * M_PI * F / N) * 10;
+    pos.x += randomFloat(-0.2, +0.2);
+    pos.y += randomFloat(-0.2, +0.2);
 
-      pos.x += randomFloat(-0.2, +0.2);
-      pos.y += randomFloat(-0.2, +0.2);
-
-      points.push_back(pos);
-    }
-
-    return points;
+    points.push_back(pos);
   }
 
-  static std::vector<Vec2> generateNoisySpiral()
+  return points;
+}
+
+std::vector<Vec2> generateNoisySpiral()
+{
+  std::vector<Vec2> points;
+  const int N = int(randomFloat(15, 150));
+  const float length = 40.0f;
+
+  for(int i = 0; i < N; ++i)
   {
-    std::vector<Vec2> points;
-    const int N = int(randomFloat(15, 150));
-    const float length = 40.0f;
+    const float t = (length * i) / N;
+    Vec2 pos;
+    pos.x = sin(t * 2 * M_PI * 0.05) * (t * 0.4);
+    pos.y = cos(t * 2 * M_PI * 0.05) * (t * 0.4);
 
-    for(int i = 0; i < N; ++i)
-    {
-      const float t = (length * i) / N;
-      Vec2 pos;
-      pos.x = sin(t * 2 * M_PI * 0.05) * (t * 0.4);
-      pos.y = cos(t * 2 * M_PI * 0.05) * (t * 0.4);
-
-      pos.x += randomFloat(-0.2, 0.2);
-      pos.y += randomFloat(-0.2, 0.2);
-      points.push_back(pos);
-    }
-
-    return points;
+    pos.x += randomFloat(-0.2, 0.2);
+    pos.y += randomFloat(-0.2, 0.2);
+    points.push_back(pos);
   }
 
-  static std::vector<Vec2> generateInput()
-  {
-    if(rand() % 2)
-      return generateNoisySpiral();
-    else
-      return generateRandomHorizontalLine();
-  }
+  return points;
+}
 
-  static std::vector<Segment> execute(std::vector<Vec2> input)
+std::vector<Vec2> generateInput(int /*seed*/)
+{
+  if(rand() % 2)
+    return generateNoisySpiral();
+  else
+    return generateRandomHorizontalLine();
+}
+
+std::vector<Segment> execute(std::vector<Vec2> input)
+{
+  std::vector<Vertex> vertices;
+  vertices.reserve(input.size());
+  for(int i = 0; i < (int)input.size(); ++i)
   {
-    std::vector<Vertex> vertices;
-    vertices.reserve(input.size());
-    for(int i = 0; i < (int)input.size(); ++i)
+    float area = 0.f;
+    const bool isFirstOrLastVertex = (i == 0 || i == (int)input.size() - 1);
+    if(!isFirstOrLastVertex)
     {
-      float area = 0.f;
-      const bool isFirstOrLastVertex = (i == 0 || i == (int)input.size() - 1);
-      if(!isFirstOrLastVertex)
-      {
-        const Vec2 a = input[i - 1];
-        const Vec2 b = input[i];
-        const Vec2 c = input[i + 1];
-        area = triangleArea(a, b, c);
-      }
-      vertices.push_back({i, input[i], getColorFromIndex(i), area});
-      if(i > 0)
-      {
-        drawAreas(vertices);
-        sandbox_breakpoint();
-      }
+      const Vec2 a = input[i - 1];
+      const Vec2 b = input[i];
+      const Vec2 c = input[i + 1];
+      area = triangleArea(a, b, c);
     }
-
-    const float minAreaToKeep = 0.5f;
-
-    auto CompareAreas = [](Vertex a, Vertex b) { return a.area < b.area; };
-    auto minAreaIt = std::min_element(vertices.begin() + 1, vertices.end() - 1, CompareAreas);
-    while(vertices.size() > 2 && minAreaIt->area < minAreaToKeep)
+    vertices.push_back({i, input[i], getColorFromIndex(i), area});
+    if(i > 0)
     {
-      if(minAreaIt - 1 != vertices.begin())
-      {
-        const Vec2 a = (minAreaIt - 2)->position;
-        const Vec2 b = (minAreaIt - 1)->position;
-        const Vec2 c = (minAreaIt + 1)->position;
-        (minAreaIt - 1)->area = triangleArea(a, b, c);
-      }
-      if(minAreaIt + 1 != vertices.end() - 1)
-      {
-        const Vec2 a = (minAreaIt - 1)->position;
-        const Vec2 b = (minAreaIt + 1)->position;
-        const Vec2 c = (minAreaIt + 2)->position;
-        (minAreaIt + 1)->area = triangleArea(a, b, c);
-      }
-      vertices.erase(minAreaIt);
-
       drawAreas(vertices);
       sandbox_breakpoint();
-      minAreaIt = std::min_element(vertices.begin() + 1, vertices.end() - 1, CompareAreas);
     }
-
-    std::vector<Segment> output;
-    output.reserve(vertices.size() - 1);
-    for(int i = 0; i < (int)vertices.size() - 1; ++i)
-      output.push_back({vertices[i].index, vertices[i + 1].index});
-    return output;
   }
 
-  static void display(span<const Vec2> input, span<const Segment> output)
+  const float minAreaToKeep = 0.5f;
+
+  auto CompareAreas = [](Vertex a, Vertex b) { return a.area < b.area; };
+  auto minAreaIt = std::min_element(vertices.begin() + 1, vertices.end() - 1, CompareAreas);
+  while(vertices.size() > 2 && minAreaIt->area < minAreaToKeep)
   {
-    for(int idx = 0; idx < (int)input.len; ++idx)
+    if(minAreaIt - 1 != vertices.begin())
     {
-      sandbox_rect(input[idx] - Vec2(0.1, 0.1), Vec2(0.2, 0.2), Gray);
-
-      const int next_idx = (idx + 1);
-      if(next_idx < (int)input.len)
-        sandbox_line(input[idx], input[next_idx], Gray);
+      const Vec2 a = (minAreaIt - 2)->position;
+      const Vec2 b = (minAreaIt - 1)->position;
+      const Vec2 c = (minAreaIt + 1)->position;
+      (minAreaIt - 1)->area = triangleArea(a, b, c);
     }
-
-    for(auto& segment : output)
+    if(minAreaIt + 1 != vertices.end() - 1)
     {
-      sandbox_rect(input[segment.a] - Vec2(0.1, 0.1), Vec2(0.2, 0.2), Green);
-      sandbox_rect(input[segment.b] - Vec2(0.1, 0.1), Vec2(0.2, 0.2), Green);
-      sandbox_line(input[segment.a], input[segment.b], Green);
+      const Vec2 a = (minAreaIt - 1)->position;
+      const Vec2 b = (minAreaIt + 1)->position;
+      const Vec2 c = (minAreaIt + 2)->position;
+      (minAreaIt + 1)->area = triangleArea(a, b, c);
     }
+    vertices.erase(minAreaIt);
+
+    drawAreas(vertices);
+    sandbox_breakpoint();
+    minAreaIt = std::min_element(vertices.begin() + 1, vertices.end() - 1, CompareAreas);
   }
-};
 
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<VisvalingamAlgorithm>>()); }
-const int reg = registerApp("Simplification/Polyline/Visvalingam", &create);
+  std::vector<Segment> output;
+  output.reserve(vertices.size() - 1);
+  for(int i = 0; i < (int)vertices.size() - 1; ++i)
+    output.push_back({vertices[i].index, vertices[i + 1].index});
+  return output;
+}
+
+void display(span<const Vec2> input, span<const Segment> output)
+{
+  for(int idx = 0; idx < (int)input.len; ++idx)
+  {
+    sandbox_rect(input[idx] - Vec2(0.1, 0.1), Vec2(0.2, 0.2), Gray);
+
+    const int next_idx = (idx + 1);
+    if(next_idx < (int)input.len)
+      sandbox_line(input[idx], input[next_idx], Gray);
+  }
+
+  for(auto& segment : output)
+  {
+    sandbox_rect(input[segment.a] - Vec2(0.1, 0.1), Vec2(0.2, 0.2), Green);
+    sandbox_rect(input[segment.b] - Vec2(0.1, 0.1), Vec2(0.2, 0.2), Green);
+    sandbox_line(input[segment.a], input[segment.b], Green);
+  }
+}
+
+BEGIN_ALGO("Simplification/Polyline/Visvalingam", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 }
