@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Voronoi diagram: Fortune algorithm
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/bounding_box.h"
 #include "core/sandbox.h"
 
@@ -475,76 +475,75 @@ struct siteEvent final : public Event
   void draw() const override { sandbox_rect(Pos - Vec2(0.2, 0.2), Vec2(0.4, 0.4), Green); }
 };
 
-struct FortuneVoronoiAlgoritm
+std::vector<Vec2> generateInput(int /*seed*/)
 {
-  static std::vector<Vec2> generateInput()
+  const Vec2 min = {-20, -15};
+  const Vec2 max = {20, 15};
+
+  std::vector<Vec2> r(randomInt(15, 100));
+
+  for(auto& p : r)
+    p = randomPos(min, max);
+
+  return r;
+}
+
+VoronoiDiagram execute(std::vector<Vec2> input)
+{
+  EventQueue eventQueue;
+  VoronoiDiagram diagram;
+  Arc* rootArc = nullptr;
+  for(Vec2 point : input)
   {
-    const Vec2 min = {-20, -15};
-    const Vec2 max = {20, 15};
-
-    std::vector<Vec2> r(randomInt(15, 100));
-
-    for(auto& p : r)
-      p = randomPos(min, max);
-
-    return r;
+    eventQueue.push_back(new siteEvent(point));
   }
 
-  static VoronoiDiagram execute(std::vector<Vec2> input)
+  while(!eventQueue.empty())
   {
-    EventQueue eventQueue;
-    VoronoiDiagram diagram;
-    Arc* rootArc = nullptr;
-    for(Vec2 point : input)
-    {
-      eventQueue.push_back(new siteEvent(point));
-    }
+    // Pop next event
+    auto orderByY = [](Event* a, Event* b) { return a->y() < b->y(); };
+    std::sort(eventQueue.begin(), eventQueue.end(), orderByY);
+    Event* event = eventQueue.back();
+    eventQueue.pop_back();
 
-    while(!eventQueue.empty())
-    {
-      // Pop next event
-      auto orderByY = [](Event* a, Event* b) { return a->y() < b->y(); };
-      std::sort(eventQueue.begin(), eventQueue.end(), orderByY);
-      Event* event = eventQueue.back();
-      eventQueue.pop_back();
+    // Draw context
+    const float eventPosY = event->y();
+    drawBeachLine(rootArc, eventPosY, Yellow);
+    drawHorizontalLine(eventPosY, Red);
+    drawEvents(eventQueue);
+    drawDiagram(diagram, Yellow);
 
-      // Draw context
-      const float eventPosY = event->y();
-      drawBeachLine(rootArc, eventPosY, Yellow);
-      drawHorizontalLine(eventPosY, Red);
-      drawEvents(eventQueue);
-      drawDiagram(diagram, Yellow);
+    // Process event
+    event->happen(eventQueue, rootArc, diagram);
 
-      // Process event
-      event->happen(eventQueue, rootArc, diagram);
+    sandbox_breakpoint();
 
-      sandbox_breakpoint();
-
-      delete event;
-    }
-
-    diagram.fillRemainingVertices(rootArc);
-
-    while(rootArc)
-    {
-      Arc* arc = rootArc;
-      rootArc = rootArc->right;
-      delete arc;
-    }
-
-    return diagram;
+    delete event;
   }
 
-  static void display(span<const Vec2> input, const VoronoiDiagram& output)
-  {
-    for(auto& p : input)
-    {
-      sandbox_rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
-    }
-    drawDiagram(output, Yellow);
-  }
-};
+  diagram.fillRemainingVertices(rootArc);
 
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<FortuneVoronoiAlgoritm>>()); }
-const int reg = registerApp("FortuneVoronoi", &create);
+  while(rootArc)
+  {
+    Arc* arc = rootArc;
+    rootArc = rootArc->right;
+    delete arc;
+  }
+
+  return diagram;
+}
+
+void display(span<const Vec2> input, const VoronoiDiagram& output)
+{
+  for(auto& p : input)
+  {
+    sandbox_rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
+  }
+  drawDiagram(output, Yellow);
+}
+
+BEGIN_ALGO("Voronoi/Fortune", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 }
