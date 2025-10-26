@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Dijkstra's algorithm for shortest path
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/sandbox.h"
 
 #include <climits>
@@ -42,7 +42,7 @@ struct Output
   std::vector<int> cost;
 };
 
-Graph randomGraph()
+Graph randomGraph(int /*seed*/)
 {
   Graph r;
 
@@ -98,129 +98,126 @@ Graph randomGraph()
   return r;
 }
 
-struct DijkstraAlgorithm
+Output execute(Graph input)
 {
-  static Graph generateInput() { return randomGraph(); }
+  Output r{};
 
-  static Output execute(Graph input)
+  auto& nodes = input.nodes;
+
+  std::vector<bool> isVisited(nodes.size());
+  r.cost.resize(nodes.size(), INT_MAX);
+  r.provenance.resize(nodes.size(), INT_MAX);
+
+  std::set<int> todo; // list of nodes bordering the visited area
+
+  todo.insert(input.startNode);
+  r.cost[input.startNode] = 0;
+  r.provenance[input.startNode] = input.startNode;
+
+  while(todo.size())
   {
-    Output r{};
-
-    auto& nodes = input.nodes;
-
-    std::vector<bool> isVisited(nodes.size());
-    r.cost.resize(nodes.size(), INT_MAX);
-    r.provenance.resize(nodes.size(), INT_MAX);
-
-    std::set<int> todo; // list of nodes bordering the visited area
-
-    todo.insert(input.startNode);
-    r.cost[input.startNode] = 0;
-    r.provenance[input.startNode] = input.startNode;
-
-    while(todo.size())
+    // find node on TODO list with smallest cost
+    int bestId = -1;
+    int bestCost = INT_MAX;
+    for(auto id : todo)
     {
-      // find node on TODO list with smallest cost
-      int bestId = -1;
-      int bestCost = INT_MAX;
-      for(auto id : todo)
+      if(r.cost[id] < bestCost)
       {
-        if(r.cost[id] < bestCost)
-        {
-          bestId = id;
-          bestCost = r.cost[id];
-        }
+        bestId = id;
+        bestCost = r.cost[id];
       }
-
-      const auto current = bestId;
-      todo.erase(current);
-
-      isVisited[current] = true;
-
-      for(auto& nb : nodes[current].neighboors)
-      {
-        if(isVisited[nb.id])
-          continue;
-
-        const int nbCost = r.cost[current] + nb.cost;
-        if(nbCost >= r.cost[nb.id])
-          continue;
-
-        r.cost[nb.id] = nbCost;
-        r.provenance[nb.id] = current;
-
-        todo.insert(nb.id);
-
-        sandbox_circle(nodes[nb.id].pos, 1, Red);
-        sandbox_line(nodes[current].pos, nodes[nb.id].pos, Red);
-      }
-
-      sandbox_circle(nodes[current].pos, 2, Red);
-
-      for(int i = 0; i < (int)nodes.size(); ++i)
-      {
-        if(r.cost[i] == INT_MAX)
-          continue;
-
-        char buffer[32];
-        sprintf(buffer, "%d", r.cost[i]);
-
-        const bool highlight = todo.find(i) != todo.end();
-        sandbox_text(nodes[i].pos, buffer, highlight ? Green : White);
-
-        if(r.provenance[i] != i)
-        {
-          const int prov = r.provenance[i];
-          sandbox_line(input.nodes[prov].pos, input.nodes[i].pos, White);
-        }
-      }
-
-      for(auto id : todo)
-        sandbox_circle(nodes[id].pos, 1, Green);
-
-      sandbox_breakpoint();
     }
 
-    return r;
-  }
+    const auto current = bestId;
+    todo.erase(current);
 
-  static void display(const Graph& input, const Output& output)
-  {
-    auto& nodes = input.nodes;
+    isVisited[current] = true;
 
-    for(int idx = 0; idx < (int)nodes.size(); ++idx)
+    for(auto& nb : nodes[current].neighboors)
     {
-      auto& node = nodes[idx];
-      sandbox_circle(node.pos, 0.5, Gray);
+      if(isVisited[nb.id])
+        continue;
 
-      for(auto& nb : node.neighboors)
-        sandbox_line(nodes[idx].pos, nodes[nb.id].pos, Gray);
+      const int nbCost = r.cost[current] + nb.cost;
+      if(nbCost >= r.cost[nb.id])
+        continue;
+
+      r.cost[nb.id] = nbCost;
+      r.provenance[nb.id] = current;
+
+      todo.insert(nb.id);
+
+      sandbox_circle(nodes[nb.id].pos, 1, Red);
+      sandbox_line(nodes[current].pos, nodes[nb.id].pos, Red);
     }
 
-    sandbox_circle(nodes[input.startNode].pos, 1.2, Yellow);
+    sandbox_circle(nodes[current].pos, 2, Red);
 
-    if(output.cost.empty())
-      return;
-
-    for(int i = 0; i < (int)input.nodes.size(); ++i)
+    for(int i = 0; i < (int)nodes.size(); ++i)
     {
-      if(output.cost[i] == INT_MAX)
+      if(r.cost[i] == INT_MAX)
         continue;
 
       char buffer[32];
-      sprintf(buffer, "%d", output.cost[i]);
+      sprintf(buffer, "%d", r.cost[i]);
 
-      sandbox_text(input.nodes[i].pos, buffer, Green);
+      const bool highlight = todo.find(i) != todo.end();
+      sandbox_text(nodes[i].pos, buffer, highlight ? Green : White);
 
-      if(output.provenance[i] != i)
+      if(r.provenance[i] != i)
       {
-        const int prov = output.provenance[i];
-        sandbox_line(input.nodes[prov].pos, input.nodes[i].pos, Green);
+        const int prov = r.provenance[i];
+        sandbox_line(input.nodes[prov].pos, input.nodes[i].pos, White);
       }
     }
-  }
-};
 
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<DijkstraAlgorithm>>()); }
-const int reg = registerApp("Pathfind/Dijkstra", &create);
+    for(auto id : todo)
+      sandbox_circle(nodes[id].pos, 1, Green);
+
+    sandbox_breakpoint();
+  }
+
+  return r;
+}
+
+void display(const Graph& input, const Output& output)
+{
+  auto& nodes = input.nodes;
+
+  for(int idx = 0; idx < (int)nodes.size(); ++idx)
+  {
+    auto& node = nodes[idx];
+    sandbox_circle(node.pos, 0.5, Gray);
+
+    for(auto& nb : node.neighboors)
+      sandbox_line(nodes[idx].pos, nodes[nb.id].pos, Gray);
+  }
+
+  sandbox_circle(nodes[input.startNode].pos, 1.2, Yellow);
+
+  if(output.cost.empty())
+    return;
+
+  for(int i = 0; i < (int)input.nodes.size(); ++i)
+  {
+    if(output.cost[i] == INT_MAX)
+      continue;
+
+    char buffer[32];
+    sprintf(buffer, "%d", output.cost[i]);
+
+    sandbox_text(input.nodes[i].pos, buffer, Green);
+
+    if(output.provenance[i] != i)
+    {
+      const int prov = output.provenance[i];
+      sandbox_line(input.nodes[prov].pos, input.nodes[i].pos, Green);
+    }
+  }
+}
+
+BEGIN_ALGO("Pathfind/Dijkstra", execute)
+WITH_INPUTGEN(randomGraph)
+WITH_DISPLAY(display)
+END_ALGO
 }
