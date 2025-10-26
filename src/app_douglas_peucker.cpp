@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Douglas-Peucker algorithm : polyline simplification.
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/sandbox.h"
 
 #include <cmath>
@@ -161,50 +161,49 @@ std::vector<Segment> simplify_DouglasPeucker(const std::vector<Vec2>& input, flo
   return result;
 }
 
-struct DouglasPeuckerAlgorithm
+std::vector<Vec2> generateRandomPolyline(int /*seed*/)
 {
-  static std::vector<Vec2> generateInput()
+  std::vector<Vec2> points;
+  const int N = int(randomFloat(3, 15));
+  const float length = 40.0f;
+
+  for(int i = 0; i < N; ++i)
   {
-    std::vector<Vec2> points;
-    const int N = int(randomFloat(3, 15));
-    const float length = 40.0f;
-
-    for(int i = 0; i < N; ++i)
-    {
-      Vec2 pos;
-      pos.x = -length / 2 + length * i / N;
-      pos.y = randomFloat(-10, 10);
-      points.push_back(pos);
-    }
-
-    return points;
+    Vec2 pos;
+    pos.x = -length / 2 + length * i / N;
+    pos.y = randomFloat(-10, 10);
+    points.push_back(pos);
   }
 
-  static std::vector<Segment> execute(std::vector<Vec2> input)
-  {
-    const float maxDistanceToSimplify = 3.0f;
+  return points;
+}
 
-    std::vector<Segment> result;
-    result = simplify_DouglasPeucker(input, maxDistanceToSimplify, {0, int(input.size() - 1)});
-    return result;
+std::vector<Segment> simplifyPolylineDP(std::vector<Vec2> input)
+{
+  const float maxDistanceToSimplify = 3.0f;
+
+  std::vector<Segment> result;
+  result = simplify_DouglasPeucker(input, maxDistanceToSimplify, {0, int(input.size() - 1)});
+  return result;
+}
+
+void display(span<const Vec2> input, span<const Segment> output)
+{
+  for(int idx = 0; idx < (int)input.len; ++idx)
+  {
+    drawPointWithIdentifier(input[idx], idx, White, Red);
+
+    const int next_idx = (idx + 1);
+    if(next_idx < (int)input.len)
+      sandbox_line(input[idx], input[next_idx]);
   }
 
-  static void display(span<const Vec2> input, span<const Segment> output)
-  {
-    for(int idx = 0; idx < (int)input.len; ++idx)
-    {
-      drawPointWithIdentifier(input[idx], idx, White, Red);
+  for(auto& segment : output)
+    sandbox_line(input[segment.a], input[segment.b], Green);
+}
 
-      const int next_idx = (idx + 1);
-      if(next_idx < (int)input.len)
-        sandbox_line(input[idx], input[next_idx]);
-    }
-
-    for(auto& segment : output)
-      sandbox_line(input[segment.a], input[segment.b], Green);
-  }
-};
-
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<DouglasPeuckerAlgorithm>>()); }
-const int reg = registerApp("Simplification/Polyline/DouglasPeucker", &create);
+BEGIN_ALGO("Simplification/Polyline/DouglasPeucker", simplifyPolylineDP)
+WITH_INPUTGEN(generateRandomPolyline)
+WITH_DISPLAY(display)
+END_ALGO
 }
