@@ -11,7 +11,7 @@ struct TestCase
 {
   const char* name;
   InputType inputData;
-  void (*checkOutput)(const OutputType&) = nullptr;
+  void (*checkOutput)(const OutputType&) = [](const OutputType&) {};
 };
 
 struct AlgorithmDescription
