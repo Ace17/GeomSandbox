@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // A* algorithm for shortest path
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/sandbox.h"
 
 #include <algorithm> // std::find_if
@@ -160,109 +160,108 @@ void drawVisitedGraph(const Graph& graph, const VisitedGraph& visited, const Nod
   }
 }
 
-struct AStarAlgorithm
+Graph generateInput(int /*seed*/)
 {
-  static Graph generateInput()
+  const int width = 10;
+  const int height = 8;
+  return randomGraph(width, height);
+}
+
+Output execute(Graph input)
+{
+  auto& nodes = input.nodes;
+  const int nodesCount = (int)nodes.size();
+
+  VisitedGraph visited;
+  visited.provenance.resize(nodesCount, INT_MAX);
+  visited.cost.resize(nodesCount, INT_MAX);
+
+  const NodeValueSorter sorter = {input, visited};
+  NodeSet nodesToVisit(sorter);
+
+  nodesToVisit.insert(input.startNode);
+  visited.visitNode(input.startNode, input.startNode, 0);
+  while(!nodesToVisit.empty() && *nodesToVisit.begin() != input.endNode)
   {
-    const int width = 10;
-    const int height = 8;
-    return randomGraph(width, height);
-  }
+    const int nodeIndex = *nodesToVisit.begin();
+    const Node& node = nodes[nodeIndex];
+    const int nodeCost = visited.cost[nodeIndex];
+    nodesToVisit.erase(nodesToVisit.begin());
 
-  static Output execute(Graph input)
-  {
-    auto& nodes = input.nodes;
-    const int nodesCount = (int)nodes.size();
+    drawVisitedGraph(input, visited, nodesToVisit);
+    sandbox_circle(node.renderPos, 1.2, Red);
+    sandbox_breakpoint();
 
-    VisitedGraph visited;
-    visited.provenance.resize(nodesCount, INT_MAX);
-    visited.cost.resize(nodesCount, INT_MAX);
-
-    const NodeValueSorter sorter = {input, visited};
-    NodeSet nodesToVisit(sorter);
-
-    nodesToVisit.insert(input.startNode);
-    visited.visitNode(input.startNode, input.startNode, 0);
-    while(!nodesToVisit.empty() && *nodesToVisit.begin() != input.endNode)
+    for(int neighbor : node.neighbours)
     {
-      const int nodeIndex = *nodesToVisit.begin();
-      const Node& node = nodes[nodeIndex];
-      const int nodeCost = visited.cost[nodeIndex];
-      nodesToVisit.erase(nodesToVisit.begin());
-
-      drawVisitedGraph(input, visited, nodesToVisit);
-      sandbox_circle(node.renderPos, 1.2, Red);
-      sandbox_breakpoint();
-
-      for(int neighbor : node.neighbours)
+      if(!visited.isVisited(neighbor))
       {
-        if(!visited.isVisited(neighbor))
-        {
-          const Vec2& neighborRenderPos = nodes[neighbor].renderPos;
-          const int neighborCost = nodeCost + 1;
-          const int neighborDistanceFromEnd = input.distanceFromEnd(neighbor);
-          drawVisitedGraph(input, visited, nodesToVisit);
-          sandbox_circle(node.renderPos, 1.2, Red);
-          sandbox_circle(neighborRenderPos, 1.2, Green);
-          sandbox_line(node.renderPos, neighborRenderPos, Green);
-          char buffer[256];
-          sprintf(buffer, "%d+%d=%d", neighborDistanceFromEnd, neighborCost, neighborDistanceFromEnd + neighborCost);
-          sandbox_text(neighborRenderPos, buffer, Green);
-          sandbox_breakpoint();
+        const Vec2& neighborRenderPos = nodes[neighbor].renderPos;
+        const int neighborCost = nodeCost + 1;
+        const int neighborDistanceFromEnd = input.distanceFromEnd(neighbor);
+        drawVisitedGraph(input, visited, nodesToVisit);
+        sandbox_circle(node.renderPos, 1.2, Red);
+        sandbox_circle(neighborRenderPos, 1.2, Green);
+        sandbox_line(node.renderPos, neighborRenderPos, Green);
+        char buffer[256];
+        sprintf(buffer, "%d+%d=%d", neighborDistanceFromEnd, neighborCost, neighborDistanceFromEnd + neighborCost);
+        sandbox_text(neighborRenderPos, buffer, Green);
+        sandbox_breakpoint();
 
-          visited.visitNode(neighbor, nodeIndex, nodeCost + 1);
-          nodesToVisit.insert(neighbor);
-        }
+        visited.visitNode(neighbor, nodeIndex, nodeCost + 1);
+        nodesToVisit.insert(neighbor);
       }
     }
+  }
 
-    if(!nodesToVisit.empty())
+  if(!nodesToVisit.empty())
+  {
+    std::vector<int> result;
+    int node = input.endNode;
+    result.push_back(node);
+    while(node != input.startNode)
     {
-      std::vector<int> result;
-      int node = input.endNode;
+      node = visited.provenance[node];
       result.push_back(node);
-      while(node != input.startNode)
-      {
-        node = visited.provenance[node];
-        result.push_back(node);
-      }
-      return result;
     }
-
-    // No path found.
-    return {};
+    return result;
   }
 
-  static void display(const Graph& input, const Output& output)
+  // No path found.
+  return {};
+}
+
+void display(const Graph& input, const Output& output)
+{
+  auto& nodes = input.nodes;
+
+  for(int idx = 0; idx < (int)nodes.size(); ++idx)
   {
-    auto& nodes = input.nodes;
+    auto& node = nodes[idx];
+    sandbox_circle(node.renderPos, 0.5, Gray);
 
-    for(int idx = 0; idx < (int)nodes.size(); ++idx)
+    for(int neighbor : node.neighbours)
+      sandbox_line(nodes[idx].renderPos, nodes[neighbor].renderPos, Gray);
+  }
+
+  sandbox_circle(nodes[input.startNode].renderPos, 1.2, Yellow);
+  sandbox_circle(nodes[input.endNode].renderPos, 1.2, LightBlue);
+
+  for(int i = 0; i < (int)output.size(); ++i)
+  {
+    const int node = output[i];
+    if(node != input.startNode && node != input.endNode)
+      sandbox_circle(nodes[node].renderPos, 1.2, Green);
+    if(i > 0)
     {
-      auto& node = nodes[idx];
-      sandbox_circle(node.renderPos, 0.5, Gray);
-
-      for(int neighbor : node.neighbours)
-        sandbox_line(nodes[idx].renderPos, nodes[neighbor].renderPos, Gray);
-    }
-
-    sandbox_circle(nodes[input.startNode].renderPos, 1.2, Yellow);
-    sandbox_circle(nodes[input.endNode].renderPos, 1.2, LightBlue);
-
-    for(int i = 0; i < (int)output.size(); ++i)
-    {
-      const int node = output[i];
-      if(node != input.startNode && node != input.endNode)
-        sandbox_circle(nodes[node].renderPos, 1.2, Green);
-      if(i > 0)
-      {
-        const int previousNode = output[i - 1];
-        sandbox_line(input.nodes[node].renderPos, input.nodes[previousNode].renderPos, Green);
-      }
+      const int previousNode = output[i - 1];
+      sandbox_line(input.nodes[node].renderPos, input.nodes[previousNode].renderPos, Green);
     }
   }
-};
+}
 
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<AStarAlgorithm>>()); }
-const int reg = registerApp("Pathfind/AStar", &create);
+BEGIN_ALGO("Pathfind/AStar", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 }
