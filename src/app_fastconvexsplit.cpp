@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Split a polygon into convex pieces
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/bounding_box.h"
 #include "core/geom.h"
 #include "core/sandbox.h"
@@ -133,7 +133,7 @@ Plane chooseCuttingPlane(const Polygon2f& poly)
   return bestPlane;
 }
 
-std::vector<Polygon2f> decomposePolygonToConvexParts(const Polygon2f& input)
+std::vector<Polygon2f> decomposePolygonToConvexParts(Polygon2f input)
 {
   std::deque<Polygon2f> fifo;
   fifo.push_back(input);
@@ -195,42 +195,39 @@ std::vector<Polygon2f> decomposePolygonToConvexParts(const Polygon2f& input)
   return result;
 }
 
-struct FastConvexSplit
+Polygon2f generateInput(int /*seed*/)
 {
-  static Polygon2f generateInput()
-  {
-    auto input = createRandomPolygon2f();
-    BoundingBox bbox;
+  auto input = createRandomPolygon2f();
+  BoundingBox bbox;
 
-    for(const Vec2 vertex : input.vertices)
-      bbox.add(vertex);
+  for(const Vec2 vertex : input.vertices)
+    bbox.add(vertex);
 
-    const int idx = (int)input.vertices.size();
+  const int idx = (int)input.vertices.size();
 
-    input.vertices.push_back({bbox.min.x * 1.1f, bbox.min.y * 1.1f});
-    input.vertices.push_back({bbox.max.x * 1.1f, bbox.min.y * 1.1f});
-    input.vertices.push_back({bbox.max.x * 1.1f, bbox.max.y * 1.1f});
-    input.vertices.push_back({bbox.min.x * 1.1f, bbox.max.y * 1.1f});
+  input.vertices.push_back({bbox.min.x * 1.1f, bbox.min.y * 1.1f});
+  input.vertices.push_back({bbox.max.x * 1.1f, bbox.min.y * 1.1f});
+  input.vertices.push_back({bbox.max.x * 1.1f, bbox.max.y * 1.1f});
+  input.vertices.push_back({bbox.min.x * 1.1f, bbox.max.y * 1.1f});
 
-    input.faces.push_back({idx + 0, idx + 1});
-    input.faces.push_back({idx + 1, idx + 2});
-    input.faces.push_back({idx + 2, idx + 3});
-    input.faces.push_back({idx + 3, idx + 0});
+  input.faces.push_back({idx + 0, idx + 1});
+  input.faces.push_back({idx + 1, idx + 2});
+  input.faces.push_back({idx + 2, idx + 3});
+  input.faces.push_back({idx + 3, idx + 0});
 
-    return input;
-  }
+  return input;
+}
 
-  static std::vector<Polygon2f> execute(Polygon2f input) { return decomposePolygonToConvexParts(input); }
+void display(const Polygon2f& input, span<const Polygon2f> output)
+{
+  drawPolygon(input, Gray);
 
-  static void display(const Polygon2f& input, span<const Polygon2f> output)
-  {
-    drawPolygon(input, Gray);
+  for(auto& poly : output)
+    drawPolygon(poly, choosePolygonColor(poly));
+}
 
-    for(auto& poly : output)
-      drawPolygon(poly, choosePolygonColor(poly));
-  }
-};
-
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<FastConvexSplit>>()); }
-const int registered = registerApp("FastConvexSplit", &create);
+BEGIN_ALGO("FastConvexSplit", decomposePolygonToConvexParts)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 }
