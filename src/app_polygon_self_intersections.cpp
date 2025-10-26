@@ -6,10 +6,11 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/sandbox.h"
 
 #include <cmath>
+#include <cstdio>
 #include <vector>
 
 #include "random.h"
@@ -175,245 +176,297 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
   return r;
 }
 
-struct PolygonSelfIntersectionAlgorithm
+std::vector<Vec2> generateInput(int /*seed*/)
 {
-  static std::vector<Vec2> generateInput()
+  std::vector<Vec2> points;
+  const int N = 10;
+
+  for(int i = 0; i < N; ++i)
   {
-    std::vector<Vec2> points;
-    const int N = 10;
-
-    for(int i = 0; i < N; ++i)
+    Vec2 pos;
+    pos.x = randomFloat(-20, 20);
+    pos.y = randomFloat(-20, 20);
+    if(points.size() >= 2 && rand() % 10 == 0)
     {
-      Vec2 pos;
-      pos.x = randomFloat(-20, 20);
-      pos.y = randomFloat(-20, 20);
-      if(points.size() >= 2 && rand() % 10 == 0)
-      {
-        auto p = points[rand() % points.size() - 1];
-        points.push_back(p);
-      }
-      else
-      {
-        points.push_back(pos);
-      }
+      auto p = points[rand() % points.size() - 1];
+      points.push_back(p);
     }
-
-    return points;
-  }
-
-  static std::vector<Intersection> execute(std::vector<Vec2> input) { return computeSelfIntersections(input); }
-
-  static void display(span<const Vec2> input, span<const Intersection> output)
-  {
-    for(int i = 0; i < (int)input.len; ++i)
+    else
     {
-      char buf[256];
-      sprintf(buf, "%d", i);
-      sandbox_text(input[i], buf, White, Vec2(6, -6));
-      sandbox_rect(input[i], {}, White, Vec2(6, 6));
-    }
-
-    for(int i = 0; i < (int)input.len; ++i)
-      sandbox_line(input[i], input[(i + 1) % input.len]);
-
-    int idx = 0;
-    for(auto& point : output)
-    {
-      sandbox_circle(input[point.i], {}, Orange, 6);
-      sandbox_circle(input[point.j], {}, Orange, 6);
-
-      sandbox_circle(point.pos, {}, Red, 5);
-
-      char buf[256];
-      sprintf(buf, "I%d", idx);
-      sandbox_text(point.pos, buf, Red, Vec2(6, +24));
-      ++idx;
-    }
-
-    {
-      char buf[256];
-      sprintf(buf, "%d intersection(s)", (int)output.len);
-      sandbox_text({0, 9}, buf, White);
+      points.push_back(pos);
     }
   }
 
-  inline static const TestCase<std::vector<Vec2>> AllTestCases[] = {
-        {
-              "Lungs in pyramid",
-              {
-                    {0, -1},
-                    {8, -1},
-                    {4, 5},
-                    {4, 3},
-                    {5, 2},
-                    {6, 0},
-                    {5, 0},
-                    {5, 2},
-                    {4, 3},
-                    {3, 2},
-                    {3, 0},
-                    {2, 0},
-                    {3, 2},
-                    {4, 3},
-                    {4, 5},
-              },
-        },
+  return points;
+}
 
-        {
-              "Two bridges, one lake (Railway)",
-              {
-                    {-3.8, 0.8},
-                    {8.2, -4.8},
-                    {9.4, 1.6},
-                    {6.6, 1.2},
-                    {3.6, -1.0},
-                    {6.6, 1.2},
-                    {3.2, 2},
-                    {6.4, 2.6},
-                    {6.6, 1.2},
-                    {9.4, 1.6},
-                    {9.4, 6.2},
-              },
-        },
+std::vector<Intersection> execute(std::vector<Vec2> input) { return computeSelfIntersections(input); }
 
-        {
-              "side change after coinciding border",
-              {
-                    {0, 0},
-                    {4, 0},
-                    {4, 4},
-                    {0, 4},
-                    {0, 2},
-                    {0.5, 2},
-                    {1.5, 2},
-                    {2, 2},
-                    {2, 3},
-                    {3, 3},
-                    {3, 1},
-                    {2, 1},
-                    {2, 2},
-                    {1.5, 2},
-                    {1.0, 2.5},
-                    {0.5, 2},
-                    {0, 2},
-              },
-        },
+void display(span<const Vec2> input, span<const Intersection> output)
+{
+  for(int i = 0; i < (int)input.len; ++i)
+  {
+    char buf[256];
+    sprintf(buf, "%d", i);
+    sandbox_text(input[i], buf, White, Vec2(6, -6));
+    sandbox_rect(input[i], {}, White, Vec2(6, 6));
+  }
 
-        {
-              "saw, multiple intersections",
-              {
-                    {0, 0},
-                    {10, 0},
-                    {10, 2},
-                    {1, 2},
-                    {1, 3},
-                    {1.5, 3},
-                    {2, 2},
-                    {2.5, 2},
-                    {3, 3},
-                    {4, 1},
-                    {5, 3},
-                    {5.8, 2},
-                    {6.2, 2},
-                    {6.5, 1},
-                    {7, 2},
-                    {7.3, 2},
-                    {8, 3},
-                    {8.5, 2},
-                    {9, 3},
-                    {10, 3},
-                    {10, 4},
-                    {0, 4},
-              },
-        },
+  for(int i = 0; i < (int)input.len; ++i)
+    sandbox_line(input[i], input[(i + 1) % input.len]);
 
-        {
-              "vertex/vertex contact, intersection",
-              {
-                    {-10, -10},
-                    {0, -10},
-                    {0, 0},
-                    {0, +10},
-                    {+10, +10},
-                    {+10, 0},
-                    {0, 0},
-                    {-10, 0},
-              },
-        },
-        {
-              "vertex/vertex contact, no intersection",
-              {
-                    {-10, -10},
-                    {0, 0},
-                    {+10, -10},
-                    {+10, 10},
-                    {0, 0},
-                    {-10, 10},
-                    {-10, 1},
-              },
-        },
-        {
-              "twisted bridge",
-              {
-                    {-20, 0},
-                    {-15, -5},
-                    {-10, 0},
-                    {0, 0},
-                    {+10, 0},
-                    {+15, 5},
-                    {+20, 0},
-                    {+15, -5},
-                    {+10, 0},
-                    {0, 0},
-                    {-10, 0},
-                    {-15, 5},
-              },
-        },
-        {"bridge",
-              {
-                    {0, 0},
-                    {9, 0},
-                    {9, 6},
-                    {6, 6},
-                    {6, 3},
-                    {3, 3},
-                    {3, 9},
-                    {6, 9},
-                    {6, 6},
-                    {9, 6},
-                    {9, 12},
-                    {0, 12},
-                    {0, 1},
-              }},
-        {"vertex/segment contact",
-              {
-                    {-10, 0},
-                    {+10, 0},
-                    {+10, 5},
-                    {0, 0},
-                    {-10, 5},
-                    {-10, 1},
-              }},
-        {"cross",
-              {
-                    {-10, -10},
-                    {+10, +10},
-                    {-10, +10},
-                    {+10, -10},
-              }},
-        {"basic",
-              {
-                    {-10, 0},
-                    {10, 0},
-                    {10, -5},
-                    {0, -5},
-                    {0, 0},
-                    {0, 5},
-                    {-10, 5},
-              }},
-  };
+  int idx = 0;
+  for(auto& point : output)
+  {
+    sandbox_circle(input[point.i], {}, Orange, 6);
+    sandbox_circle(input[point.j], {}, Orange, 6);
+
+    sandbox_circle(point.pos, {}, Red, 5);
+
+    char buf[256];
+    sprintf(buf, "I%d", idx);
+    sandbox_text(point.pos, buf, Red, Vec2(6, +24));
+    ++idx;
+  }
+
+  {
+    char buf[256];
+    sprintf(buf, "%d intersection(s)", (int)output.len);
+    sandbox_text({0, 9}, buf, White);
+  }
+}
+
+const TestCase<std::vector<Vec2>, span<const Intersection>> AllTestCases[] = {
+      {
+            "Lungs in pyramid",
+            {
+                  {0, -1},
+                  {8, -1},
+                  {4, 5},
+                  {4, 3},
+                  {5, 2},
+                  {6, 0},
+                  {5, 0},
+                  {5, 2},
+                  {4, 3},
+                  {3, 2},
+                  {3, 0},
+                  {2, 0},
+                  {3, 2},
+                  {4, 3},
+                  {4, 5},
+            },
+            [](const span<const Intersection>&)
+            {
+              // todo
+            },
+      },
+
+      {
+            "Two bridges, one lake (Railway)",
+            {
+                  {-3.8, 0.8},
+                  {8.2, -4.8},
+                  {9.4, 1.6},
+                  {6.6, 1.2},
+                  {3.6, -1.0},
+                  {6.6, 1.2},
+                  {3.2, 2},
+                  {6.4, 2.6},
+                  {6.6, 1.2},
+                  {9.4, 1.6},
+                  {9.4, 6.2},
+            },
+            [](const span<const Intersection>&)
+            {
+              // todo
+            },
+      },
+
+      {
+            "side change after coinciding border",
+            {
+                  {0, 0},
+                  {4, 0},
+                  {4, 4},
+                  {0, 4},
+                  {0, 2},
+                  {0.5, 2},
+                  {1.5, 2},
+                  {2, 2},
+                  {2, 3},
+                  {3, 3},
+                  {3, 1},
+                  {2, 1},
+                  {2, 2},
+                  {1.5, 2},
+                  {1.0, 2.5},
+                  {0.5, 2},
+                  {0, 2},
+            },
+            [](const span<const Intersection>&)
+            {
+              // todo
+            },
+      },
+
+      {
+            "saw, multiple intersections",
+            {
+                  {0, 0},
+                  {10, 0},
+                  {10, 2},
+                  {1, 2},
+                  {1, 3},
+                  {1.5, 3},
+                  {2, 2},
+                  {2.5, 2},
+                  {3, 3},
+                  {4, 1},
+                  {5, 3},
+                  {5.8, 2},
+                  {6.2, 2},
+                  {6.5, 1},
+                  {7, 2},
+                  {7.3, 2},
+                  {8, 3},
+                  {8.5, 2},
+                  {9, 3},
+                  {10, 3},
+                  {10, 4},
+                  {0, 4},
+            },
+            [](const span<const Intersection>&)
+            {
+              // todo
+            },
+      },
+
+      {
+            "vertex/vertex contact, intersection",
+            {
+                  {-10, -10},
+                  {0, -10},
+                  {0, 0},
+                  {0, +10},
+                  {+10, +10},
+                  {+10, 0},
+                  {0, 0},
+                  {-10, 0},
+            },
+            [](const span<const Intersection>&)
+            {
+              // todo
+            },
+      },
+      {
+            "vertex/vertex contact, no intersection",
+            {
+                  {-10, -10},
+                  {0, 0},
+                  {+10, -10},
+                  {+10, 10},
+                  {0, 0},
+                  {-10, 10},
+                  {-10, 1},
+            },
+            [](const span<const Intersection>&)
+            {
+              // todo
+            },
+      },
+      {
+            "twisted bridge",
+            {
+                  {-20, 0},
+                  {-15, -5},
+                  {-10, 0},
+                  {0, 0},
+                  {+10, 0},
+                  {+15, 5},
+                  {+20, 0},
+                  {+15, -5},
+                  {+10, 0},
+                  {0, 0},
+                  {-10, 0},
+                  {-15, 5},
+            },
+            [](const span<const Intersection>&)
+            {
+              // todo
+            },
+      },
+      {
+            "bridge",
+            {
+                  {0, 0},
+                  {9, 0},
+                  {9, 6},
+                  {6, 6},
+                  {6, 3},
+                  {3, 3},
+                  {3, 9},
+                  {6, 9},
+                  {6, 6},
+                  {9, 6},
+                  {9, 12},
+                  {0, 12},
+                  {0, 1},
+            },
+            [](const span<const Intersection>&)
+            {
+              // todo
+            },
+      },
+      {
+            "vertex/segment contact",
+            {
+                  {-10, 0},
+                  {+10, 0},
+                  {+10, 5},
+                  {0, 0},
+                  {-10, 5},
+                  {-10, 1},
+            },
+            [](const span<const Intersection>&)
+            {
+              // todo
+            },
+      },
+      {
+            "cross",
+            {
+                  {-10, -10},
+                  {+10, +10},
+                  {-10, +10},
+                  {+10, -10},
+            },
+            [](const span<const Intersection>&)
+            {
+              // todo
+            },
+      },
+      {
+            "basic",
+            {
+                  {-10, 0},
+                  {10, 0},
+                  {10, -5},
+                  {0, -5},
+                  {0, 0},
+                  {0, 5},
+                  {-10, 5},
+            },
+            [](const span<const Intersection>&)
+            {
+              // todo
+            },
+      },
 };
 
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<PolygonSelfIntersectionAlgorithm>>()); }
-const int reg = registerApp("Intersection/Polygon/SelfIntersection", &create);
+BEGIN_ALGO("Intersection/Polygon/SelfIntersection", execute);
+WITH_INPUTGEN(generateInput)
+WITH_TESTCASES(AllTestCases)
+WITH_DISPLAY(display)
+END_ALGO
 }
