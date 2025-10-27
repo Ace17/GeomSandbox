@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Bresenham's algorithm for line drawing
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/sandbox.h"
 
 #include <algorithm>
@@ -152,59 +152,58 @@ Output lineHighSlope(Segment input)
   return output;
 }
 
-struct BresenhamAlgorithm
+Segment generateInput(int /*seed*/)
 {
-  static Segment generateInput()
-  {
-    const Vec2 start = Vec2(randomInt(0, gridWidth) + 0.5f, randomInt(0, gridHeight) + 0.5f);
-    const Vec2 end = Vec2(randomInt(0, gridWidth) + 0.5f, randomInt(0, gridHeight) + 0.5f);
-    return {start, end};
-  }
+  const Vec2 start = Vec2(randomInt(0, gridWidth) + 0.5f, randomInt(0, gridHeight) + 0.5f);
+  const Vec2 end = Vec2(randomInt(0, gridWidth) + 0.5f, randomInt(0, gridHeight) + 0.5f);
+  return {start, end};
+}
 
-  static Output execute(Segment input)
+Output execute(Segment input)
+{
+  const Vec2 dir = input.end - input.start;
+  if(std::abs(dir.y) < std::abs(dir.x))
   {
-    const Vec2 dir = input.end - input.start;
-    if(std::abs(dir.y) < std::abs(dir.x))
-    {
-      sandbox_printf("low slope (x < y)\n");
-      if(input.start.x < input.end.x)
-        return lineLowSlope({input.start, input.end});
-      else
-        return lineLowSlope({input.end, input.start});
-    }
-    sandbox_printf("high slope (x >= y)\n");
-    if(input.start.y < input.end.y)
-      return lineHighSlope({input.start, input.end});
+    sandbox_printf("low slope (x < y)\n");
+    if(input.start.x < input.end.x)
+      return lineLowSlope({input.start, input.end});
     else
-      return lineHighSlope({input.end, input.start});
+      return lineLowSlope({input.end, input.start});
   }
+  sandbox_printf("high slope (x >= y)\n");
+  if(input.start.y < input.end.y)
+    return lineHighSlope({input.start, input.end});
+  else
+    return lineHighSlope({input.end, input.start});
+}
 
-  static void display(const Segment& input, const Output& output)
+void display(const Segment& input, const Output& output)
+{
+  for(int x = 0; x <= gridWidth; x++)
   {
-    for(int x = 0; x <= gridWidth; x++)
-    {
-      const float posX = static_cast<float>(x);
-      const Vec2 start = tileRenderPosition({posX, 0});
-      const Vec2 end = tileRenderPosition({posX, gridHeight});
-      sandbox_line(start, end, Gray);
-    }
-    for(int y = 0; y <= gridHeight; y++)
-    {
-      const float posY = static_cast<float>(y);
-      const Vec2 start = tileRenderPosition({0, posY});
-      const Vec2 end = tileRenderPosition({gridWidth, posY});
-      sandbox_line(start, end, Gray);
-    }
-
-    const Vec2 dir = normalize(input.end - input.start);
-    sandbox_line(tileRenderPosition(input.start), tileRenderPosition(input.end), White);
-    sandbox_text(tileRenderPosition(input.start - dir * 0.5), "Start", Yellow);
-    sandbox_text(tileRenderPosition(input.end + dir * 0.5), "End", Yellow);
-
-    drawOutput(output);
+    const float posX = static_cast<float>(x);
+    const Vec2 start = tileRenderPosition({posX, 0});
+    const Vec2 end = tileRenderPosition({posX, gridHeight});
+    sandbox_line(start, end, Gray);
   }
-};
+  for(int y = 0; y <= gridHeight; y++)
+  {
+    const float posY = static_cast<float>(y);
+    const Vec2 start = tileRenderPosition({0, posY});
+    const Vec2 end = tileRenderPosition({gridWidth, posY});
+    sandbox_line(start, end, Gray);
+  }
 
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<BresenhamAlgorithm>>()); }
-const int reg = registerApp("DrawLine/Bresenham", &create);
+  const Vec2 dir = normalize(input.end - input.start);
+  sandbox_line(tileRenderPosition(input.start), tileRenderPosition(input.end), White);
+  sandbox_text(tileRenderPosition(input.start - dir * 0.5), "Start", Yellow);
+  sandbox_text(tileRenderPosition(input.end + dir * 0.5), "End", Yellow);
+
+  drawOutput(output);
+}
+
+BEGIN_ALGO("DrawLine/Bresenham", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 } // namespace
