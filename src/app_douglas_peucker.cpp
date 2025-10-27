@@ -16,7 +16,7 @@
 
 #include "random.h"
 
-void deserialize(std::vector<Vec2>&, span<const uint8_t> data);
+std::vector<Vec2> loadPolygon(span<const uint8_t> data);
 
 namespace
 {
@@ -204,6 +204,7 @@ void display(span<const Vec2> input, span<const Segment> output)
 
 BEGIN_ALGO("Simplification/Polyline/DouglasPeucker", simplifyPolylineDP)
 WITH_INPUTGEN(generateRandomPolyline)
+WITH_LOADER(loadPolygon)
 WITH_DISPLAY(display)
 END_ALGO
 }

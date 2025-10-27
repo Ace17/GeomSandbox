@@ -19,6 +19,8 @@
 #include "random.h"
 #include "random_polygon.h"
 
+std::vector<Vec2> loadPolygon(span<const uint8_t> data);
+
 namespace
 {
 struct Segment
@@ -239,6 +241,7 @@ void display(span<const Vec2> input, span<const Segment> output)
 
 BEGIN_ALGO("Simplification/Polyline/Visvalingam", execute)
 WITH_INPUTGEN(generateInput)
+WITH_LOADER(loadPolygon)
 WITH_DISPLAY(display)
 END_ALGO
 }
