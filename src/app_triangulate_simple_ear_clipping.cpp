@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Polygon Triangulation: Ear-clipping Algorithm.
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/bounding_box.h"
 #include "core/sandbox.h"
 
@@ -174,33 +174,32 @@ Segment clipEar(Polygon2f& polygon)
   return {};
 }
 
-struct EarClippingAlgorithm
-{
-  static Polygon2f generateInput() { return createRandomPolygon2f(); }
+Polygon2f generateInput(int /*seed*/) { return createRandomPolygon2f(); }
 
-  static std::vector<Segment> execute(Polygon2f input)
+std::vector<Segment> execute(Polygon2f input)
+{
+  std::vector<Segment> result;
+  while(input.faces.size() > 3)
   {
-    std::vector<Segment> result;
-    while(input.faces.size() > 3)
-    {
-      drawPolygon(input, Yellow);
-      sandbox_breakpoint();
-      Segment segment = clipEar(input);
-      result.push_back(segment);
-    }
     drawPolygon(input, Yellow);
     sandbox_breakpoint();
-    return result;
+    Segment segment = clipEar(input);
+    result.push_back(segment);
   }
+  drawPolygon(input, Yellow);
+  sandbox_breakpoint();
+  return result;
+}
 
-  static void display(const Polygon2f& input, span<const Segment> output)
-  {
-    drawPolygon(input, White);
-    for(auto& segment : output)
-      sandbox_line(input.vertices[segment.a], input.vertices[segment.b], Green);
-  }
-};
+void display(const Polygon2f& input, span<const Segment> output)
+{
+  drawPolygon(input, White);
+  for(auto& segment : output)
+    sandbox_line(input.vertices[segment.a], input.vertices[segment.b], Green);
+}
 
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<EarClippingAlgorithm>>()); }
-const int reg = registerApp("Triangulation/Polygon/SimpleEarClipping", &create);
+BEGIN_ALGO("Triangulation/Polygon/SimpleEarClipping", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 }
