@@ -25,14 +25,7 @@ const bool enableDisplay = true;
 
 float clamp(float value, float min, float max) { return std::min(max, std::max(min, value)); }
 
-void deserialize(std::vector<Vec2>&, span<const uint8_t> data);
-
-std::vector<Vec2> loadPolygon(span<const uint8_t> data)
-{
-  std::vector<Vec2> r;
-  deserialize(r, data);
-  return r;
-}
+std::vector<Vec2> loadPolygon(span<const uint8_t> data);
 
 namespace
 {

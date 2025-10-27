@@ -5,8 +5,10 @@
 #include "bounding_box.h"
 #include "geom.h"
 
-void deserialize(std::vector<Vec2>& r, span<const uint8_t> data)
+std::vector<Vec2> loadPolygon(span<const uint8_t> data)
 {
+  std::vector<Vec2> r;
+
   std::istringstream ss(std::string((const char*)data.ptr, data.len));
   std::string line;
   while(std::getline(ss, line))
@@ -41,4 +43,6 @@ void deserialize(std::vector<Vec2>& r, span<const uint8_t> data)
       v.y *= scale.y;
     }
   }
+
+  return r;
 }
