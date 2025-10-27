@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Triangulation: Flip algorithm
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/sandbox.h"
 
 #include <cstdio> // sprintf
@@ -18,43 +18,42 @@
 
 namespace
 {
-struct FlipTriangulationAlgorithm
+std::vector<Vec2> generateInput(int /*seed*/)
 {
-  static std::vector<Vec2> generateInput()
+  std::vector<Vec2> r(15);
+
+  for(auto& p : r)
+    p = randomPos({-20, -10}, {20, 10});
+
+  return r;
+}
+
+std::vector<Edge> execute(std::vector<Vec2> input)
+{
+  auto result = triangulate_Flip({input.size(), input.data()});
+  sandbox_printf("Triangulated, %d edges\n", (int)result.size());
+  return result;
+}
+
+void display(span<const Vec2> input, span<const Edge> output)
+{
+  int idx = 0;
+
+  for(auto& p : input)
   {
-    std::vector<Vec2> r(15);
-
-    for(auto& p : r)
-      p = randomPos({-20, -10}, {20, 10});
-
-    return r;
+    sandbox_rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
+    char buffer[16];
+    sprintf(buffer, "%d", idx);
+    sandbox_text(p + Vec2(0.3, 0), buffer, Red);
+    idx++;
   }
 
-  static std::vector<Edge> execute(std::vector<Vec2> input)
-  {
-    auto result = triangulate_Flip({input.size(), input.data()});
-    sandbox_printf("Triangulated, %d edges\n", (int)result.size());
-    return result;
-  }
+  for(auto& edge : output)
+    sandbox_line(input[edge.a], input[edge.b], Green);
+}
 
-  static void display(span<const Vec2> input, span<const Edge> output)
-  {
-    int idx = 0;
-
-    for(auto& p : input)
-    {
-      sandbox_rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
-      char buffer[16];
-      sprintf(buffer, "%d", idx);
-      sandbox_text(p + Vec2(0.3, 0), buffer, Red);
-      idx++;
-    }
-
-    for(auto& edge : output)
-      sandbox_line(input[edge.a], input[edge.b], Green);
-  }
-};
-
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<FlipTriangulationAlgorithm>>()); }
-const int reg = registerApp("Triangulation/Points/Flip", &create);
+BEGIN_ALGO("Triangulation/Points/Flip", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 } // namespace
