@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Raycast against a BSP
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/bounding_box.h"
 #include "core/geom.h"
 #include "core/sandbox.h"
@@ -143,67 +143,66 @@ float raycast(Vec2 a, Vec2 b, const BspNode* root)
   return ratio;
 }
 
-struct BspRaycast
+struct AlgoInput
 {
-  struct AlgoInput
-  {
-    Polygon2f polygon;
-    Vec2 rayPos;
-    Vec2 rayDir;
-  };
-
-  static AlgoInput generateInput()
-  {
-    Polygon2f poly = createRandomPolygon2f();
-
-    for(auto& face : poly.faces)
-      std::swap(face.a, face.b);
-
-    if(0)
-    {
-      poly = {};
-      const Vec2 center = {0, 0};
-      const auto baseRadius = randomFloat(3, 7);
-      const auto phase = 0;
-
-      const int N = 3;
-      for(int i = 0; i < N; ++i)
-      {
-        const auto radius = baseRadius;
-        Vec2 pos = center;
-        pos.x += cos((2 * M_PI * i) / N + phase) * radius;
-        pos.y += sin((2 * M_PI * i) / N + phase) * radius;
-        poly.vertices.push_back(pos);
-        poly.faces.push_back({i, (i + 1) % N});
-      }
-    }
-
-    AlgoInput input;
-    input.polygon = poly;
-    input.rayPos = randomPos({-20, -2}, {-15, +2});
-    input.rayDir = randomPos({+10, -10}, {+10, +10}) - input.rayPos;
-    return input;
-  }
-
-  static float execute(const AlgoInput& input)
-  {
-    std::unique_ptr<const BspNode> bspRoot = createBspTree(input.polygon);
-    return raycast(input.rayPos, input.rayPos + input.rayDir, bspRoot.get());
-  }
-
-  static void display(const AlgoInput& input, float fraction)
-  {
-    for(auto f : input.polygon.faces)
-      sandbox_line(input.polygon.vertices[f.a], input.polygon.vertices[f.b], Yellow);
-
-    sandbox_line(input.rayPos, input.rayPos + input.rayDir, Red);
-    sandbox_circle(input.rayPos + input.rayDir, 0.2, Red);
-
-    sandbox_line(input.rayPos, input.rayPos + input.rayDir * fraction, Green);
-    sandbox_circle(input.rayPos, 0.2, Green);
-  }
+  Polygon2f polygon;
+  Vec2 rayPos;
+  Vec2 rayDir;
 };
 
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<BspRaycast>>()); }
-const int registered = registerApp("SpatialPartitioning/Bsp/Raycast", &create);
+AlgoInput generateInput(int /*seed*/)
+{
+  Polygon2f poly = createRandomPolygon2f();
+
+  for(auto& face : poly.faces)
+    std::swap(face.a, face.b);
+
+  if(0)
+  {
+    poly = {};
+    const Vec2 center = {0, 0};
+    const auto baseRadius = randomFloat(3, 7);
+    const auto phase = 0;
+
+    const int N = 3;
+    for(int i = 0; i < N; ++i)
+    {
+      const auto radius = baseRadius;
+      Vec2 pos = center;
+      pos.x += cos((2 * M_PI * i) / N + phase) * radius;
+      pos.y += sin((2 * M_PI * i) / N + phase) * radius;
+      poly.vertices.push_back(pos);
+      poly.faces.push_back({i, (i + 1) % N});
+    }
+  }
+
+  AlgoInput input;
+  input.polygon = poly;
+  input.rayPos = randomPos({-20, -2}, {-15, +2});
+  input.rayDir = randomPos({+10, -10}, {+10, +10}) - input.rayPos;
+  return input;
+}
+
+float execute(AlgoInput input)
+{
+  std::unique_ptr<const BspNode> bspRoot = createBspTree(input.polygon);
+  return raycast(input.rayPos, input.rayPos + input.rayDir, bspRoot.get());
+}
+
+void display(const AlgoInput& input, float fraction)
+{
+  for(auto f : input.polygon.faces)
+    sandbox_line(input.polygon.vertices[f.a], input.polygon.vertices[f.b], Yellow);
+
+  sandbox_line(input.rayPos, input.rayPos + input.rayDir, Red);
+  sandbox_circle(input.rayPos + input.rayDir, 0.2, Red);
+
+  sandbox_line(input.rayPos, input.rayPos + input.rayDir * fraction, Green);
+  sandbox_circle(input.rayPos, 0.2, Green);
+}
+
+BEGIN_ALGO("SpatialPartitioning/Bsp/Raycast", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 }
