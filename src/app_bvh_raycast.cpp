@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Raycast against a BVH
 
-#include "core/algorithm_app.h"
+#include "core/app.h"
 #include "core/drawer.h"
 #include "core/geom.h"
 
