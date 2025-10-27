@@ -15,7 +15,7 @@
 
 #include "random.h"
 
-void deserialize(std::vector<Vec2>&, span<const uint8_t> data);
+std::vector<Vec2> loadPolygon(span<const uint8_t> data);
 
 bool segmentsIntersect(Vec2 u0, Vec2 u1, Vec2 v0, Vec2 v1, Vec2& where);
 
@@ -466,6 +466,7 @@ const TestCase<std::vector<Vec2>, span<const Intersection>> AllTestCases[] = {
 
 BEGIN_ALGO("Intersection/Polygon/SelfIntersection", execute);
 WITH_INPUTGEN(generateInput)
+WITH_LOADER(loadPolygon)
 WITH_TESTCASES(AllTestCases)
 WITH_DISPLAY(display)
 END_ALGO
