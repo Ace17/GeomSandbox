@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Raycast against an AABB
 
-#include "core/algorithm_app.h"
+#include "core/app.h"
 #include "core/bounding_box.h"
 #include "core/drawer.h"
 #include "core/geom.h"
