@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Random polygon generation
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/sandbox.h"
 
 #include "random_polygon.h"
@@ -15,23 +15,22 @@
 namespace
 {
 
-struct RandomPolygon
+int generateInput(int /*seed*/) { return 0; }
+
+Polygon2f execute(int /*dummy*/) { return createRandomPolygon2f(); }
+
+void display(int /*input*/, const Polygon2f& output)
 {
-  static int generateInput() { return 0; }
+  // no input to draw
+  sandbox_line({-1, 0}, {1, 0});
+  sandbox_line({0, -1}, {0, 1});
 
-  static Polygon2f execute(int /*input*/) { return createRandomPolygon2f(); }
+  for(auto face : output.faces)
+    sandbox_line(output.vertices[face.a], output.vertices[face.b], Green);
+}
 
-  static void display(int /*input*/, const Polygon2f& output)
-  {
-    // no input to draw
-    sandbox_line({-1, 0}, {1, 0});
-    sandbox_line({0, -1}, {0, 1});
-
-    for(auto face : output.faces)
-      sandbox_line(output.vertices[face.a], output.vertices[face.b], Green);
-  }
-};
-
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<RandomPolygon>>()); }
-const int reg = registerApp("Random/Polygon", &create);
+BEGIN_ALGO("Random/Polygon", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 }
