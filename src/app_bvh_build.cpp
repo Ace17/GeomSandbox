@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Compute a bounding volume hierarchy from a list of triangles
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/geom.h"
 #include "core/sandbox.h"
 
@@ -63,58 +63,57 @@ void drawNode(int curr, span<const BvhNode> allNodes, int depth = 0)
     drawNode(node->children[1], allNodes, depth + 1);
 }
 
-struct BoundingVolumeHierarchy
+Input generateInput(int /*seed*/)
 {
-  static Input generateInput()
+  Input r;
+
+  for(int k = 0; k < 20; ++k)
   {
-    Input r;
+    Triangle t;
 
-    for(int k = 0; k < 20; ++k)
+    do
     {
-      Triangle t;
+      t.a = randomPos(Vec2(-20, -10), Vec2(20, 10));
+      t.b = t.a + randomPos(Vec2(0, 0), Vec2(3, 3));
+      t.c = t.a + randomPos(Vec2(0, 0), Vec2(3, 3));
+    } while(det2d(t.b - t.a, t.c - t.a) < 0.5);
 
-      do
-      {
-        t.a = randomPos(Vec2(-20, -10), Vec2(20, 10));
-        t.b = t.a + randomPos(Vec2(0, 0), Vec2(3, 3));
-        t.c = t.a + randomPos(Vec2(0, 0), Vec2(3, 3));
-      } while(det2d(t.b - t.a, t.c - t.a) < 0.5);
-
-      r.shapes.push_back(t);
-    }
-
-    return r;
+    r.shapes.push_back(t);
   }
 
-  static Output execute(Input input)
+  return r;
+}
+
+Output execute(Input input)
+{
+  std::vector<BoundingBox> boxes;
+  boxes.reserve(input.shapes.size());
+  for(auto& obj : input.shapes)
   {
-    std::vector<BoundingBox> boxes;
-    boxes.reserve(input.shapes.size());
-    for(auto& obj : input.shapes)
-    {
-      BoundingBox box;
-      box.add(obj.a);
-      box.add(obj.b);
-      box.add(obj.c);
-      boxes.push_back(box);
-    }
-    return {computeBoundingVolumeHierarchy(boxes)};
+    BoundingBox box;
+    box.add(obj.a);
+    box.add(obj.b);
+    box.add(obj.c);
+    boxes.push_back(box);
+  }
+  return {computeBoundingVolumeHierarchy(boxes)};
+}
+
+void display(const Input& input, Output output)
+{
+  for(auto& tri : input.shapes)
+  {
+    sandbox_line(tri.a, tri.b, Blue);
+    sandbox_line(tri.b, tri.c, Blue);
+    sandbox_line(tri.c, tri.a, Blue);
   }
 
-  static void display(const Input& input, Output output)
-  {
-    for(auto& tri : input.shapes)
-    {
-      sandbox_line(tri.a, tri.b, Blue);
-      sandbox_line(tri.b, tri.c, Blue);
-      sandbox_line(tri.c, tri.a, Blue);
-    }
+  if(output.nodes.size())
+    drawNode(0, output.nodes);
+}
 
-    if(output.nodes.size())
-      drawNode(0, output.nodes);
-  }
-};
-
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<BoundingVolumeHierarchy>>()); }
-const int registered = registerApp("SpatialPartitioning/Bvh/Build", &create);
+BEGIN_ALGO("SpatialPartitioning/Bvh/Build", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 }
