@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Create a BSP tree from a random polygon
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/bounding_box.h"
 #include "core/geom.h"
 #include "core/sandbox.h"
@@ -66,90 +66,89 @@ float sign(float a)
     return -1;
 }
 
-struct BspBuild
+Polygon2f generateInput(int /*seed*/) { return createRandomPolygon2f(); }
+
+struct BspHolder
 {
-  static Polygon2f generateInput() { return createRandomPolygon2f(); }
-
-  struct BspHolder
-  {
-    std::unique_ptr<BspNode> root;
-  };
-
-  static BspHolder execute(Polygon2f input) { return {createBspTree(input)}; }
-
-  static void display(const Polygon2f& input, const BspHolder& output)
-  {
-    drawPolygon(input, Gray);
-
-    if(output.root)
-    {
-      std::vector<Hyperplane> clips;
-      drawBspNode(output.root.get(), clips);
-    }
-  }
-
-  static void drawBspNode(const BspNode* node, std::vector<Hyperplane>& clips)
-  {
-    const Vec2 rayStart = node->plane.normal * node->plane.dist;
-    const Vec2 rayDir = rotateLeft(node->plane.normal);
-
-    float enter = +100.0f;
-    float leave = -100.0f;
-
-    for(auto& clipPlane : clips)
-    {
-      const float k = intersectRayWithHyperPlane(rayStart, rayDir, clipPlane.normal, clipPlane.dist);
-
-      if(dotProduct(clipPlane.normal, rayDir) < 0)
-      {
-        if(k < enter && fabs(k) < 1.0 / 0.0)
-          enter = k;
-      }
-      else
-      {
-        if(k > leave && fabs(k) < 1.0 / 0.0)
-          leave = k;
-      }
-    }
-
-    if(fabs(enter) > 100)
-      enter = sign(enter) * 100;
-
-    if(fabs(leave) > 100)
-      leave = sign(leave) * 100;
-
-    const Color colors[] = {
-          Red,
-          Green,
-          LightBlue,
-          Yellow,
-    };
-
-    const auto beg = rayStart + rayDir * enter;
-    const auto end = rayStart + rayDir * leave;
-    const auto color = colors[clips.size() % (sizeof(colors) / sizeof(*colors))];
-
-    sandbox_line(beg, end, color);
-
-    if(node->posChild)
-    {
-      clips.push_back(node->plane);
-      drawBspNode(node->posChild.get(), clips);
-      clips.pop_back();
-    }
-
-    if(node->negChild)
-    {
-      Hyperplane reversedPlane;
-      reversedPlane.normal = node->plane.normal * -1;
-      reversedPlane.dist = node->plane.dist * -1;
-      clips.push_back(reversedPlane);
-      drawBspNode(node->negChild.get(), clips);
-      clips.pop_back();
-    }
-  }
+  std::shared_ptr<BspNode> root;
 };
 
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<BspBuild>>()); }
-const int registered = registerApp("SpatialPartitioning/Bsp/Build", &create);
+BspHolder execute(Polygon2f input) { return {createBspTree(input)}; }
+
+void drawBspNode(const BspNode* node, std::vector<Hyperplane>& clips)
+{
+  const Vec2 rayStart = node->plane.normal * node->plane.dist;
+  const Vec2 rayDir = rotateLeft(node->plane.normal);
+
+  float enter = +100.0f;
+  float leave = -100.0f;
+
+  for(auto& clipPlane : clips)
+  {
+    const float k = intersectRayWithHyperPlane(rayStart, rayDir, clipPlane.normal, clipPlane.dist);
+
+    if(dotProduct(clipPlane.normal, rayDir) < 0)
+    {
+      if(k < enter && fabs(k) < 1.0 / 0.0)
+        enter = k;
+    }
+    else
+    {
+      if(k > leave && fabs(k) < 1.0 / 0.0)
+        leave = k;
+    }
+  }
+
+  if(fabs(enter) > 100)
+    enter = sign(enter) * 100;
+
+  if(fabs(leave) > 100)
+    leave = sign(leave) * 100;
+
+  const Color colors[] = {
+        Red,
+        Green,
+        LightBlue,
+        Yellow,
+  };
+
+  const auto beg = rayStart + rayDir * enter;
+  const auto end = rayStart + rayDir * leave;
+  const auto color = colors[clips.size() % (sizeof(colors) / sizeof(*colors))];
+
+  sandbox_line(beg, end, color);
+
+  if(node->posChild)
+  {
+    clips.push_back(node->plane);
+    drawBspNode(node->posChild.get(), clips);
+    clips.pop_back();
+  }
+
+  if(node->negChild)
+  {
+    Hyperplane reversedPlane;
+    reversedPlane.normal = node->plane.normal * -1;
+    reversedPlane.dist = node->plane.dist * -1;
+    clips.push_back(reversedPlane);
+    drawBspNode(node->negChild.get(), clips);
+    clips.pop_back();
+  }
+}
+
+void display(const Polygon2f& input, const BspHolder& output)
+{
+  drawPolygon(input, Gray);
+
+  if(output.root)
+  {
+    std::vector<Hyperplane> clips;
+    drawBspNode(output.root.get(), clips);
+  }
+}
+
+BEGIN_ALGO("SpatialPartitioning/Bsp/Build", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 }
