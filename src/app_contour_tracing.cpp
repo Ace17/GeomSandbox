@@ -6,7 +6,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/sandbox.h"
 
 #include <algorithm>
@@ -230,67 +230,66 @@ auto getNextSegmentIterator(std::vector<TSegment>& segments, const TSegment& sta
   return segments.end();
 }
 
-struct ContourTracingAlgorithm
+Grid generateInput(int /*seed*/)
 {
-  static Grid generateInput()
-  {
-    Grid grid;
-    grid.fill(false);
-    for(int tileIndex = 0; tileIndex < tileCount; tileIndex++)
-      grid[tileIndex] = randomFloat(0, 1) > 0.5f;
+  Grid grid;
+  grid.fill(false);
+  for(int tileIndex = 0; tileIndex < tileCount; tileIndex++)
+    grid[tileIndex] = randomFloat(0, 1) > 0.5f;
 
-    return grid;
+  return grid;
+}
+
+std::vector<PolygonBorder> execute(Grid input)
+{
+  std::vector<TSegment> segments = fillSegments(input);
+
+  std::vector<PolygonBorder> output;
+  while(!segments.empty())
+  {
+    PolygonBorder newBorder;
+    auto segmentIt = segments.begin();
+    do
+    {
+      const TSegment currentSegment = *segmentIt;
+      const Vec2 direction = segmentDirection(currentSegment);
+      newBorder.push_back(tileRenderPosition(currentSegment.a) + direction * borderCornerOffset);
+      newBorder.push_back(tileRenderPosition(currentSegment.b) - direction * borderCornerOffset);
+      *segmentIt = segments.back();
+      segments.pop_back();
+      drawSegmentList(segments, Yellow);
+      drawBorder(newBorder, Green);
+      drawOutputBorders(output);
+      sandbox_breakpoint();
+      segmentIt = getNextSegmentIterator(segments, currentSegment);
+    } while(segmentIt != segments.end());
+
+    newBorder.push_back(newBorder.front());
+    output.push_back(newBorder);
   }
 
-  static std::vector<PolygonBorder> execute(Grid input)
+  return output;
+}
+
+void display(Grid input, const std::vector<PolygonBorder>& output)
+{
+  for(int y = 0; y < gridHeight; y++)
   {
-    std::vector<TSegment> segments = fillSegments(input);
-
-    std::vector<PolygonBorder> output;
-    while(!segments.empty())
+    for(int x = 0; x < gridWidth; x++)
     {
-      PolygonBorder newBorder;
-      auto segmentIt = segments.begin();
-      do
+      const int tileIndex = y * gridWidth + x;
+      if(input[tileIndex])
       {
-        const TSegment currentSegment = *segmentIt;
-        const Vec2 direction = segmentDirection(currentSegment);
-        newBorder.push_back(tileRenderPosition(currentSegment.a) + direction * borderCornerOffset);
-        newBorder.push_back(tileRenderPosition(currentSegment.b) - direction * borderCornerOffset);
-        *segmentIt = segments.back();
-        segments.pop_back();
-        drawSegmentList(segments, Yellow);
-        drawBorder(newBorder, Green);
-        drawOutputBorders(output);
-        sandbox_breakpoint();
-        segmentIt = getNextSegmentIterator(segments, currentSegment);
-      } while(segmentIt != segments.end());
-
-      newBorder.push_back(newBorder.front());
-      output.push_back(newBorder);
-    }
-
-    return output;
-  }
-
-  static void display(Grid input, const std::vector<PolygonBorder>& output)
-  {
-    for(int y = 0; y < gridHeight; y++)
-    {
-      for(int x = 0; x < gridWidth; x++)
-      {
-        const int tileIndex = y * gridWidth + x;
-        if(input[tileIndex])
-        {
-          drawFilledTile(x, y, LightBlue);
-        }
+        drawFilledTile(x, y, LightBlue);
       }
     }
-    drawGridLines();
-    drawOutputBorders(output);
   }
-};
+  drawGridLines();
+  drawOutputBorders(output);
+}
 
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<ContourTracingAlgorithm>>()); }
-const int reg = registerApp("ContourTracing", &create);
+BEGIN_ALGO("ContourTracing", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 } // namespace
