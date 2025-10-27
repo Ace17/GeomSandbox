@@ -57,6 +57,11 @@ static int reg = [](){ \
   static_assert(std::is_same_v<GenTraits::OutputType, InputType>); \
   algoDesc.generateInputFunc = [](int seed) { return std::any(func(seed)); };
 
+#define WITH_LOADER(func) \
+  using LoaderTraits = FuncTraits<decltype(func)>; \
+  static_assert(std::is_same_v<LoaderTraits::OutputType, InputType>); \
+  algoDesc.loadInputFunc = [](span<const uint8_t> data) { return std::any(func(data)); };
+
 #define WITH_TESTCASES(testCases_) \
   static_assert(std::is_same_v<decltype(testCases_[0].inputData), InputType>); \
   for(auto& tc : testCases_) \

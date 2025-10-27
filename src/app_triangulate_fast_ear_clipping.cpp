@@ -27,6 +27,13 @@ float clamp(float value, float min, float max) { return std::min(max, std::max(m
 
 void deserialize(std::vector<Vec2>&, span<const uint8_t> data);
 
+std::vector<Vec2> loadPolygon(span<const uint8_t> data)
+{
+  std::vector<Vec2> r;
+  deserialize(r, data);
+  return r;
+}
+
 namespace
 {
 
@@ -367,6 +374,7 @@ inline static const TestCase<std::vector<Vec2>, span<const Triangle>> AllTestCas
 BEGIN_ALGO("Triangulation/Polygon/FastEarClipping", execute)
 WITH_INPUTGEN(generateInput)
 WITH_TESTCASES(AllTestCases)
+WITH_LOADER(loadPolygon)
 WITH_DISPLAY(display)
 END_ALGO
 }

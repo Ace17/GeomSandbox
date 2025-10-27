@@ -293,7 +293,7 @@ struct AlgorithmApp2 : IApp
     try
     {
       auto data = loadFile("algo.in");
-      m_algo.loadInputFunc(data);
+      m_input = m_algo.loadInputFunc(data);
     }
     catch(const std::exception& err)
     {
