@@ -7,12 +7,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Split polygon along a straight line
 
-#include "core/algorithm_app.h"
+#include "core/algorithm_app2.h"
 #include "core/sandbox.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 #include <unordered_map>
 #include <vector>
 
@@ -400,67 +401,66 @@ Input generateRandomLegacy()
 
 using std::min, std::max;
 
-struct SplitPolygonAlgorithm
+using Input = ::Input;
+
+Input generateInput(int /*seed*/)
 {
-  using Input = ::Input;
+  typedef Input (*GenerateInputFunc)();
 
-  static Input generateInput()
+  GenerateInputFunc funcs[] = {
+        &generateRandomSpiral,
+        &generateRandomM,
+        &generateRandomLegacy,
+        &generateRandomLegacy,
+        &generateRandomLegacy,
+        &generateRandomLegacy,
+        &generateRandomLegacy,
+        &generateRandomLegacy,
+        &generateRandomLegacy,
+  };
+
+  return funcs[rand() % std::size(funcs)]();
+}
+
+std::vector<std::vector<Vec2>> execute(Input input)
+{
+  Hyperplane plane;
+  plane.normal = input.normal;
+  plane.tangent = -rotateLeft(input.normal);
+  plane.dist = input.dist;
+  return splitPolygonAlongLine(input.polygon, plane);
+}
+
+void display(const Input& input, span<const std::vector<Vec2>> output)
+{
+  drawPolygon(input.polygon, White);
+
+  for(auto& subPoly : output)
   {
-    typedef Input (*GenerateInputFunc)();
-
-    GenerateInputFunc funcs[] = {
-          &generateRandomSpiral,
-          &generateRandomM,
-          &generateRandomLegacy,
-          &generateRandomLegacy,
-          &generateRandomLegacy,
-          &generateRandomLegacy,
-          &generateRandomLegacy,
-          &generateRandomLegacy,
-          &generateRandomLegacy,
-    };
-
-    return funcs[rand() % std::size(funcs)]();
+    const int k = int(&subPoly - output.ptr);
+    drawPolygon(subPoly, IndexedColors[k % std::size(IndexedColors)]);
   }
 
-  static std::vector<std::vector<Vec2>> execute(Input input)
+  if(output.len)
   {
-    Hyperplane plane;
-    plane.normal = input.normal;
-    plane.tangent = -rotateLeft(input.normal);
-    plane.dist = input.dist;
-    return splitPolygonAlongLine(input.polygon, plane);
+    char buf[256];
+    snprintf(buf, 255, "%d polygons", (int)output.len);
+    sandbox_text({0, 10}, buf);
   }
 
-  static void display(const Input& input, span<const std::vector<Vec2>> output)
+  // draw split line
   {
-    drawPolygon(input.polygon, White);
-
-    for(auto& subPoly : output)
-    {
-      const int k = int(&subPoly - output.ptr);
-      drawPolygon(subPoly, IndexedColors[k % std::size(IndexedColors)]);
-    }
-
-    if(output.len)
-    {
-      char buf[256];
-      snprintf(buf, 255, "%d polygons", (int)output.len);
-      sandbox_text({0, 10}, buf);
-    }
-
-    // draw split line
-    {
-      Color ThinRed = {1, 0, 0, 0.5};
-      auto p = input.normal * input.dist;
-      auto t = -rotateLeft(input.normal);
-      sandbox_line(p - t * 50, p + t * 50, ThinRed);
-      sandbox_line(p, p - t * 0.2 + input.normal * 0.2, ThinRed);
-      sandbox_line(p, p - t * 0.2 - input.normal * 0.2, ThinRed);
-    }
+    Color ThinRed = {1, 0, 0, 0.5};
+    auto p = input.normal * input.dist;
+    auto t = -rotateLeft(input.normal);
+    sandbox_line(p - t * 50, p + t * 50, ThinRed);
+    sandbox_line(p, p - t * 0.2 + input.normal * 0.2, ThinRed);
+    sandbox_line(p, p - t * 0.2 - input.normal * 0.2, ThinRed);
   }
-};
+}
 
-IApp* create() { return createAlgorithmApp(std::make_unique<ConcreteAlgorithm<SplitPolygonAlgorithm>>()); }
-const int reg = registerApp("Split/Polygon", &create);
+BEGIN_ALGO("Split/Polygon", execute)
+WITH_INPUTGEN(generateInput)
+WITH_DISPLAY(display)
+END_ALGO
 }
