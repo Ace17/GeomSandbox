@@ -21,8 +21,9 @@
 #include "random.h"
 #include "random_polygon.h"
 
-void deserialize(Polygon2f& r, span<const uint8_t> data)
+Polygon2f loadPolygon2f(span<const uint8_t> data)
 {
+  Polygon2f r;
   std::string s;
   for(auto& c : data)
     s += c;
@@ -66,6 +67,7 @@ void deserialize(Polygon2f& r, span<const uint8_t> data)
       v.y *= scale.y;
     }
   }
+  return r;
 }
 
 namespace
@@ -200,6 +202,7 @@ void display(const Polygon2f& input, span<const Segment> output)
 
 BEGIN_ALGO("Triangulation/Polygon/SimpleEarClipping", execute)
 WITH_INPUTGEN(generateInput)
+WITH_LOADER(loadPolygon2f)
 WITH_DISPLAY(display)
 END_ALGO
 }
