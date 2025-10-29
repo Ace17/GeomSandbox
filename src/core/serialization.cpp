@@ -1,7 +1,7 @@
+#include <cstdint>
 #include <sstream>
 #include <vector>
 
-#include "algorithm_app.h"
 #include "bounding_box.h"
 #include "geom.h"
 
