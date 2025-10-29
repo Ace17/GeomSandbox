@@ -214,6 +214,7 @@ struct AlgorithmApp2 : IApp
     {
       finishExecutionIfNeeded();
       loadTestCase(m_testCaseCounter++);
+      m_testCaseCounter %= m_algo.testCases.size();
     }
     else if(key == Key::F4)
     {
