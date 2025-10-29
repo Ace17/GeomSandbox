@@ -31,15 +31,29 @@ Vec2 randomPosition()
   return r;
 }
 
+Vec2 randomDelta()
+{
+  Vec2 r;
+  r.x = randomFloat(-7, +7);
+  r.y = randomFloat(-7, +7);
+  return r;
+}
+
 struct SegmentIntersectionUsingSweepline
 {
   static std::vector<Vec2> generateInput()
   {
-    std::vector<Vec2> points;
-    points.resize(20);
+    const int N = 200;
 
-    for(auto& p : points)
-      p = randomPosition();
+    std::vector<Vec2> points;
+
+    for(int i=0;i < N;++i)
+    {
+      auto a = randomPosition();
+      auto b = a + randomDelta();
+      points.push_back(a);
+      points.push_back(b);
+    }
 
     return points;
   }
@@ -95,7 +109,7 @@ struct SegmentIntersectionUsingSweepline
 
     {
       for(auto& evt : events)
-        sandbox_line({-100, evt.t}, {+100, evt.t}, evt.type ? LightBlue : Gray);
+        sandbox_line({-100, evt.t}, {+100, evt.t}, Gray);
       sandbox_breakpoint();
     }
 
