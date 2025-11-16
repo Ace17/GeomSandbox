@@ -74,24 +74,16 @@ int classifySide(Vec2 a, Vec2 b, Vec2 c, Vec2 p, float segmentThickness)
   }
 }
 
-struct Intersection
+struct Contact
 {
   Vec2 pos;
-  int i, j; // segment start indices. By construction, we always have i<j.
+  int i, j; // segment start indices.
+  float ti, tj; // positions on segment i and segment j
 };
 
-std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
+std::vector<Contact> computeSelfContacts(span<const Vec2> input)
 {
-  struct Contact
-  {
-    Vec2 pos;
-    int i, j; // segment start indices.
-    float ti, tj; // positions on segment i and segment j
-  };
-
   std::vector<Contact> contacts;
-
-  const float toleranceRadius = 0.001;
 
   const int N = input.len;
 
@@ -129,8 +121,25 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
     }
   }
 
+  return contacts;
+}
+
+struct Intersection
+{
+  Vec2 pos;
+  int i, j; // segment start indices. By construction, we always have i<j.
+};
+
+std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
+{
+  std::vector<Contact> contacts = computeSelfContacts(input);
+
+  const int N = input.len;
+
   // traverse all contacts, determine real intersections
   std::vector<Intersection> r;
+
+  const float toleranceRadius = 0.001;
 
   {
     for(auto c : contacts)
