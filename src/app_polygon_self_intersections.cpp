@@ -80,16 +80,16 @@ struct Intersection
   int i, j; // segment start indices. By construction, we always have i<j.
 };
 
-struct Crossing
-{
-  Vec2 pos;
-  int i, j; // segment start indices.
-  float ti, tj; // positions on segment i and segment j
-};
-
 std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
 {
-  std::vector<Crossing> crossings;
+  struct Contact
+  {
+    Vec2 pos;
+    int i, j; // segment start indices.
+    float ti, tj; // positions on segment i and segment j
+  };
+
+  std::vector<Contact> contacts;
 
   const float toleranceRadius = 0.001;
 
@@ -114,7 +114,7 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
         const float fractionI = dotProduct(where - I0, I1 - I0) / sqrMagnitude(I1 - I0);
         const float fractionJ = dotProduct(where - J0, J1 - J0) / sqrMagnitude(J1 - J0);
 
-        crossings.push_back({where, i, j, fractionI, fractionJ});
+        contacts.push_back({where, i, j, fractionI, fractionJ});
       }
 
       {
@@ -129,11 +129,11 @@ std::vector<Intersection> computeSelfIntersections(span<const Vec2> input)
     }
   }
 
-  // traverse all crossings, determine real intersections
+  // traverse all contacts, determine real intersections
   std::vector<Intersection> r;
 
   {
-    for(auto c : crossings)
+    for(auto c : contacts)
     {
       const auto X = c.pos;
 
