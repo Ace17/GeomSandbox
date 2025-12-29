@@ -79,21 +79,13 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
   if(points.len < 3)
     return {};
 
-  // bootstrap triangulation with first triangle
+  // bootstrap triangulation with first edge
   {
     int i0 = queue.pop();
     int i1 = queue.pop();
-    int i2 = queue.pop();
-
-    // make the triangle CCW if needed
-    if(det2d(points[i1] - points[i0], points[i2] - points[i0]) < 0)
-      std::swap(i1, i2);
-
-    triangles.push_back({i0, i1, i2});
 
     hull[i0] = i1;
-    hull[i1] = i2;
-    hull[i2] = i0;
+    hull[i1] = i0;
   }
 
   int hullHead = hull.begin()->first;
