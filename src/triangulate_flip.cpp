@@ -1,4 +1,4 @@
-// Copyright (C) 2021 - Sebastien Alaiwan
+// Copyright (C) 2026 - Sebastien Alaiwan
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
@@ -127,6 +127,15 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
         hull[hullCurr] = idx;
         hullHead = idx;
 
+        for(auto& tr : triangles)
+        {
+          auto a = points[tr.a];
+          auto b = points[tr.b];
+          auto c = points[tr.c];
+          sandbox_line(a, b, Gray);
+          sandbox_line(b, c, Gray);
+          sandbox_line(c, a, Gray);
+        }
         printHull(hull, points, hullHead);
       }
 
