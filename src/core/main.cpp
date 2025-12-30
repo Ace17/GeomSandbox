@@ -317,7 +317,7 @@ struct OpenGlDrawer : IDrawer
 
   void circle(Vec2 center, float radius, Color color, float invariantRadius) override
   {
-    auto const N = 20;
+    auto const N = 40;
     Point2 PREV{};
 
     for(int i = 0; i <= N; ++i)

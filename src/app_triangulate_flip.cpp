@@ -20,7 +20,7 @@ namespace
 {
 std::vector<Vec2> generateInput(int /*seed*/)
 {
-  std::vector<Vec2> r(15);
+  std::vector<Vec2> r(10);
 
   for(auto& p : r)
     p = randomPos({-20, -10}, {20, 10});

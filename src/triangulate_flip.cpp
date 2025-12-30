@@ -13,6 +13,7 @@
 #include "core/sandbox.h"
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <vector>
 
@@ -155,9 +156,8 @@ struct HalfEdge
   int twin = -1;
 };
 
-std::vector<HalfEdge> convertToHalfEdge(span<const Vec2> points, span<const Triangle> triangles)
+std::vector<HalfEdge> convertToHalfEdge(span<const Triangle> triangles)
 {
-  (void)points;
   std::vector<HalfEdge> he;
   std::map<std::pair<int, int>, int> pointToEdge;
 
@@ -193,48 +193,121 @@ std::vector<HalfEdge> convertToHalfEdge(span<const Vec2> points, span<const Tria
   return he;
 }
 
+struct Circle
+{
+  Vec2 center;
+  float sqrRadius;
+};
+
+Circle computeCircumcircle(Vec2 c0, Vec2 c1, Vec2 c2)
+{
+  // compute both perpendicular bissectors
+  const Vec2 A = (c0 + c1) * 0.5;
+  const Vec2 tA = c1 - c0; // tangent
+
+  const Vec2 B = (c0 + c2) * 0.5;
+  const Vec2 nB = rotateLeft(c2 - c0); // normal
+
+  // Let I be the intersection of both bissectors.
+  // We know that:
+  // 1) I = B + k * nB
+  // 2) AI.tA = 0
+  // So:
+  // k = - AB.tA / nB.tA
+
+  const auto k = -((B - A) * tA) / (nB * tA);
+
+  const auto I = B + nB * k;
+
+  Circle r;
+  r.center = I;
+  r.sqrRadius = (I - c0) * (I - c0);
+
+  return r;
+}
+
 std::vector<Edge> flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
 {
   std::vector<int> stack;
   stack.reserve(he.len);
 
   for(int i = 0; i < (int)he.len; ++i)
-    if(i > he[i].twin) // of both twins, only push one
-      stack.push_back(i);
+  {
+    if(he[i].twin == -1)
+      continue;
+
+    stack.push_back(i);
+  }
 
   while(!stack.empty())
   {
-    // |              .             |
+    // |              B             |
     // |             /|\            |
     // |         L1 / | \ R2        |
     // |           /  |  \          |
-    // |          /   |   \         |
+    // |        C /   |   \D        |
     // |          \  E|   /         |
     // |           \  |  /          |
     // |         L2 \ | / R1        |
     // |             \|/            |
-    // |              .             |
-    const auto E = stack.back();
+    // |              A             |
+    const int E = stack.back();
     stack.pop_back();
+
+    const int twinE = he[E].twin;
 
     const auto L1 = he[E].next;
     const auto L2 = he[L1].next;
 
-    const auto R1 = he[he[E].twin].next;
-    const auto R2 = he[L1].next;
+    const auto R1 = he[twinE].next;
+    const auto R2 = he[R1].next;
 
-    (void)L1;
-    (void)L2;
-    (void)R1;
-    (void)R2;
+    const int A = he[E].point;
+    const int B = he[L1].point;
+    const int C = he[L2].point;
+    const int D = he[R2].point;
+
+    const Circle leftCircle = computeCircumcircle(points[A], points[B], points[C]);
+
+    auto delta = points[D] - leftCircle.center;
+    if(dotProduct(delta, delta) < leftCircle.sqrRadius)
+    {
+      for(auto edge : he)
+        sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
+
+      sandbox_line(points[he[E].point], points[he[he[E].next].point], Green);
+      sandbox_circle(leftCircle.center, sqrt(leftCircle.sqrRadius), Red);
+      sandbox_circle(points[D], 0, Red, 8.0);
+      sandbox_breakpoint();
+
+      // flip edge E
+      he[E].point = C;
+      he[E].next = R2;
+
+      he[twinE].point = D;
+      he[twinE].next = L2;
+
+      he[L2].next = R1;
+      he[R1].next = twinE;
+      he[R2].next = L1;
+      he[L1].next = E;
+    }
+
+    sandbox_circle(leftCircle.center, sqrt(leftCircle.sqrRadius), Green);
 
     for(auto edge : he)
-      sandbox_line(points[edge.point], points[he[edge.next].point]);
+      sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
+
+    sandbox_line(points[he[E].point], points[he[he[E].next].point], Green);
 
     sandbox_breakpoint();
   }
 
   std::vector<Edge> r;
+
+  for(auto edge : he)
+    sandbox_line(points[edge.point], points[he[edge.next].point], Yellow);
+  sandbox_breakpoint();
 
   return r;
 }
@@ -243,7 +316,7 @@ std::vector<Edge> flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
 std::vector<Edge> triangulate_Flip(span<const Vec2> points)
 {
   auto triangles = createBasicTriangulation(points);
-  auto he = convertToHalfEdge(points, triangles);
+  auto he = convertToHalfEdge(triangles);
 
   return flipTriangulation(points, he);
 }
