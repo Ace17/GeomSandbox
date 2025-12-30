@@ -132,8 +132,8 @@ void display(const Segment& input, const Output& output)
       int colA = floor(point.x / CELL_SIZE.x - 0.5f);
       int colB = floor(point.x / CELL_SIZE.x + 0.5f);
 
-      Vec2 posA = { (colA + 0.75f) * CELL_SIZE.x, (row + 0.5f) * CELL_SIZE.y };
-      Vec2 posB = { (colB + 0.25f) * CELL_SIZE.x, (row + 0.5f) * CELL_SIZE.y };
+      Vec2 posA = {(colA + 0.75f) * CELL_SIZE.x, (row + 0.5f) * CELL_SIZE.y};
+      Vec2 posB = {(colB + 0.25f) * CELL_SIZE.x, (row + 0.5f) * CELL_SIZE.y};
       sandbox_line(posA, posB, Green);
     }
     else
@@ -147,8 +147,8 @@ void display(const Segment& input, const Output& output)
       int rowA = floor(point.y / CELL_SIZE.y - 0.5f);
       int rowB = floor(point.y / CELL_SIZE.y + 0.5f);
 
-      Vec2 posA = { (col + 0.5f) * CELL_SIZE.x, (rowA + 0.75f) * CELL_SIZE.y };
-      Vec2 posB = { (col + 0.5f) * CELL_SIZE.x, (rowB + 0.25f) * CELL_SIZE.y };
+      Vec2 posA = {(col + 0.5f) * CELL_SIZE.x, (rowA + 0.75f) * CELL_SIZE.y};
+      Vec2 posB = {(col + 0.5f) * CELL_SIZE.x, (rowB + 0.25f) * CELL_SIZE.y};
       sandbox_line(posA, posB, Green);
     }
   }

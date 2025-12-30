@@ -20,7 +20,7 @@ namespace
 {
 float det2d(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
 
-void printHull(std::map<int, int> hull, span<const Vec2> points, int head)
+void printHull(const std::vector<int>& hull, span<const Vec2> points, int head)
 {
   int curr = head;
 
@@ -74,7 +74,8 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
   span<const int> queue = order;
 
   std::vector<Triangle> triangles;
-  std::map<int, int> hull;
+  std::vector<int> hull(points.len);
+  int hullHead = 0;
 
   if(points.len < 3)
     return {};
@@ -86,9 +87,8 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
 
     hull[i0] = i1;
     hull[i1] = i0;
+    hullHead = i0;
   }
-
-  int hullHead = hull.begin()->first;
 
   printHull(hull, points, hullHead);
 
