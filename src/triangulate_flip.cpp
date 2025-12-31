@@ -5,7 +5,9 @@
 // License, or (at your option) any later version.
 
 ///////////////////////////////////////////////////////////////////////////////
-// Triangulation, Flip algorithm
+// Delaunay Triangulation, Flip algorithm:
+// 1) build a basic triangulation by sweeping the input points left-to-right
+// 2) flip the edges where needed, until we're Delaunay conformant
 
 #include "triangulate_flip.h"
 
