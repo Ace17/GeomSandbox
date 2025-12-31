@@ -20,7 +20,7 @@ namespace
 {
 std::vector<Vec2> generateInput(int /*seed*/)
 {
-  std::vector<Vec2> r(10);
+  std::vector<Vec2> r(100);
 
   for(auto& p : r)
     p = randomPos({-20, -10}, {20, 10});
@@ -41,10 +41,10 @@ void display(span<const Vec2> input, span<const Edge> output)
 
   for(auto& p : input)
   {
-    sandbox_rect(p - Vec2(0.2, 0.2), Vec2(0.4, 0.4));
+    sandbox_rect(p, {}, White, Vec2(4, 4));
     char buffer[16];
     sprintf(buffer, "%d", idx);
-    sandbox_text(p + Vec2(0.3, 0), buffer, Red);
+    sandbox_text(p, buffer, Red, Vec2(0.8, 0));
     idx++;
   }
 

@@ -229,6 +229,7 @@ Circle computeCircumcircle(Vec2 c0, Vec2 c1, Vec2 c2)
 
 void flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
 {
+  int statFlipCount = 0;
   std::set<int> stack;
 
   for(int i = 0; i < (int)he.len; ++i)
@@ -298,6 +299,8 @@ void flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
       stack.insert(R1);
       stack.insert(L2);
       stack.insert(R2);
+
+      ++statFlipCount;
     }
 
     sandbox_circle(leftCircle.center, sqrt(leftCircle.sqrRadius), Green);
@@ -312,6 +315,7 @@ void flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
 
   for(auto edge : he)
     sandbox_line(points[edge.point], points[he[edge.next].point], Yellow);
+  sandbox_printf("%d flips\n", statFlipCount);
   sandbox_breakpoint();
 }
 } // namespace
