@@ -315,6 +315,16 @@ void flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
 
     for(auto edge : he)
       sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
+    for(auto edgeIndex : stack)
+    {
+      if(edgeIndex == -1)
+      {
+        sandbox_text({}, "-1 edge", Red);
+        continue;
+      }
+      auto edge = he[edgeIndex];
+      sandbox_line(points[edge.point], points[he[edge.next].point], LightBlue);
+    }
 
     sandbox_line(points[he[E].point], points[he[he[E].next].point], Green);
 
@@ -336,7 +346,7 @@ std::vector<Edge> triangulate_Flip(span<const Vec2> points)
   flipTriangulation(points, he);
 
   std::vector<Edge> r;
-  for(int i = 0;i < (int)he.size();++i)
+  for(int i = 0; i < (int)he.size(); ++i)
   {
     auto& edge = he[i];
     if(i > edge.twin)
