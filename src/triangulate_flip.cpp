@@ -249,16 +249,16 @@ void flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
 
   while(!stack.empty())
   {
-    // |              B             |
-    // |             /|\            |
-    // |         L1 / | \ R2        |
-    // |           /  |  \          |
-    // |        C /   |   \D        |
-    // |          \  E|   /         |
-    // |           \  |  /          |
-    // |         L2 \ | / R1        |
-    // |             \|/            |
-    // |              A             |
+    // |              B             |          |              B             |
+    // |             /|\            |          |             / \            |
+    // |         L1 / | \ R2        |          |         L1 /   \ R2        |
+    // |           /  |  \          |          |           /     \          |
+    // |        C /   |   \D        |   ==>    |        C /___E___\D        |
+    // |          \  E|Et /         |          |          \   Et  /         |
+    // |           \  |  /          |          |           \     /          |
+    // |         L2 \ | / R1        |          |         L2 \   / R1        |
+    // |             \|/            |          |             \ /            |
+    // |              A             |          |              A             |
     const int E = *stack.begin();
     stack.erase(stack.begin());
 
@@ -302,6 +302,7 @@ void flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
       he[R2].next = L1;
       he[L1].next = E;
 
+      // repush edges for re-evaluation
       stack.insert(L1);
       stack.insert(R1);
       stack.insert(L2);
