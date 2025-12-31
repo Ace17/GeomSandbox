@@ -37,16 +37,8 @@ std::vector<Edge> execute(std::vector<Vec2> input)
 
 void display(span<const Vec2> input, span<const Edge> output)
 {
-  int idx = 0;
-
   for(auto& p : input)
-  {
     sandbox_rect(p, {}, White, Vec2(4, 4));
-    char buffer[16];
-    sprintf(buffer, "%d", idx);
-    sandbox_text(p, buffer, Red, Vec2(0.8, 0));
-    idx++;
-  }
 
   for(auto& edge : output)
     sandbox_line(input[edge.a], input[edge.b], Green);
