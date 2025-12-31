@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 #include <map>
+#include <set>
 #include <vector>
 
 namespace
@@ -226,17 +227,16 @@ Circle computeCircumcircle(Vec2 c0, Vec2 c1, Vec2 c2)
   return r;
 }
 
-std::vector<Edge> flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
+void flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
 {
-  std::vector<int> stack;
-  stack.reserve(he.len);
+  std::set<int> stack;
 
   for(int i = 0; i < (int)he.len; ++i)
   {
     if(he[i].twin == -1)
       continue;
 
-    stack.push_back(i);
+    stack.insert(i);
   }
 
   while(!stack.empty())
@@ -251,10 +251,12 @@ std::vector<Edge> flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
     // |         L2 \ | / R1        |
     // |             \|/            |
     // |              A             |
-    const int E = stack.back();
-    stack.pop_back();
+    const int E = *stack.begin();
+    stack.erase(stack.begin());
 
     const int twinE = he[E].twin;
+    if(twinE == -1)
+      continue;
 
     const auto L1 = he[E].next;
     const auto L2 = he[L1].next;
@@ -291,6 +293,11 @@ std::vector<Edge> flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
       he[R1].next = twinE;
       he[R2].next = L1;
       he[L1].next = E;
+
+      stack.insert(L1);
+      stack.insert(R1);
+      stack.insert(L2);
+      stack.insert(R2);
     }
 
     sandbox_circle(leftCircle.center, sqrt(leftCircle.sqrRadius), Green);
@@ -303,13 +310,9 @@ std::vector<Edge> flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
     sandbox_breakpoint();
   }
 
-  std::vector<Edge> r;
-
   for(auto edge : he)
     sandbox_line(points[edge.point], points[he[edge.next].point], Yellow);
   sandbox_breakpoint();
-
-  return r;
 }
 } // namespace
 
@@ -318,5 +321,15 @@ std::vector<Edge> triangulate_Flip(span<const Vec2> points)
   auto triangles = createBasicTriangulation(points);
   auto he = convertToHalfEdge(triangles);
 
-  return flipTriangulation(points, he);
+  flipTriangulation(points, he);
+
+  std::vector<Edge> r;
+  for(int i = 0;i < (int)he.size();++i)
+  {
+    auto& edge = he[i];
+    if(i > edge.twin)
+      r.push_back({edge.point, he[edge.next].point});
+  }
+
+  return r;
 }
