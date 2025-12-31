@@ -20,6 +20,8 @@
 
 namespace
 {
+const bool EnableTrace = true;
+
 float det2d(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
 
 void printHull(const std::vector<int>& hull, span<const Vec2> points, int head)
@@ -92,7 +94,8 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
     hullHead = i0;
   }
 
-  printHull(hull, points, hullHead);
+  if(EnableTrace)
+    printHull(hull, points, hullHead);
 
   while(queue.len > 0)
   {
@@ -129,16 +132,20 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
         hull[hullCurr] = idx;
         hullHead = idx;
 
-        for(auto& tr : triangles)
+        if(EnableTrace)
         {
-          auto a = points[tr.a];
-          auto b = points[tr.b];
-          auto c = points[tr.c];
-          sandbox_line(a, b, Gray);
-          sandbox_line(b, c, Gray);
-          sandbox_line(c, a, Gray);
+          for(auto& tr : triangles)
+          {
+            auto a = points[tr.a];
+            auto b = points[tr.b];
+            auto c = points[tr.c];
+            sandbox_line(a, b, Gray);
+            sandbox_line(b, c, Gray);
+            sandbox_line(c, a, Gray);
+          }
+
+          printHull(hull, points, hullHead);
         }
-        printHull(hull, points, hullHead);
       }
 
       hullCurr = hullNext;
@@ -282,13 +289,16 @@ void flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
     auto delta = points[D] - leftCircle.center;
     if(dotProduct(delta, delta) < leftCircle.sqrRadius)
     {
-      for(auto edge : he)
-        sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
+      if(EnableTrace)
+      {
+        for(auto edge : he)
+          sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
 
-      sandbox_line(points[he[E].point], points[he[he[E].next].point], Green);
-      sandbox_circle(leftCircle.center, sqrt(leftCircle.sqrRadius), Red);
-      sandbox_circle(points[D], 0, Red, 8.0);
-      sandbox_breakpoint();
+        sandbox_line(points[he[E].point], points[he[he[E].next].point], Green);
+        sandbox_circle(leftCircle.center, sqrt(leftCircle.sqrRadius), Red);
+        sandbox_circle(points[D], 0, Red, 8.0);
+        sandbox_breakpoint();
+      }
 
       // flip edge E
       he[E].point = C;
@@ -311,30 +321,36 @@ void flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
       ++statFlipCount;
     }
 
-    sandbox_circle(leftCircle.center, sqrt(leftCircle.sqrRadius), Green);
-
-    for(auto edge : he)
-      sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
-    for(auto edgeIndex : stack)
+    if(EnableTrace)
     {
-      if(edgeIndex == -1)
+      sandbox_circle(leftCircle.center, sqrt(leftCircle.sqrRadius), Green);
+
+      for(auto edge : he)
+        sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
+      for(auto edgeIndex : stack)
       {
-        sandbox_text({}, "-1 edge", Red);
-        continue;
+        if(edgeIndex == -1)
+        {
+          sandbox_text({}, "-1 edge", Red);
+          continue;
+        }
+        auto edge = he[edgeIndex];
+        sandbox_line(points[edge.point], points[he[edge.next].point], LightBlue);
       }
-      auto edge = he[edgeIndex];
-      sandbox_line(points[edge.point], points[he[edge.next].point], LightBlue);
+
+      sandbox_line(points[he[E].point], points[he[he[E].next].point], Green);
+
+      sandbox_breakpoint();
     }
-
-    sandbox_line(points[he[E].point], points[he[he[E].next].point], Green);
-
-    sandbox_breakpoint();
   }
 
-  for(auto edge : he)
-    sandbox_line(points[edge.point], points[he[edge.next].point], Yellow);
-  sandbox_printf("%d flips\n", statFlipCount);
-  sandbox_breakpoint();
+  if(EnableTrace)
+  {
+    for(auto edge : he)
+      sandbox_line(points[edge.point], points[he[edge.next].point], Yellow);
+    sandbox_printf("%d flips\n", statFlipCount);
+    sandbox_breakpoint();
+  }
 }
 } // namespace
 
