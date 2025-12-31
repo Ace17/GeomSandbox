@@ -186,6 +186,13 @@ std::vector<HalfEdge> convertToHalfEdge(span<const Triangle> triangles)
     he[e1].twin = findHalfEdge(t.c, t.b);
     he[e2].twin = findHalfEdge(t.a, t.c);
 
+    if(he[e0].twin != -1)
+      he[he[e0].twin].twin = e0;
+    if(he[e1].twin != -1)
+      he[he[e1].twin].twin = e1;
+    if(he[e2].twin != -1)
+      he[he[e2].twin].twin = e2;
+
     pointToEdge[{t.a, t.b}] = e0;
     pointToEdge[{t.b, t.c}] = e1;
     pointToEdge[{t.c, t.a}] = e2;
