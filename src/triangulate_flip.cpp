@@ -331,12 +331,7 @@ void flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
         sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
       for(auto edgeIndex : stack)
       {
-        if(edgeIndex == -1)
-        {
-          sandbox_text({}, "-1 edge", Red);
-          continue;
-        }
-        auto edge = he[edgeIndex];
+        const HalfEdge& edge = he[edgeIndex];
         sandbox_line(points[edge.point], points[he[edge.next].point], LightBlue);
       }
 
