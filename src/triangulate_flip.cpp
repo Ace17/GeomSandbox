@@ -43,11 +43,6 @@ void printHull(const std::vector<int>& hull, span<const Vec2> points, int head)
   sandbox_breakpoint();
 }
 
-struct Triangle
-{
-  int a, b, c;
-};
-
 std::vector<int> sortPointsFromLeftToRight(span<const Vec2> points)
 {
   std::vector<int> order(points.len);
@@ -74,12 +69,31 @@ std::vector<int> sortPointsFromLeftToRight(span<const Vec2> points)
   return order;
 }
 
-std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
+struct HalfEdge
 {
+  int point;
+  int next;
+  int twin = -1;
+};
+
+std::vector<HalfEdge> createBasicTriangulation(span<const Vec2> points)
+{
+  std::vector<HalfEdge> he;
+  std::map<std::pair<int, int>, int> pointToEdge;
+
+  auto findHalfEdge = [&](int a, int b)
+  {
+    auto i = pointToEdge.find({a, b});
+
+    if(i == pointToEdge.end())
+      return -1;
+
+    return i->second;
+  };
+
   const auto order = sortPointsFromLeftToRight(points);
   span<const int> queue = order;
 
-  std::vector<Triangle> triangles;
   std::vector<int> hull(points.len);
   int hullHead = 0;
 
@@ -128,7 +142,34 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
 
       if(det2d(p - a, b - a) > 0.001)
       {
-        triangles.push_back({hullCurr, idx, hullNext});
+        {
+          const int p0 = hullCurr;
+          const int p1 = idx;
+          const int p2 = hullNext;
+
+          const auto e0 = (int)he.size() + 0;
+          const auto e1 = (int)he.size() + 1;
+          const auto e2 = (int)he.size() + 2;
+          he.push_back({p0, e1});
+          he.push_back({p1, e2});
+          he.push_back({p2, e0});
+
+          // search for a twin for e0 (=the edge that links [p0 -> p1])
+          he[e0].twin = findHalfEdge(p1, p0);
+          he[e1].twin = findHalfEdge(p2, p1);
+          he[e2].twin = findHalfEdge(p0, p2);
+
+          if(he[e0].twin != -1)
+            he[he[e0].twin].twin = e0;
+          if(he[e1].twin != -1)
+            he[he[e1].twin].twin = e1;
+          if(he[e2].twin != -1)
+            he[he[e2].twin].twin = e2;
+
+          pointToEdge[{p0, p1}] = e0;
+          pointToEdge[{p1, p2}] = e1;
+          pointToEdge[{p2, p0}] = e2;
+        }
 
         hull[idx] = hullNext;
         hull[hullCurr] = idx;
@@ -136,16 +177,8 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
 
         if(EnableTrace)
         {
-          for(auto& tr : triangles)
-          {
-            auto a = points[tr.a];
-            auto b = points[tr.b];
-            auto c = points[tr.c];
-            sandbox_line(a, b, Gray);
-            sandbox_line(b, c, Gray);
-            sandbox_line(c, a, Gray);
-          }
-
+          for(auto edge : he)
+            sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
           printHull(hull, points, hullHead);
         }
       }
@@ -154,57 +187,6 @@ std::vector<Triangle> createBasicTriangulation(span<const Vec2> points)
     } while(hullCurr != hullFirst);
 
     queue += 1;
-  }
-
-  return triangles;
-}
-
-struct HalfEdge
-{
-  int point;
-  int next;
-  int twin = -1;
-};
-
-std::vector<HalfEdge> convertToHalfEdge(span<const Triangle> triangles)
-{
-  std::vector<HalfEdge> he;
-  std::map<std::pair<int, int>, int> pointToEdge;
-
-  auto findHalfEdge = [&](int a, int b)
-  {
-    auto i = pointToEdge.find({a, b});
-
-    if(i == pointToEdge.end())
-      return -1;
-
-    return i->second;
-  };
-
-  for(auto& t : triangles)
-  {
-    const auto e0 = (int)he.size() + 0;
-    const auto e1 = (int)he.size() + 1;
-    const auto e2 = (int)he.size() + 2;
-    he.push_back({t.a, e1});
-    he.push_back({t.b, e2});
-    he.push_back({t.c, e0});
-
-    // search for a twin for e0 (=the edge that links [t.a -> t.b])
-    he[e0].twin = findHalfEdge(t.b, t.a);
-    he[e1].twin = findHalfEdge(t.c, t.b);
-    he[e2].twin = findHalfEdge(t.a, t.c);
-
-    if(he[e0].twin != -1)
-      he[he[e0].twin].twin = e0;
-    if(he[e1].twin != -1)
-      he[he[e1].twin].twin = e1;
-    if(he[e2].twin != -1)
-      he[he[e2].twin].twin = e2;
-
-    pointToEdge[{t.a, t.b}] = e0;
-    pointToEdge[{t.b, t.c}] = e1;
-    pointToEdge[{t.c, t.a}] = e2;
   }
 
   return he;
@@ -353,8 +335,7 @@ void flipTriangulation(span<const Vec2> points, span<HalfEdge> he)
 
 std::vector<Edge> triangulate_Flip(span<const Vec2> points)
 {
-  auto triangles = createBasicTriangulation(points);
-  auto he = convertToHalfEdge(triangles);
+  std::vector<HalfEdge> he = createBasicTriangulation(points);
 
   flipTriangulation(points, he);
 
