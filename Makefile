@@ -79,6 +79,7 @@ SRCS+=\
 			src/random_polygon.cpp\
 			src/split_polygon.cpp\
 			src/split_polyhedron.cpp\
+			src/triangulate_basic.cpp\
 			src/triangulate_bowyerwatson.cpp\
 			src/triangulate_flip.cpp\
 
