@@ -10,7 +10,10 @@
 #include "core/algorithm_app2.h"
 #include "core/sandbox.h"
 
+#include <algorithm>
+#include <cassert>
 #include <cstdio> // sprintf
+#include <cstring>
 #include <vector>
 
 #include "random.h"
@@ -44,8 +47,39 @@ void display(span<const Vec2> input, span<const Edge> output)
     sandbox_line(input[edge.a], input[edge.b], Green);
 }
 
+bool sameEdges(std::vector<Edge> a, span<const Edge> b)
+{
+  if(a.size() != b.len)
+    return false;
+  std::vector<Edge> c(b.begin(), b.end());
+  auto byLexicographicalOrder = [](Edge p, Edge q)
+  {
+    if(p.a != q.a)
+      return p.a < q.a;
+
+    return p.b < q.b;
+  };
+  std::sort(c.begin(), c.end(), byLexicographicalOrder);
+  return memcmp(a.data(), b.ptr, sizeof(Edge) * a.size()) == 0;
+}
+
+const TestCase<std::vector<Vec2>, span<const Edge>> AllTestCases[] = {
+      {
+            "Basic",
+            {
+                  {0, 0},
+                  {8, 0},
+                  {0, 8},
+            },
+            [](const span<const Edge>& edges) {
+              assert(sameEdges({{0, 1}, {1, 2}, {2, 0}}, edges));
+            },
+      },
+};
+
 BEGIN_ALGO("Triangulation/Points/Flip", execute)
 WITH_INPUTGEN(generateInput)
+WITH_TESTCASES(AllTestCases)
 WITH_DISPLAY(display)
 END_ALGO
 } // namespace
