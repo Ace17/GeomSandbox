@@ -108,18 +108,6 @@ std::vector<HalfEdge> createBasicTriangulation(span<const Vec2> points)
     const int idx = queue[0];
     const auto p = points[idx];
 
-    // recompute hullHead so its on the left of the hull
-    while(1)
-    {
-      auto a = points[hullHead];
-      auto b = points[hull[hullHead]];
-
-      if(det2d(p - a, b - a) <= 0)
-        break;
-
-      hullHead = hull[hullHead];
-    }
-
     const int hullFirst = hullHead;
     int hullCurr = hullFirst;
 
@@ -163,7 +151,6 @@ std::vector<HalfEdge> createBasicTriangulation(span<const Vec2> points)
 
         hull[idx] = hullNext;
         hull[hullCurr] = idx;
-        hullHead = idx;
 
         if(EnableTrace)
         {
