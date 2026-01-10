@@ -172,11 +172,11 @@ std::vector<HalfEdge> createBasicTriangulation(span<const Vec2> points)
         pointToEdge[{p2, p0}] = e2;
       }
 
-      hull[idx] = hullNext;
-      hull[hullCurr] = idx;
-
       hullCurr = hullNext;
     }
+
+    hull[arcFirst] = idx;
+    hull[idx] = arcLast;
 
     if(EnableTrace)
     {
