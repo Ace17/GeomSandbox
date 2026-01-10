@@ -34,8 +34,6 @@ void printHull(const std::vector<int>& hull, span<const Vec2> points, int head)
 
   sandbox_line(points[head] + Vec2(-1, -1), points[head] + Vec2(+1, +1));
   sandbox_line(points[head] + Vec2(-1, +1), points[head] + Vec2(+1, -1));
-
-  sandbox_breakpoint();
 }
 
 std::vector<int> sortPointsFromLeftToRight(span<const Vec2> points)
@@ -101,15 +99,23 @@ std::vector<HalfEdge> createBasicTriangulation(span<const Vec2> points)
   }
 
   if(EnableTrace)
+  {
     printHull(hull, points, hullHead);
+    sandbox_breakpoint();
+  }
 
   while(queue.len > 0)
   {
-    const int idx = queue[0];
+    const int idx = queue.pop();
     const auto p = points[idx];
 
     const int hullFirst = hullHead;
     int hullCurr = hullFirst;
+
+    int arcFirst = -1;
+    int arcLast = -1;
+
+    printHull(hull, points, hullHead);
 
     do
     {
@@ -120,50 +126,65 @@ std::vector<HalfEdge> createBasicTriangulation(span<const Vec2> points)
 
       if(det2d(p - a, b - a) > 0.001)
       {
-        {
-          const int p0 = hullCurr;
-          const int p1 = idx;
-          const int p2 = hullNext;
+        if(arcFirst == -1)
+          arcFirst = hullCurr;
+        arcLast = hullNext;
 
-          const auto e0 = (int)he.size() + 0;
-          const auto e1 = (int)he.size() + 1;
-          const auto e2 = (int)he.size() + 2;
-          he.push_back({p0, e1});
-          he.push_back({p1, e2});
-          he.push_back({p2, e0});
-
-          // search for a twin for e0 (=the edge that links [p0 -> p1])
-          he[e0].twin = findHalfEdge(p1, p0);
-          he[e1].twin = findHalfEdge(p2, p1);
-          he[e2].twin = findHalfEdge(p0, p2);
-
-          if(he[e0].twin != -1)
-            he[he[e0].twin].twin = e0;
-          if(he[e1].twin != -1)
-            he[he[e1].twin].twin = e1;
-          if(he[e2].twin != -1)
-            he[he[e2].twin].twin = e2;
-
-          pointToEdge[{p0, p1}] = e0;
-          pointToEdge[{p1, p2}] = e1;
-          pointToEdge[{p2, p0}] = e2;
-        }
-
-        hull[idx] = hullNext;
-        hull[hullCurr] = idx;
-
-        if(EnableTrace)
-        {
-          for(auto edge : he)
-            sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
-          printHull(hull, points, hullHead);
-        }
+        sandbox_line(a, b, Orange);
       }
 
       hullCurr = hullNext;
     } while(hullCurr != hullFirst);
 
-    queue += 1;
+    sandbox_circle(p, 0, Orange, 8);
+    sandbox_breakpoint();
+
+    hullCurr = arcFirst;
+    while(hullCurr != arcLast)
+    {
+      const int hullNext = hull[hullCurr];
+      {
+        const int p0 = hullCurr;
+        const int p1 = idx;
+        const int p2 = hullNext;
+
+        const auto e0 = (int)he.size() + 0;
+        const auto e1 = (int)he.size() + 1;
+        const auto e2 = (int)he.size() + 2;
+        he.push_back({p0, e1});
+        he.push_back({p1, e2});
+        he.push_back({p2, e0});
+
+        // search for a twin for e0 (=the edge that links [p0 -> p1])
+        he[e0].twin = findHalfEdge(p1, p0);
+        he[e1].twin = findHalfEdge(p2, p1);
+        he[e2].twin = findHalfEdge(p0, p2);
+
+        if(he[e0].twin != -1)
+          he[he[e0].twin].twin = e0;
+        if(he[e1].twin != -1)
+          he[he[e1].twin].twin = e1;
+        if(he[e2].twin != -1)
+          he[he[e2].twin].twin = e2;
+
+        pointToEdge[{p0, p1}] = e0;
+        pointToEdge[{p1, p2}] = e1;
+        pointToEdge[{p2, p0}] = e2;
+      }
+
+      hull[idx] = hullNext;
+      hull[hullCurr] = idx;
+
+      hullCurr = hullNext;
+    }
+
+    if(EnableTrace)
+    {
+      for(auto edge : he)
+        sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
+      printHull(hull, points, hullHead);
+      sandbox_breakpoint();
+    }
   }
 
   return he;
