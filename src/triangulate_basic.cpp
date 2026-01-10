@@ -142,37 +142,34 @@ std::vector<HalfEdge> createBasicTriangulation(span<const Vec2> points)
     hullCurr = arcFirst;
     while(hullCurr != arcLast)
     {
-      const int hullNext = hull[hullCurr];
-      {
-        const int p0 = hullCurr;
-        const int p1 = idx;
-        const int p2 = hullNext;
+      const int p0 = hullCurr;
+      const int p1 = idx;
+      const int p2 = hull[hullCurr];
 
-        const auto e0 = (int)he.size() + 0;
-        const auto e1 = (int)he.size() + 1;
-        const auto e2 = (int)he.size() + 2;
-        he.push_back({p0, e1});
-        he.push_back({p1, e2});
-        he.push_back({p2, e0});
+      const auto e0 = (int)he.size() + 0;
+      const auto e1 = (int)he.size() + 1;
+      const auto e2 = (int)he.size() + 2;
+      he.push_back({p0, e1});
+      he.push_back({p1, e2});
+      he.push_back({p2, e0});
 
-        // search for a twin for e0 (=the edge that links [p0 -> p1])
-        he[e0].twin = findHalfEdge(p1, p0);
-        he[e1].twin = findHalfEdge(p2, p1);
-        he[e2].twin = findHalfEdge(p0, p2);
+      // search for a twin for e0 (=the edge that links [p0 -> p1])
+      he[e0].twin = findHalfEdge(p1, p0);
+      he[e1].twin = findHalfEdge(p2, p1);
+      he[e2].twin = findHalfEdge(p0, p2);
 
-        if(he[e0].twin != -1)
-          he[he[e0].twin].twin = e0;
-        if(he[e1].twin != -1)
-          he[he[e1].twin].twin = e1;
-        if(he[e2].twin != -1)
-          he[he[e2].twin].twin = e2;
+      if(he[e0].twin != -1)
+        he[he[e0].twin].twin = e0;
+      if(he[e1].twin != -1)
+        he[he[e1].twin].twin = e1;
+      if(he[e2].twin != -1)
+        he[he[e2].twin].twin = e2;
 
-        pointToEdge[{p0, p1}] = e0;
-        pointToEdge[{p1, p2}] = e1;
-        pointToEdge[{p2, p0}] = e2;
-      }
+      pointToEdge[{p0, p1}] = e0;
+      pointToEdge[{p1, p2}] = e1;
+      pointToEdge[{p2, p0}] = e2;
 
-      hullCurr = hullNext;
+      hullCurr = hull[hullCurr];
     }
 
     hull[arcFirst] = idx;
