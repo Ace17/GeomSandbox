@@ -60,7 +60,7 @@ bool sameEdges(std::vector<Edge> a, span<const Edge> b)
     return p.b < q.b;
   };
   std::sort(c.begin(), c.end(), byLexicographicalOrder);
-  return memcmp(a.data(), b.ptr, sizeof(Edge) * a.size()) == 0;
+  return memcmp(a.data(), c.data(), sizeof(Edge) * a.size()) == 0;
 }
 
 const TestCase<std::vector<Vec2>, span<const Edge>> AllTestCases[] = {
