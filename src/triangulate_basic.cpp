@@ -12,6 +12,7 @@
 #include "core/sandbox.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <map>
 #include <vector>
 
@@ -21,19 +22,102 @@ const bool EnableTrace = true;
 
 float det2d(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
 
-void printHull(const std::vector<int>& hull, span<const Vec2> points, int head)
+void printPolygon(span<const Vec2> points, float margin)
 {
-  int curr = head;
+  const int N = (int)points.len;
 
-  do
+  std::vector<Vec2> insetTx(N);
+
+  for(int i = 0; i < N; ++i)
   {
-    int next = hull[curr];
-    sandbox_line(points[curr], points[next]);
-    curr = next;
-  } while(curr != head);
+    const Vec2 pPrev = points[(i - 1 + N) % N];
+    const Vec2 pCurr = points[i];
+    const Vec2 pNext = points[(i + 1) % N];
 
-  sandbox_line(points[head] + Vec2(-1, -1), points[head] + Vec2(+1, +1));
-  sandbox_line(points[head] + Vec2(-1, +1), points[head] + Vec2(+1, -1));
+    const Vec2 N1 = normalize(rotateLeft(pCurr - pPrev));
+    const Vec2 N2 = normalize(rotateLeft(pNext - pCurr));
+
+    const float delta = det2d(N1, N2);
+
+    Vec2 tx;
+    tx.x = +margin / delta * (N2.y - N1.y);
+    tx.y = -margin / delta * (N2.x - N1.x);
+    insetTx[i] = tx;
+  }
+
+  for(int i = 0; i < N; ++i)
+  {
+    const Vec2 curr = points[i];
+    const Vec2 next = points[(i + 1) % N];
+
+    sandbox_line(curr, next, White);
+    sandbox_line(curr, next, Gray, insetTx[i], insetTx[(i + 1) % N]);
+  }
+}
+
+void printEdgeChain(span<const HalfEdge> he, span<const Vec2> points, int firstEdge, span<char> hit)
+{
+  std::vector<int> edgeChain;
+  std::vector<Vec2> polygon;
+
+  // compute edgeChain
+  {
+    int curr = firstEdge;
+
+    do
+    {
+      const int next = he[curr].next;
+      const int p0 = he[curr].point;
+      if(p0 == -1 || next == -1)
+      {
+        sandbox_text({}, "UAF", Red);
+        break;
+      }
+      if(hit[curr])
+      {
+        sandbox_text(points[p0], "ERR", Red);
+        sandbox_circle(points[p0], 0, Red, 8);
+        break;
+      }
+
+      edgeChain.push_back(curr);
+      polygon.push_back(points[p0]);
+      hit[curr] = 1;
+
+      curr = next;
+    } while(curr != firstEdge);
+  }
+
+  printPolygon(polygon, 8);
+
+  // print labels
+
+  const int N = (int)edgeChain.size();
+
+  for(int i = 0; i < N; ++i)
+  {
+    const int curr = edgeChain[i];
+    const int next = edgeChain[(i + 1) % N];
+
+    const int p0 = he[curr].point;
+    const int p1 = he[next].point;
+
+    char buf[256];
+    sprintf(buf, "%d", curr);
+    const Vec2 N2 = rotateLeft(normalize(points[p1] - points[p0]));
+    sandbox_text((points[p0] + points[p1]) * 0.5, buf, {0.3, 0.3, 0.3, 0.3}, N2 * 20);
+  }
+}
+
+void printMesh(span<const HalfEdge> he, span<const Vec2> points)
+{
+  std::vector<char> hit(he.len);
+
+  for(int i = 0; i < (int)he.len; ++i)
+    if(!hit[i] && he[i].point != -1)
+      printEdgeChain(he, points, i, hit);
+
+  sandbox_circle(points[he[0].point], 0, Green, 8);
 }
 
 std::vector<int> sortPointsFromLeftToRight(span<const Vec2> points)
@@ -62,6 +146,93 @@ std::vector<int> sortPointsFromLeftToRight(span<const Vec2> points)
   return order;
 }
 
+void blankHull(span<HalfEdge> he)
+{
+  int curr = 0;
+
+  do
+  {
+    he[curr].point = -1;
+    curr = he[curr].next;
+  } while(curr != 0);
+}
+
+std::vector<HalfEdge> removeBlankEdges(span<const HalfEdge> he)
+{
+  std::vector<HalfEdge> r;
+  std::vector<int> oldToNew(he.len, -1);
+  for(int oldIndex = 0; oldIndex < (int)he.len; ++oldIndex)
+  {
+    const HalfEdge& oldEdge = he[oldIndex];
+
+    if(oldEdge.point == -1)
+      continue; // ignore blank edges
+
+    if(oldToNew[oldIndex] == -1)
+    {
+      oldToNew[oldIndex] = r.size();
+      r.push_back({});
+    }
+
+    if(oldToNew[oldEdge.next] == -1)
+    {
+      oldToNew[oldEdge.next] = r.size();
+      r.push_back({});
+    }
+
+    if(oldEdge.twin != -1 && oldToNew[oldEdge.twin] == -1)
+    {
+      oldToNew[oldEdge.twin] = r.size();
+      r.push_back({});
+    }
+
+    r[oldToNew[oldIndex]].point = oldEdge.point;
+    r[oldToNew[oldIndex]].next = oldToNew[oldEdge.next];
+    r[oldToNew[oldIndex]].twin = oldEdge.twin != -1 ? oldToNew[oldEdge.twin] : -1;
+  }
+  return r;
+}
+
+std::pair<int, int> computeVisibleChain(span<const HalfEdge> he, span<const Vec2> points, Vec2 p)
+{
+  int visFirst = -1;
+  int visLast = -1;
+  int hullCurr = 0;
+
+  do
+  {
+    const int hullNext = he[hullCurr].next;
+
+    const int p0 = he[hullCurr].point;
+    const int p1 = he[hullNext].point;
+
+    const auto a = points[p0];
+    const auto b = points[p1];
+
+    if(det2d(b - a, p - a) > 0.001)
+    {
+      if(visFirst == -1)
+        visFirst = hullCurr;
+      visLast = hullNext;
+
+      if(EnableTrace)
+        sandbox_line(a, b, Orange);
+    }
+
+    hullCurr = hullNext;
+  } while(hullCurr != 0);
+
+  if(EnableTrace)
+  {
+    sandbox_text(points[he[visFirst].point], "First", Orange);
+    sandbox_text(points[he[visLast].point], "Last", Orange);
+    sandbox_circle(p, 0, Orange, 8);
+    sandbox_breakpoint();
+  }
+
+  return {visFirst, visLast};
+}
+
 }
 
 std::vector<HalfEdge> createBasicTriangulation(span<const Vec2> points)
@@ -79,28 +250,32 @@ std::vector<HalfEdge> createBasicTriangulation(span<const Vec2> points)
     return i->second;
   };
 
+  auto allocHalfEdge = [&]()
+  {
+    const auto r = (int)he.size();
+    he.push_back({});
+    return r;
+  };
+
   const auto order = sortPointsFromLeftToRight(points);
   span<const int> queue = order;
-
-  std::vector<int> hull(points.len);
-  int hullHead = 0;
 
   if(points.len < 3)
     return {};
 
-  // bootstrap triangulation with first edge
+  // Init the hull. By convention, he[0] is always its leftmost edge.
   {
     int i0 = queue.pop();
     int i1 = queue.pop();
 
-    hull[i0] = i1;
-    hull[i1] = i0;
-    hullHead = i0;
+    he.resize(2);
+    he[0] = {i0, 1};
+    he[1] = {i1, 0};
   }
 
   if(EnableTrace)
   {
-    printHull(hull, points, hullHead);
+    printMesh(he, points);
     sandbox_breakpoint();
   }
 
@@ -109,49 +284,27 @@ std::vector<HalfEdge> createBasicTriangulation(span<const Vec2> points)
     const int idx = queue.pop();
     const auto p = points[idx];
 
-    const int hullFirst = hullHead;
-    int hullCurr = hullFirst;
+    if(EnableTrace)
+      printMesh(he, points);
 
-    int arcFirst = -1;
-    int arcLast = -1;
+    const auto [visFirst, visLast] = computeVisibleChain(he, points, p);
 
-    printHull(hull, points, hullHead);
-
-    do
+    // create each triangle composed of p and an edge of the visible chain
+    int visEdge = visFirst;
+    while(visEdge != visLast)
     {
-      const int hullNext = hull[hullCurr];
+      const int hullNext = he[visEdge].next;
 
-      const auto a = points[hullCurr];
-      const auto b = points[hullNext];
+      const int p0 = he[visEdge].point;
+      const int p1 = he[hullNext].point;
+      const int p2 = idx;
 
-      if(det2d(p - a, b - a) > 0.001)
-      {
-        if(arcFirst == -1)
-          arcFirst = hullCurr;
-        arcLast = hullNext;
-
-        sandbox_line(a, b, Orange);
-      }
-
-      hullCurr = hullNext;
-    } while(hullCurr != hullFirst);
-
-    sandbox_circle(p, 0, Orange, 8);
-    sandbox_breakpoint();
-
-    hullCurr = arcFirst;
-    while(hullCurr != arcLast)
-    {
-      const int p0 = hullCurr;
-      const int p1 = idx;
-      const int p2 = hull[hullCurr];
-
-      const auto e0 = (int)he.size() + 0;
-      const auto e1 = (int)he.size() + 1;
-      const auto e2 = (int)he.size() + 2;
-      he.push_back({p0, e1});
-      he.push_back({p1, e2});
-      he.push_back({p2, e0});
+      const auto e0 = allocHalfEdge();
+      const auto e1 = allocHalfEdge();
+      const auto e2 = allocHalfEdge();
+      he[e0] = {p0, e1};
+      he[e1] = {p1, e2};
+      he[e2] = {p2, e0};
 
       // search for a twin for e0 (=the edge that links [p0 -> p1])
       he[e0].twin = findHalfEdge(p1, p0);
@@ -169,20 +322,27 @@ std::vector<HalfEdge> createBasicTriangulation(span<const Vec2> points)
       pointToEdge[{p1, p2}] = e1;
       pointToEdge[{p2, p0}] = e2;
 
-      hullCurr = hull[hullCurr];
+      // we only reuse the first edge, blank the other visible hull edges
+      if(visEdge != visFirst)
+        he[visEdge].point = -1;
+
+      visEdge = hullNext;
     }
 
-    hull[arcFirst] = idx;
-    hull[idx] = arcLast;
+    // modify the hull to include the added point 'idx'
+    {
+      const int n = allocHalfEdge();
+      he[n] = {idx, visLast};
+      he[visFirst].next = n;
+    }
 
     if(EnableTrace)
     {
-      for(auto edge : he)
-        sandbox_line(points[edge.point], points[he[edge.next].point], Gray);
-      printHull(hull, points, hullHead);
+      printMesh(he, points);
       sandbox_breakpoint();
     }
   }
 
-  return he;
+  blankHull(he);
+  return removeBlankEdges(he);
 }
