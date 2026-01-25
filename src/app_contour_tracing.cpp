@@ -18,12 +18,12 @@
 namespace
 {
 
-constexpr int gridWidth = 10;
-constexpr int gridHeight = 10;
+constexpr int gridWidth = 30;
+constexpr int gridHeight = 30;
 constexpr int tileCount = gridWidth * gridHeight;
 
-constexpr float tileRenderSize = 2.5;
-constexpr float borderCornerOffset = 0.5;
+constexpr float tileRenderSize = 1.0;
+constexpr float borderCornerOffset = 0.2;
 
 using Grid = std::array<bool, tileCount>;
 using PolygonBorder = std::vector<Vec2>;
@@ -39,11 +39,11 @@ struct Coord
 };
 
 Coord rotateLeft(Coord c) { return Coord({-c.y, c.x}); }
+int clamp(int val, int min, int max) { return val < min ? min : (val > max ? max : val); }
 
 struct TSegment
 {
-  Coord a;
-  Coord b;
+  Coord a, b;
 
   bool operator==(const TSegment& other) const { return a == other.a && b == other.b; }
 };
@@ -226,12 +226,33 @@ auto getNextSegmentIterator(std::vector<TSegment>& segments, const TSegment& sta
   return segments.end();
 }
 
+float sqr(float x) { return x * x; }
+
 Grid generateInput(int /*seed*/)
 {
-  Grid grid;
-  grid.fill(false);
-  for(int tileIndex = 0; tileIndex < tileCount; tileIndex++)
-    grid[tileIndex] = randomFloat(0, 1) > 0.5f;
+  Grid grid{};
+
+  for(int k = 0; k < tileCount / 5; ++k)
+  {
+    const bool gridValue = randomFloat(0, 1) > 0.5f;
+
+    const int rectWidth = sqr(randomFloat(0.1, 0.5)) * gridWidth;
+    const int rectHeight = sqr(randomFloat(0.1, 0.5)) * gridHeight;
+
+    Coord pos;
+    pos.x = randomFloat(0, 1) * (gridWidth - rectWidth);
+    pos.y = randomFloat(0, 1) * (gridHeight - rectHeight);
+
+    for(int y = 0; y < rectHeight; ++y)
+    {
+      for(int x = 0; x < rectWidth; ++x)
+      {
+        const int absX = clamp(x + pos.x, 0, gridWidth - 1);
+        const int absY = clamp(y + pos.y, 0, gridHeight - 1);
+        grid[absX + absY * gridWidth] = gridValue;
+      }
+    }
+  }
 
   return grid;
 }
