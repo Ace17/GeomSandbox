@@ -30,11 +30,9 @@ using PolygonBorder = std::vector<Vec2>;
 
 struct Coord
 {
-  int x;
-  int y;
+  int x, y;
 
   bool operator==(const Coord& other) const { return x == other.x && y == other.y; }
-  bool operator!=(const Coord& other) const { return !operator==(other); }
 
   Coord operator+(const Coord& other) const { return {x + other.x, y + other.y}; }
   Coord operator-(const Coord& other) const { return {x - other.x, y - other.y}; }
