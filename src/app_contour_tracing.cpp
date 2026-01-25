@@ -59,30 +59,28 @@ bool tileIsFilled(const Grid& grid, const Coord& coord)
   return grid[tileIndex(coord)];
 }
 
-Vec2 tileRenderPosition(int x, int y)
+Vec2 tileRenderPosition(Coord coord)
 {
-  const float renderX = x * tileRenderSize - gridWidth * tileRenderSize / 2.f;
-  const float renderY = y * tileRenderSize - gridHeight * tileRenderSize / 2.f;
+  const float renderX = coord.x * tileRenderSize - gridWidth * tileRenderSize / 2.f;
+  const float renderY = coord.y * tileRenderSize - gridHeight * tileRenderSize / 2.f;
   return {renderX, renderY};
 }
-
-Vec2 tileRenderPosition(const Coord& coord) { return tileRenderPosition(coord.x, coord.y); }
 
 void drawGridLines()
 {
   for(int y = 0; y < gridHeight + 1; y++)
   {
-    sandbox_line(tileRenderPosition(0, y), tileRenderPosition(gridWidth, y), White);
+    sandbox_line(tileRenderPosition({0, y}), tileRenderPosition({gridWidth, y}), White);
   }
   for(int x = 0; x < gridWidth + 1; x++)
   {
-    sandbox_line(tileRenderPosition(x, 0), tileRenderPosition(x, gridHeight), White);
+    sandbox_line(tileRenderPosition({x, 0}), tileRenderPosition({x, gridHeight}), White);
   }
 }
 
 void drawFilledTile(int x, int y, const Color& color)
 {
-  const Vec2 position = tileRenderPosition(x, y);
+  const Vec2 position = tileRenderPosition({x, y});
   const Vec2 size = Vec2(tileRenderSize, tileRenderSize);
   const Vec2 tileEnd = position + size;
   const int traceCount = 5;
@@ -108,7 +106,7 @@ void drawFilledTile(int x, int y, const Color& color)
 
 void drawTestedCellBorders(int x, int y, const Color& color)
 {
-  const Vec2 topLeft = tileRenderPosition(x, y) + Vec2(0.f, tileRenderSize);
+  const Vec2 topLeft = tileRenderPosition({x, y}) + Vec2(0.f, tileRenderSize);
   const Vec2 topRight = topLeft + Vec2(tileRenderSize, 0.f);
   const Vec2 bottomRight = topRight + Vec2(0.f, -tileRenderSize);
   sandbox_line(topLeft, topRight, color);
@@ -120,8 +118,8 @@ void drawSegment(const TSegment& segment, const Color& color)
   constexpr float arrowTipLength = 0.5f;
   constexpr float arrowTipWidth = 0.3f;
 
-  const Vec2 segmentRenderStart = tileRenderPosition(segment.a.x, segment.a.y);
-  const Vec2 segmentRenderEnd = tileRenderPosition(segment.b.x, segment.b.y);
+  const Vec2 segmentRenderStart = tileRenderPosition(segment.a);
+  const Vec2 segmentRenderEnd = tileRenderPosition(segment.b);
 
   const Vec2 direction = segmentRenderEnd - segmentRenderStart;
   const Vec2 perpendicular = rotateLeft(direction);
