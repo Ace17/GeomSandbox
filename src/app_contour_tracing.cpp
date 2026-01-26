@@ -161,10 +161,6 @@ std::vector<TSegment> fillSegments(const Grid& input)
   {
     for(int x = -1; x < gridWidth; x++)
     {
-      drawTestedCellBorders(x, y, Green);
-      drawSegmentList(segments, Yellow);
-      sandbox_breakpoint();
-
       std::vector<TSegment> newSegments;
       const Coord topLeft = {x, y + 1};
       const Coord topRight = topLeft + Coord({1, 0});
@@ -189,11 +185,11 @@ std::vector<TSegment> fillSegments(const Grid& input)
         drawTestedCellBorders(x, y, Green);
         drawSegmentList(segments, Yellow);
         drawSegmentList(newSegments, Green);
-        sandbox_breakpoint();
         segments.insert(segments.end(), newSegments.begin(), newSegments.end());
       }
     }
   }
+  sandbox_breakpoint();
 
   return segments;
 }
