@@ -61,6 +61,7 @@ SRCS+=\
 			src/app_bsp_build.cpp\
 			src/app_bsp_raycast.cpp\
 			src/app_contour_tracing.cpp\
+			src/app_contour_tracing2.cpp\
 			src/app_douglas_peucker.cpp\
 			src/app_fastconvexsplit.cpp\
 			src/app_polygon_self_intersections.cpp\
