@@ -294,11 +294,8 @@ void display(Grid input, const std::vector<PolygonBorder>& output)
   {
     for(int x = 0; x < gridWidth; x++)
     {
-      const int tileIndex = y * gridWidth + x;
-      if(input[tileIndex])
-      {
+      if(input[tileIndex({x, y})])
         drawFilledTile(x, y, LightBlue);
-      }
     }
   }
   drawGridLines();
