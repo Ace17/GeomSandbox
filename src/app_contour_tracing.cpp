@@ -130,12 +130,10 @@ void drawSegment(const TSegment& segment, const Color& color)
   sandbox_line(segmentRenderEnd, arrowTipPointRight, color);
 }
 
-void drawSegmentList(const std::vector<TSegment>& segments, const Color& color)
+void drawSegmentList(span<const TSegment> segments, const Color& color)
 {
   for(const TSegment& segment : segments)
-  {
     drawSegment(segment, color);
-  }
 }
 
 void drawBorder(const PolygonBorder& border, const Color& color)
@@ -146,12 +144,10 @@ void drawBorder(const PolygonBorder& border, const Color& color)
   }
 }
 
-void drawOutputBorders(const std::vector<PolygonBorder>& borders)
+void drawOutputBorders(span<const PolygonBorder> borders)
 {
   for(const PolygonBorder& border : borders)
-  {
     drawBorder(border, Red);
-  }
 }
 
 std::vector<TSegment> fillSegments(const Grid& input)
