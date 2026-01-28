@@ -64,7 +64,7 @@ Output computeContours(InputGrid grid)
   std::unordered_set<Vec2i, Vec2iHash> entryPoints;
   for(int y = 0; y < grid.size.y; y++)
   {
-    for(int x = 0; x < grid.size.x; x++)
+    for(int x = 0; x < grid.size.x + 1; x++)
     {
       // [x-1,y]    |   [x,y]
       //    A       |     D
@@ -115,7 +115,6 @@ Output computeContours(InputGrid grid)
     Vec2i pos = ep;
     do
     {
-      entryPoints.erase(pos);
       contour.push_back(pos);
 
       if(!grid.get(pos + leftScanPos[currDir]))
@@ -129,6 +128,9 @@ Output computeContours(InputGrid grid)
 
       sandbox_line(a, b, Green);
       sandbox_circle(a, 0, Green, 4);
+
+      if(currDir == 0) // an entry point is always upwards
+        entryPoints.erase(pos);
 
       pos = pos + dirs[currDir];
     } while(!(pos == ep));
