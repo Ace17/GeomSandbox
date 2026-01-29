@@ -105,7 +105,7 @@ Output computeContours(InputGrid grid)
     r.contours.push_back({});
     auto& contour = r.contours.back();
 
-    auto ep = *entryPoints.begin();
+    const Vec2i ep = *entryPoints.begin();
 
     static const Vec2i dirs[] = {{0, 1}, {-1, 0}, {0, -1}, {1, 0}};
     static const Vec2i leftScanPos[] = {{-1, 0}, {-1, -1}, {0, -1}, {0, 0}};
