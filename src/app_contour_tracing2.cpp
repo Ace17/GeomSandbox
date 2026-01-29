@@ -43,7 +43,7 @@ struct InputGrid
 
 struct Output
 {
-  std::vector<std::vector<Vec2i>> contours;
+  std::vector<std::vector<Vec2>> contours;
 };
 
 InputGrid generateInput(int)
@@ -115,10 +115,15 @@ Output computeContours(InputGrid grid)
     Vec2i pos = ep;
     do
     {
-      contour.push_back(pos);
+      contour.push_back(toVec2(pos));
 
       if(!grid.get(pos + leftScanPos[currDir]))
+      {
+        contour.pop_back();
+        contour.push_back(toVec2(pos)-toVec2(dirs[currDir]) * 0.1);
         currDir = (currDir + 1) % 4;
+        contour.push_back(toVec2(pos)+toVec2(dirs[currDir]) * 0.1);
+      }
       else if(grid.get(pos + rightScanPos[currDir]))
         currDir = (currDir + 4 - 1) % 4;
 
@@ -164,9 +169,7 @@ void display(const InputGrid& grid, const Output& out)
     for(int i = 0; i < N; ++i)
     {
       const int j = (i + 1) % N;
-      Vec2 a = {(float)c[i].x, (float)c[i].y};
-      Vec2 b = {(float)c[j].x, (float)c[j].y};
-      sandbox_line(a, b, Green);
+      sandbox_line(c[i], c[j], Green);
     }
   }
 }
