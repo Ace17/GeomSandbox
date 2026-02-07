@@ -18,3 +18,8 @@ struct Polygon2f
 
   float faceLength(int faceIdx) const;
 };
+
+struct PolygonWithHoles
+{
+  std::vector<std::vector<Vec2>> boundaries;
+};

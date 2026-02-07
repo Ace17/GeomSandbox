@@ -53,6 +53,7 @@ SRCS+=\
 			src/app_sound_sources.cpp\
 			src/app_split_polyhedron.cpp\
 			src/app_split_polygon.cpp\
+			src/app_split_polygon_along_diagonals.cpp\
 			src/app_main.cpp\
 
 # Algos
@@ -78,6 +79,7 @@ SRCS+=\
 			src/pathfind_dijkstra.cpp\
 			src/random_polyhedron.cpp\
 			src/random_polygon.cpp\
+			src/random_polygon_with_holes.cpp\
 			src/split_polygon.cpp\
 			src/split_polyhedron.cpp\
 			src/triangulate_basic.cpp\
