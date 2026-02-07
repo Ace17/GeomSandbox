@@ -113,19 +113,20 @@ Output computeContours(InputGrid grid)
     int currDir = 0;
 
     Vec2i pos = ep;
+    contour.push_back(toVec2(pos));
     do
     {
-      contour.push_back(toVec2(pos));
-
       if(!grid.get(pos + leftScanPos[currDir]))
       {
-        contour.pop_back();
-        contour.push_back(toVec2(pos)-toVec2(dirs[currDir]) * 0.1);
+        contour.push_back(toVec2(pos) - toVec2(dirs[currDir]) * 0.1);
         currDir = (currDir + 1) % 4;
-        contour.push_back(toVec2(pos)+toVec2(dirs[currDir]) * 0.1);
+        contour.push_back(toVec2(pos) + toVec2(dirs[currDir]) * 0.1);
       }
       else if(grid.get(pos + rightScanPos[currDir]))
+      {
+        contour.push_back(toVec2(pos));
         currDir = (currDir + 4 - 1) % 4;
+      }
 
       // move up, the interior is on our left
       const Vec2 a = toVec2(pos);
