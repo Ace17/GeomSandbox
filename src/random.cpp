@@ -22,3 +22,12 @@ Vec2 randomPos(Vec2 min, Vec2 max)
   r.y = randomFloat(min.y, max.y);
   return r;
 }
+
+Vec3 randomPos(Vec3 min, Vec3 max)
+{
+  Vec3 r;
+  r.x = randomFloat(min.x, max.x);
+  r.y = randomFloat(min.y, max.y);
+  r.z = randomFloat(min.z, max.z);
+  return r;
+}
