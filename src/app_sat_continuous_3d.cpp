@@ -244,9 +244,9 @@ struct ConvexPolyhedronShape : IShape
       auto v0 = vertices[faces[i + 0]];
       auto v1 = vertices[faces[i + 1]];
       auto v2 = vertices[faces[i + 2]];
-      r.push_back(normalize(v1-v0));
-      r.push_back(normalize(v2-v1));
-      r.push_back(normalize(v0-v2));
+      r.push_back(normalize(v1 - v0));
+      r.push_back(normalize(v2 - v1));
+      r.push_back(normalize(v0 - v2));
     }
     return r;
   }
@@ -318,7 +318,7 @@ struct SeparatingAxisTestApp3D : IApp
     {
       const Vec3 center = randomPos({-25, -5, 0}, {-5, 5, 10});
 
-      const int N = 3;//randomInt(3, 12);
+      const int N = 3; // randomInt(3, 12);
       const float radiusX = randomFloat(4, 9);
       const float radiusY = randomFloat(4, 9);
       const float phase = randomFloat(0, 2 * M_PI);
@@ -335,9 +335,9 @@ struct SeparatingAxisTestApp3D : IApp
         obstaclePolyhedron.faces.push_back(1 + (i + 0) % N);
         obstaclePolyhedron.faces.push_back(1 + (i + 1) % N);
       }
-        obstaclePolyhedron.faces.push_back(3);
-        obstaclePolyhedron.faces.push_back(2);
-        obstaclePolyhedron.faces.push_back(1);
+      obstaclePolyhedron.faces.push_back(3);
+      obstaclePolyhedron.faces.push_back(2);
+      obstaclePolyhedron.faces.push_back(1);
     }
 
     compute();
