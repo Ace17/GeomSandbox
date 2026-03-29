@@ -6,6 +6,39 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Continuous collision detection using the separating axis test.
+//
+// A convex shape (the "mover") is swept along a vector 'delta',
+// until it hits another (static) convex shape (the "obstacle").
+//
+// To do this, the minkowski sum of both shapes is constructed
+// (in an implicit form, see CombinedShape).
+// A ray is then casted along the vector 'delta'. This ray represents the
+// displacement of the origin of the "mover" shape, which stops when it hits
+// the boundary of the minkowski sum of "mover" and "obstacle".
+//|                                                                            |
+//|    _____                                                                   |
+//|   |     |"delta"                                                           |
+//|   |  x--|------->   .                                                      |
+//|   |_____|          / \                                                     |
+//|                   /   \                                                    |
+//|   "mover"        /     \                                                   |
+//|                 /   x   \                                                  |
+//|                /_________\                                                 |
+//|                                                                            |
+//|                "obstacle"                                                  |
+//|                                                                            |
+//|                                                                            |
+//|                   _____                                                    |
+//|         "delta" /|     |\                                                  |
+//|      x---------->|  .  | \                                                 |
+//|               /  |_/_\_|  \                                                |
+//|              /    /   \    \                                               |
+//|             /____/     \____\                                              |
+//|             |   / | x | \   |                                              |
+//|             |  /__|___|__\  |                                              |
+//|             |_____|___|_____|                                              |
+//|                                                                            |
+//|    minkowsi sum of "mover" and "obstacle"                                  |
 
 #include "core/app.h"
 #include "core/drawer.h"
