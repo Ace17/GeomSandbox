@@ -252,6 +252,49 @@ struct ConvexPolyhedronShape : IShape
   }
 };
 
+struct TriangleShape : IShape
+{
+  Vec3 vertices[3];
+
+  ProjectionOnAxis projectOnAxis(Vec3 axis) const override
+  {
+    ProjectionOnAxis r;
+
+    r.min = vertices[0] * axis;
+    r.max = vertices[0] * axis;
+
+    for(auto& v : vertices)
+    {
+      r.min = std::min<float>(r.min, v * axis);
+      r.max = std::max<float>(r.max, v * axis);
+    }
+
+    assert(r.min <= r.max);
+
+    return r;
+  }
+
+  std::vector<Vec3> axesToTest() const override
+  {
+    auto v0 = vertices[0];
+    auto v1 = vertices[1];
+    auto v2 = vertices[2];
+    return { normalize(crossProduct(v1 - v0, v2 - v0)) };
+  }
+
+  std::vector<Vec3> edgesToCombine() const override
+  {
+    std::vector<Vec3> r;
+    auto v0 = vertices[0];
+    auto v1 = vertices[1];
+    auto v2 = vertices[2];
+    r.push_back(normalize(v1 - v0));
+    r.push_back(normalize(v2 - v1));
+    r.push_back(normalize(v0 - v2));
+    return r;
+  }
+};
+
 // Minkowski sum of two shapes
 struct CombinedShape : IShape
 {
@@ -310,11 +353,20 @@ struct SeparatingAxisTestApp3D : IApp
     boxStart = randomPos({-20, -10, 0}, {20, 10, 0});
     boxTarget = randomPos({-20, -10, 0}, {20, 10, 0});
 
+    // box
     {
       obstacleBoxHalfSize = randomPos({2, 20, 2}, {5, 5, 3});
       obstacleBoxCenter = randomPos({5, -5, 0}, {15, 5, 0});
     }
 
+    // triangle
+    {
+      obstacleTriangle.vertices[0] = randomPos({2, 2, 2}, {20, 20, 10});
+      obstacleTriangle.vertices[1] = randomPos({2, 2, 2}, {20, 20, 10});
+      obstacleTriangle.vertices[2] = randomPos({2, 2, 2}, {20, 20, 10});
+    }
+
+    // polyhedron
     {
       const Vec3 center = randomPos({-25, -5, 0}, {-5, 5, 10});
 
@@ -355,8 +407,18 @@ struct SeparatingAxisTestApp3D : IApp
     // draw trajectory
     drawer->line(boxStart, boxTarget, White);
 
-    // draw obstacles
+    // draw box obstacle
     drawBox(drawer, obstacleBoxCenter, obstacleBoxHalfSize, Yellow, "obstacle");
+
+    // draw triangle obstacle
+    {
+        auto v0 = obstacleTriangle.vertices[0];
+        auto v1 = obstacleTriangle.vertices[1];
+        auto v2 = obstacleTriangle.vertices[2];
+        drawer->line(v0, v1, Yellow);
+        drawer->line(v1, v2, Yellow);
+        drawer->line(v2, v0, Yellow);
+    }
 
     // draw polyhedron
     {
@@ -478,7 +540,7 @@ struct SeparatingAxisTestApp3D : IApp
     obstacleBoxShape.scale = obstacleBoxHalfSize;
     obstacleBoxShape.translate = obstacleBoxCenter;
 
-    IShape* obstacleShapes[] = {&obstaclePolyhedron, &obstacleBoxShape};
+    IShape* obstacleShapes[] = {&obstaclePolyhedron, &obstacleBoxShape, &obstacleTriangle};
 
     RaycastResult minRaycast;
     minRaycast.fraction = 1;
@@ -510,6 +572,7 @@ struct SeparatingAxisTestApp3D : IApp
   Vec3 obstacleBoxCenter;
   Vec3 obstacleBoxHalfSize;
   ConvexPolyhedronShape obstaclePolyhedron{};
+  TriangleShape obstacleTriangle{};
 
   int currentSelection = 0;
 };
