@@ -36,6 +36,7 @@ SRCS+=\
 			src/app_collision_response2d.cpp\
 			src/app_clip_polyline.cpp\
 			src/app_cube.cpp\
+			src/app_ccd_rotate.cpp\
 			src/app_polycut.cpp\
 			src/app_sat_continuous.cpp\
 			src/app_sat_continuous_3d.cpp\
