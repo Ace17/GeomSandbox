@@ -19,99 +19,173 @@
 namespace
 {
 
+Vec2 rotate(Vec2 f, float angle)
+{
+  Vec2 r;
+  r.x = cos(angle) * f.x - sin(angle) * f.y;
+  r.y = sin(angle) * f.x + cos(angle) * f.y;
+  return r;
+}
+
+struct InitialConditions
+{
+  float rotatingCircleRadius;
+  float rotatingCircleOmega; // rad/s
+  Vec2 rotatingCircleRotationCenter;
+  float rotatingCircleRotationRadius;
+
+  float rotatingSegmentPosBase;
+  float rotatingSegmentPosTip;
+
+  float translatingCircleRadius;
+  Vec2 translatingCircleInitialPos;
+  Vec2 translatingCircleVelocity;
+};
+
+struct SpatialConfiguration
+{
+  Vec2 rotatingCircleCenter;
+  Vec2 rotatingSegmentA;
+  Vec2 rotatingSegmentB;
+  Vec2 translatingCircleCenter;
+};
+
+Vec2 dir(float angle) { return Vec2(cos(angle), sin(angle)); }
+
+SpatialConfiguration computeConfiguration(const InitialConditions& ic, float t)
+{
+  SpatialConfiguration sc;
+
+  sc.rotatingCircleCenter =
+        ic.rotatingCircleRotationCenter + dir(ic.rotatingCircleOmega * t) * ic.rotatingCircleRotationRadius;
+  sc.rotatingSegmentA = rotate(Vec2(0, ic.rotatingSegmentPosBase), ic.rotatingCircleOmega * t);
+  sc.rotatingSegmentB =
+        rotate(Vec2(ic.rotatingCircleRotationRadius, ic.rotatingSegmentPosTip), ic.rotatingCircleOmega * t);
+  sc.translatingCircleCenter = ic.translatingCircleInitialPos + ic.translatingCircleVelocity * t;
+
+  return sc;
+}
+
+float sqr(float x) { return x * x; }
+
+float sqr(Vec2 x) { return dotProduct(x, x); }
+
+Vec2 deltaBetweenCircles(const InitialConditions& ic, float t)
+{
+  const Vec2 rotatingCircleCenter =
+        ic.rotatingCircleRotationCenter + dir(ic.rotatingCircleOmega * t) * ic.rotatingCircleRotationRadius;
+  const Vec2 translatingCircleCenter = ic.translatingCircleInitialPos + ic.translatingCircleVelocity * t;
+  return rotatingCircleCenter - translatingCircleCenter;
+}
+
+// analytical first time derivative for 'deltaBetweenCircles'
+Vec2 deltaBetweenCircles_ddt(const InitialConditions& ic, float t)
+{
+  const Vec2 dRotatingCircleCenter = Vec2(ic.rotatingCircleOmega * -sin(ic.rotatingCircleOmega * t),
+                                           ic.rotatingCircleOmega * cos(ic.rotatingCircleOmega * t)) *
+        ic.rotatingCircleRotationRadius;
+  const Vec2 dTranslatingCircleCenter = ic.translatingCircleVelocity;
+  return dRotatingCircleCenter - dTranslatingCircleCenter;
+}
+
+float sqrDistBetweenCircles(const InitialConditions& ic, float t)
+{
+  return sqr(sqr(deltaBetweenCircles(ic, t)) - sqr(ic.rotatingCircleRadius + ic.translatingCircleRadius));
+}
+
+// analytical first time derivative for 'sqrDistBetweenCircles'
+float sqrDistBetweenCircles_ddt(const InitialConditions& ic, float t)
+{
+  return 2 * (sqr(deltaBetweenCircles(ic, t)) - sqr(ic.rotatingCircleRadius + ic.translatingCircleRadius)) * 2 *
+        deltaBetweenCircles(ic, t) * deltaBetweenCircles_ddt(ic, t);
+}
+
+// distance between the line holding the rotating segment, and the translating circle
+float lineCircleDistance(const InitialConditions& ic, float t)
+{
+  const float segmentDy = ic.rotatingSegmentPosBase - ic.rotatingSegmentPosTip;
+  const float segmentDx = ic.rotatingCircleRotationRadius;
+  const float rotatingSegmentSlantedAngle = atan(segmentDy / segmentDx);
+  const float dist = ic.rotatingSegmentPosBase;
+
+  const float angle = ic.rotatingCircleOmega * t - rotatingSegmentSlantedAngle;
+  const Vec2 normal = Vec2(-sin(angle), cos(angle));
+  const Vec2 circleCenter = ic.translatingCircleInitialPos + ic.translatingCircleVelocity * t;
+  return dotProduct(normal, circleCenter) - dist - ic.translatingCircleRadius;
+}
+
+// analytical first time derivative for 'lineCircleDistance'
+float lineCircleDistance_ddt(const InitialConditions& ic, float t)
+{
+  const float segmentDy = ic.rotatingSegmentPosBase - ic.rotatingSegmentPosTip;
+  const float segmentDx = ic.rotatingCircleRotationRadius;
+  const float rotatingSegmentSlantedAngle = atan(segmentDy / segmentDx);
+
+  const float angle = ic.rotatingCircleOmega * t - rotatingSegmentSlantedAngle;
+  const float angle_ddt = ic.rotatingCircleOmega;
+
+  const Vec2 normal = Vec2(-sin(angle), cos(angle));
+  const Vec2 normal_ddt = Vec2(-angle_ddt * cos(angle), -angle_ddt * sin(angle));
+
+  const Vec2 circleCenter = ic.translatingCircleInitialPos + ic.translatingCircleVelocity * t;
+  const Vec2 circleCenter_ddt = ic.translatingCircleVelocity;
+
+  //--------------------------------------------------------------------------------
+  return dotProduct(normal_ddt, circleCenter) + dotProduct(normal, circleCenter_ddt);
+}
+
+void drawCross(IDrawer* drawer, Vec2 pos, Color color)
+{
+  drawer->line(pos - Vec2{0.2, 0}, pos + Vec2{0.2, 0}, color);
+  drawer->line(pos - Vec2{0, 0.2}, pos + Vec2{0, 0.2}, color);
+}
+
+void drawConfiguration(IDrawer* drawer, const InitialConditions& ic, float t, Color color)
+{
+  const auto sc = computeConfiguration(ic, t);
+
+  drawer->circle(sc.rotatingCircleCenter, ic.rotatingCircleRadius, color);
+  drawCross(drawer, sc.rotatingCircleCenter, color);
+  drawer->line(sc.rotatingSegmentA, sc.rotatingSegmentB, color);
+  drawer->circle(sc.translatingCircleCenter, ic.translatingCircleRadius, color);
+}
+
 struct CcdRotateApp : IApp
 {
   CcdRotateApp()
   {
-    rotatingCircleRadius = 1.5;
-    rotatingCircleRotationRadius = 6.0;
-    rotatingCircleRotationCenter = Vec2(0, 0);
-    rotatingCircleOmega = 0.45;
+    initialConditions.rotatingCircleRadius = 0.8;
+    initialConditions.rotatingCircleRotationRadius = 6.0;
+    initialConditions.rotatingCircleRotationCenter = Vec2(0, 0);
+    initialConditions.rotatingCircleOmega = 0.45;
 
-    translatingCircleRadius = 1.3;
-    translatingCircleInitialPos = Vec2(7, 5);
-    translatingCircleVelocity = Vec2(-1, -2);
+    initialConditions.rotatingSegmentPosBase = 1.2;
+    initialConditions.rotatingSegmentPosTip = initialConditions.rotatingCircleRadius;
 
-    compute();
-  }
+    initialConditions.translatingCircleRadius = 1.3;
+    initialConditions.translatingCircleInitialPos = Vec2(5, 5);
+    initialConditions.translatingCircleVelocity = Vec2(-1, -2);
 
-  Vec2 dir(float angle) { return Vec2(cos(angle), sin(angle)); }
-
-  float sqr(float x) { return x * x; }
-
-  float sqr(Vec2 x) { return dotProduct(x, x); }
-
-  Vec2 deltaBetweenCircles(float t)
-  {
-    const Vec2 rotatingCircleCenter =
-          rotatingCircleRotationCenter + dir(rotatingCircleOmega * t) * rotatingCircleRotationRadius;
-    const Vec2 translatingCircleCenter = translatingCircleInitialPos + translatingCircleVelocity * t;
-    return rotatingCircleCenter - translatingCircleCenter;
-  }
-
-  // analytical first time derivative for 'deltaBetweenCircles'
-  Vec2 deltaBetweenCircles_ddt(float t)
-  {
-    const Vec2 dRotatingCircleCenter = Vec2(rotatingCircleOmega * -sin(rotatingCircleOmega * t),
-                                             rotatingCircleOmega * cos(rotatingCircleOmega * t)) *
-          rotatingCircleRotationRadius;
-    const Vec2 dTranslatingCircleCenter = translatingCircleVelocity;
-    return dRotatingCircleCenter - dTranslatingCircleCenter;
-  }
-
-  float sqrDistBetweenCircles(float t)
-  {
-    return sqr(sqr(deltaBetweenCircles(t)) - sqr(rotatingCircleRadius + translatingCircleRadius));
-  }
-
-  // analytical first time derivative for 'sqrDistBetweenCircles'
-  float sqrDistBetweenCircles_ddt(float t)
-  {
-    return 2 * (sqr(deltaBetweenCircles(t)) - sqr(rotatingCircleRadius + translatingCircleRadius)) * 2 *
-          deltaBetweenCircles(t) * deltaBetweenCircles_ddt(t);
+    compute(initialConditions);
   }
 
   void draw(IDrawer* drawer) override
   {
-    {
-      const Vec2 rotatingCircleCenter =
-            rotatingCircleRotationCenter + dir(rotatingCircleOmega * t) * rotatingCircleRotationRadius;
-      drawer->circle(rotatingCircleCenter, rotatingCircleRadius, Green);
-      drawCross(drawer, rotatingCircleCenter, Green);
-    }
+    const auto& ic = initialConditions;
 
-    {
-      const Vec2 translatingCircleCenter = translatingCircleInitialPos + translatingCircleVelocity * t;
-      drawer->circle(translatingCircleCenter, translatingCircleRadius, Green);
-    }
+    drawer->circle(Vec2{}, ic.rotatingSegmentPosBase, Green);
+
+    drawConfiguration(drawer, ic, t, Green);
 
     if(tCollision >= 0)
-    {
-      {
-        const Vec2 rotatingCircleCenter =
-              rotatingCircleRotationCenter + dir(rotatingCircleOmega * tCollision) * rotatingCircleRotationRadius;
-        drawer->circle(rotatingCircleCenter, rotatingCircleRadius, Red);
-        drawCross(drawer, rotatingCircleCenter, Red);
-      }
+      drawConfiguration(drawer, initialConditions, tCollision, Red);
 
-      {
-        const Vec2 translatingCircleCenter = translatingCircleInitialPos + translatingCircleVelocity * tCollision;
-        drawer->circle(translatingCircleCenter, translatingCircleRadius, Red);
-      }
-    }
-
-    drawCross(drawer, rotatingCircleRotationCenter, White);
+    drawCross(drawer, ic.rotatingCircleRotationCenter, White);
 
     char buf[256];
-    sprintf(buf, "t=%.2f, dist=%.2f, derivative=%.2f, tCollision=%.2f", t, sqrDistBetweenCircles(t),
-          sqrDistBetweenCircles_ddt(t), tCollision);
-    drawer->text({}, buf, White, {0, 4});
-  }
-
-  void drawCross(IDrawer* drawer, Vec2 pos, Color color)
-  {
-    drawer->line(pos - Vec2{1, 0}, pos + Vec2{1, 0}, color);
-    drawer->line(pos - Vec2{0, 1}, pos + Vec2{0, 1}, color);
+    sprintf(buf, "t=%.2f, dist=%.2f, lineDist=%.2f, derivative=%.2f, tCollision=%.2f", t, sqrDistBetweenCircles(ic, t),
+          lineCircleDistance(ic, t), sqrDistBetweenCircles_ddt(ic, t), tCollision);
+    drawer->text({}, buf, White, {-580, -80});
   }
 
   void processEvent(InputEvent inputEvent) override
@@ -131,42 +205,58 @@ struct CcdRotateApp : IApp
       t += 0.03;
       break;
     case Key::PageUp:
-      translatingCircleInitialPos.x += 1;
+      initialConditions.translatingCircleInitialPos.x += 0.2;
       break;
     case Key::PageDown:
-      translatingCircleInitialPos.x -= 1;
+      initialConditions.translatingCircleInitialPos.x -= 0.2;
       break;
     default:
       break;
     }
 
-    compute();
+    compute(initialConditions);
   }
 
-  void compute()
+  void compute(const InitialConditions& ic)
   {
-    float x = 0;
+    tCollision = -1;
 
-    for(int k = 0; k < 10; ++k)
-      x -= sqrDistBetweenCircles(x) / sqrDistBetweenCircles_ddt(x);
+    {
+      float x = 0;
 
-    if(sqrDistBetweenCircles(x) < 0.01)
-      tCollision = x;
-    else
-      tCollision = -1;
+      for(int k = 0; k < 10; ++k)
+        x -= lineCircleDistance(ic, x) / lineCircleDistance_ddt(ic, x);
+
+      if(lineCircleDistance(ic, x) < 0.01)
+      {
+        auto sc = computeConfiguration(ic, x);
+        // check if the translating circle collides with the segment
+        if(dotProduct(sc.translatingCircleCenter - sc.rotatingSegmentA, sc.rotatingSegmentB - sc.rotatingSegmentA) >
+                    0 &&
+              dotProduct(sc.translatingCircleCenter - sc.rotatingSegmentB, sc.rotatingSegmentA - sc.rotatingSegmentB) >
+                    0)
+        {
+          tCollision = x;
+        }
+      }
+    }
+
+    {
+      float x = 0;
+
+      for(int k = 0; k < 15; ++k)
+        x -= sqrDistBetweenCircles(ic, x) / sqrDistBetweenCircles_ddt(ic, x);
+
+      if(sqrDistBetweenCircles(ic, x) < 0.01)
+        if(tCollision == -1 || x < tCollision)
+          tCollision = x;
+    }
   }
 
   float t = 0;
   float tCollision = 0;
 
-  float rotatingCircleRadius;
-  float rotatingCircleOmega; // rad/s
-  Vec2 rotatingCircleRotationCenter;
-  float rotatingCircleRotationRadius;
-
-  float translatingCircleRadius;
-  Vec2 translatingCircleInitialPos;
-  Vec2 translatingCircleVelocity;
+  InitialConditions initialConditions{};
 };
 
 const int registered = registerApp("CollisionDetection/CCD_Rotate", []() -> IApp* { return new CcdRotateApp; });
