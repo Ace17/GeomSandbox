@@ -9,10 +9,10 @@ struct NullVisualizer : IVisualizer
   void line(Vec3, Vec3, Color, Vec2, Vec2){};
   void line(Vec2, Vec2, Color, Vec2, Vec2){};
   void rect(Vec2, Vec2, Color, Vec2){};
-  void circle(Vec2, float, Color, float){};
-  void text(Vec2, const char*, Color, Vec2){};
-  void printf(const char*, va_list){};
-  void step() override{};
+  void circle(Vec2, float, Color, float) {};
+  void text(Vec2, const char*, Color, Vec2) {};
+  void printf(const char*, va_list) {};
+  void step() override {};
 };
 
 static NullVisualizer nullVisualizer;

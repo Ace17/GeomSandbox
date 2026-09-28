@@ -279,7 +279,7 @@ struct TriangleShape : IShape
     auto v0 = vertices[0];
     auto v1 = vertices[1];
     auto v2 = vertices[2];
-    return { normalize(crossProduct(v1 - v0, v2 - v0)) };
+    return {normalize(crossProduct(v1 - v0, v2 - v0))};
   }
 
   std::vector<Vec3> edgesToCombine() const override
@@ -412,12 +412,12 @@ struct SeparatingAxisTestApp3D : IApp
 
     // draw triangle obstacle
     {
-        auto v0 = obstacleTriangle.vertices[0];
-        auto v1 = obstacleTriangle.vertices[1];
-        auto v2 = obstacleTriangle.vertices[2];
-        drawer->line(v0, v1, Yellow);
-        drawer->line(v1, v2, Yellow);
-        drawer->line(v2, v0, Yellow);
+      auto v0 = obstacleTriangle.vertices[0];
+      auto v1 = obstacleTriangle.vertices[1];
+      auto v2 = obstacleTriangle.vertices[2];
+      drawer->line(v0, v1, Yellow);
+      drawer->line(v1, v2, Yellow);
+      drawer->line(v2, v0, Yellow);
     }
 
     // draw polyhedron

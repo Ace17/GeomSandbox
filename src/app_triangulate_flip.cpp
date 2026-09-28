@@ -71,9 +71,7 @@ const TestCase<std::vector<Vec2>, span<const Edge>> AllTestCases[] = {
                   {8, 0},
                   {0, 8},
             },
-            [](const span<const Edge>& edges) {
-              assert(sameEdges({{0, 1}, {1, 2}, {2, 0}}, edges));
-            },
+            [](const span<const Edge>& edges) { assert(sameEdges({{0, 1}, {1, 2}, {2, 0}}, edges)); },
       },
 };
 
