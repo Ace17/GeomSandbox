@@ -175,7 +175,7 @@ struct CcdRotateApp : IApp
 
     drawer->circle(Vec2{}, ic.rotatingSegmentPosBase, Green);
 
-    drawConfiguration(drawer, ic, t, Green);
+    drawConfiguration(drawer, ic, tCurr, Green);
 
     if(tCollision >= 0)
       drawConfiguration(drawer, initialConditions, tCollision, Red);
@@ -183,8 +183,9 @@ struct CcdRotateApp : IApp
     drawCross(drawer, ic.rotatingCircleRotationCenter, White);
 
     char buf[256];
-    sprintf(buf, "t=%.2f, dist=%.2f, lineDist=%.2f, derivative=%.2f, tCollision=%.2f", t, sqrDistBetweenCircles(ic, t),
-          lineCircleDistance(ic, t), sqrDistBetweenCircles_ddt(ic, t), tCollision);
+    sprintf(buf, "t=%.2f, dist=%.2f, lineDist=%.2f, derivative=%.2f, tCollision=%.2f", tCurr,
+          sqrDistBetweenCircles(ic, tCurr), lineCircleDistance(ic, tCurr), sqrDistBetweenCircles_ddt(ic, tCurr),
+          tCollision);
     drawer->text({}, buf, White, {-580, -80});
   }
 
@@ -199,10 +200,10 @@ struct CcdRotateApp : IApp
     switch(key)
     {
     case Key::Left:
-      t -= 0.03;
+      tCurr -= 0.03;
       break;
     case Key::Right:
-      t += 0.03;
+      tCurr += 0.03;
       break;
     case Key::PageUp:
       initialConditions.translatingCircleInitialPos.x += 0.2;
@@ -253,7 +254,7 @@ struct CcdRotateApp : IApp
     }
   }
 
-  float t = 0;
+  float tCurr = 0;
   float tCollision = 0;
 
   InitialConditions initialConditions{};
